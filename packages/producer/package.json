@@ -12,12 +12,7 @@
     },
     "./package.json": "./package.json"
   },
-  "files": [
-    "dist",
-    "bin",
-    "schemas",
-    "vendor"
-  ],
+  "files": ["dist", "bin", "schemas", "vendor"],
   "scripts": {
     "build": "tsup src/index.ts --format esm --dts --clean",
     "test": "vitest run --passWithNoTests",

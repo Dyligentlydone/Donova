@@ -28,7 +28,10 @@ export async function renderParallel(opts: ParallelOpts): Promise<string> {
   await mkdir(chunksDir, { recursive: true });
 
   // Distribute segments round-robin across workers, preserving order per worker.
-  const buckets: Array<{ startFrame: number; frameCount: number }[]> = Array.from({ length: workers }, () => []);
+  const buckets: Array<{ startFrame: number; frameCount: number }[]> = Array.from(
+    { length: workers },
+    () => [],
+  );
   plan.segments.forEach((seg, i) => buckets[i % workers]?.push(seg));
 
   let done = 0;
@@ -88,6 +91,18 @@ export async function renderParallel(opts: ParallelOpts): Promise<string> {
   const listPath = join(opts.workDir, "concat.txt");
   await writeFile(listPath, ordered.map((f) => `file '${f.replace(/'/g, "'\\''")}'`).join("\n"));
   const out = join(opts.workDir, "video-only.mp4");
-  await runFfmpeg(opts.ffmpeg, ["-f", "concat", "-safe", "0", "-i", listPath, "-c", "copy", "-movflags", "+faststart", out]);
+  await runFfmpeg(opts.ffmpeg, [
+    "-f",
+    "concat",
+    "-safe",
+    "0",
+    "-i",
+    listPath,
+    "-c",
+    "copy",
+    "-movflags",
+    "+faststart",
+    out,
+  ]);
   return out;
 }

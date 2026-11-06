@@ -120,8 +120,9 @@ export function runFfmpeg(ffmpeg: string, args: string[], opts: RunOpts = {}): P
     p.stderr?.on("data", (d) => {
       buf += d.toString();
       stderrTail = (stderrTail + d.toString()).slice(-4000);
-      let idx: number;
-      while ((idx = buf.indexOf("\n")) >= 0) {
+      for (;;) {
+        const idx = buf.indexOf("\n");
+        if (idx < 0) break;
         const line = buf.slice(0, idx);
         buf = buf.slice(idx + 1);
         opts.onStderr?.(line);

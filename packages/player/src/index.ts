@@ -37,7 +37,9 @@ export class FramecraftPlayer extends HTMLElement {
     super();
     const root = this.attachShadow({ mode: "open" });
     root.appendChild(template.content.cloneNode(true));
-    this.iframe = root.querySelector("iframe")!;
+    const iframe = root.querySelector("iframe");
+    if (!iframe) throw new Error("player template missing iframe");
+    this.iframe = iframe;
   }
 
   connectedCallback(): void {
@@ -76,11 +78,11 @@ export class FramecraftPlayer extends HTMLElement {
   }
 
   private get fc(): { renderSeek: (t: number) => Promise<void> } | undefined {
-    return (this.iframe.contentWindow as unknown as { __fc?: { renderSeek: (t: number) => Promise<void> } })?.__fc;
+    return (this.iframe.contentWindow as unknown as { __fc?: { renderSeek: (t: number) => Promise<void> } })
+      ?.__fc;
   }
 
   get state(): PlayerState {
-    const w = this.iframe.contentWindow as unknown as { __fc?: { fps: number } } | null;
     return {
       ready: !!(this.iframe.contentWindow as unknown as { __playerReady?: boolean } | null)?.__playerReady,
       duration: this.duration,
@@ -89,7 +91,6 @@ export class FramecraftPlayer extends HTMLElement {
       width: this.iframe.clientWidth,
       height: this.iframe.clientHeight,
     };
-    void w;
   }
 
   async seek(t: number): Promise<void> {

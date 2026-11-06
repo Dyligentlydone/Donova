@@ -1,6 +1,6 @@
 import { createReadStream, existsSync } from "node:fs";
-import { readFile, writeFile, mkdir, readdir } from "node:fs/promises";
-import { createServer, type Server } from "node:http";
+import { mkdir, readFile, readdir, writeFile } from "node:fs/promises";
+import { type Server, createServer } from "node:http";
 import { extname, join, normalize, resolve, sep } from "node:path";
 import { parseCompositionHtml } from "@framecraft/contract";
 import { startFileServer } from "@framecraft/engine";
@@ -58,13 +58,21 @@ function safePath(root: string, p: string): string | null {
 }
 
 /** DOM mutation ops — byte-preserving where the change is attr-only. */
-async function applyMutation(file: string, html: string, mutations: Array<Record<string, unknown>>): Promise<string> {
+async function applyMutation(
+  file: string,
+  html: string,
+  mutations: Array<Record<string, unknown>>,
+): Promise<string> {
   // Use parse5 to locate, then do a targeted string splice on the ORIGINAL html
   // so untouched regions keep their bytes (08 §12 undo/byte-preserving).
   const doc = parse5.parse(html, { sourceCodeLocationInfo: true });
   type El = parse5.DefaultTreeAdapterMap["element"];
   const walk = function* (n: unknown): Generator<El> {
-    const node = n as { tagName?: string; childNodes?: unknown[]; attrs?: Array<{ name: string; value: string }> };
+    const node = n as {
+      tagName?: string;
+      childNodes?: unknown[];
+      attrs?: Array<{ name: string; value: string }>;
+    };
     if (node.tagName) yield node as unknown as El;
     for (const c of node.childNodes ?? []) yield* walk(c);
   };
@@ -72,13 +80,19 @@ async function applyMutation(file: string, html: string, mutations: Array<Record
   // Apply in reverse document order so offsets stay valid.
   const edits: Array<{ start: number; end: number; text: string }> = [];
   // Pre-index timed elements for domIndex addressing.
-  const timedEls = [...walk(doc)].filter((e) => e.attrs?.some((a: { name: string; value: string }) => a.name === "data-start"));
+  const timedEls = [...walk(doc)].filter((e) =>
+    e.attrs?.some((a: { name: string; value: string }) => a.name === "data-start"),
+  );
   for (const m of mutations) {
     if (m.op === "setAttr" && (typeof m.selector === "string" || typeof m.domIndex === "number")) {
       const targets =
         typeof m.domIndex === "number"
           ? timedEls.filter((_e, i) => i === m.domIndex)
-          : [...walk(doc)].filter((e) => e.attrs?.some((a: { name: string; value: string }) => `[${a.name}="${a.value}"]` === m.selector));
+          : [...walk(doc)].filter((e) =>
+              e.attrs?.some(
+                (a: { name: string; value: string }) => `[${a.name}="${a.value}"]` === m.selector,
+              ),
+            );
       for (const el of targets) {
         const loc = el.sourceCodeLocation;
         if (!loc?.startTag) continue;
@@ -87,19 +101,32 @@ async function applyMutation(file: string, html: string, mutations: Array<Record
         const openTag = html.slice(loc.startTag.startOffset, loc.startTag.endOffset);
         const attrRe = new RegExp(`\\s${attrName}="[^"]*"`);
         let newTag: string;
-        if (attrRe.test(openTag)) newTag = openTag.replace(attrRe, ` ${attrName}="${value.replace(/"/g, "&quot;")}"`);
-        else newTag = openTag.replace(/\s*\/?>$/, (tail) => ` ${attrName}="${value.replace(/"/g, "&quot;")}"${tail}`);
+        if (attrRe.test(openTag))
+          newTag = openTag.replace(attrRe, ` ${attrName}="${value.replace(/"/g, "&quot;")}"`);
+        else
+          newTag = openTag.replace(
+            /\s*\/?>$/,
+            (tail) => ` ${attrName}="${value.replace(/"/g, "&quot;")}"${tail}`,
+          );
         edits.push({ start: loc.startTag.startOffset, end: loc.startTag.endOffset, text: newTag });
       }
     } else if (m.op === "setText" && (typeof m.selector === "string" || typeof m.domIndex === "number")) {
       const targets =
         typeof m.domIndex === "number"
           ? timedEls.filter((_e, i) => i === m.domIndex)
-          : [...walk(doc)].filter((e) => e.attrs?.some((a: { name: string; value: string }) => `[${a.name}="${a.value}"]` === m.selector));
+          : [...walk(doc)].filter((e) =>
+              e.attrs?.some(
+                (a: { name: string; value: string }) => `[${a.name}="${a.value}"]` === m.selector,
+              ),
+            );
       for (const el of targets) {
         const loc = el.sourceCodeLocation;
         if (!loc?.startTag || !loc.endTag) continue;
-        edits.push({ start: loc.startTag.endOffset, end: loc.endTag.startOffset, text: String(m.value ?? "") });
+        edits.push({
+          start: loc.startTag.endOffset,
+          end: loc.endTag.startOffset,
+          text: String(m.value ?? ""),
+        });
       }
     }
   }
@@ -108,7 +135,10 @@ async function applyMutation(file: string, html: string, mutations: Array<Record
   return out;
 }
 
-export async function startStudioServer(projectDir: string, opts?: { port?: number }): Promise<{ url: string; server: Server; compositionUrl: string }> {
+export async function startStudioServer(
+  projectDir: string,
+  opts?: { port?: number },
+): Promise<{ url: string; server: Server; compositionUrl: string }> {
   const root = resolve(projectDir);
   const compServer = await startFileServer(root); // serves the raw project for the iframe
   const uiDir = new URL("../ui/", import.meta.url).pathname;
@@ -143,7 +173,10 @@ export async function startStudioServer(projectDir: string, opts?: { port?: numb
         return send(200, { ok: true });
       }
       if (p === "/api/mutation" && req.method === "POST") {
-        const body = JSON.parse(await readBody(req)) as { file: string; mutations: Array<Record<string, unknown>> };
+        const body = JSON.parse(await readBody(req)) as {
+          file: string;
+          mutations: Array<Record<string, unknown>>;
+        };
         const fp = safePath(root, body.file);
         if (!fp || !existsSync(fp)) return send(404, { error: "not found" });
         const html = await readFile(fp, "utf8");
@@ -211,7 +244,11 @@ export async function startStudioServer(projectDir: string, opts?: { port?: numb
       // --- Studio UI assets ---
       if (p === "/" || p === "/studio" || p === "/studio/") {
         const ui = join(uiDir, "index.html");
-        return send(200, existsSync(ui) ? await readFile(ui, "utf8") : "<h1>studio ui missing</h1>", "text/html");
+        return send(
+          200,
+          existsSync(ui) ? await readFile(ui, "utf8") : "<h1>studio ui missing</h1>",
+          "text/html",
+        );
       }
       if (p.startsWith("/studio/")) {
         const fp = join(uiDir, p.slice("/studio/".length));

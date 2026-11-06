@@ -1,5 +1,5 @@
-import { existsSync, readFileSync, writeFileSync, mkdirSync } from "node:fs";
 import { createHash } from "node:crypto";
+import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { homedir } from "node:os";
 import { join } from "node:path";
 import { CACHE_DIR } from "@framecraft/contract";
@@ -101,7 +101,11 @@ export async function openFrameSource(opts: RenderToFramesOpts): Promise<FrameSo
   // Probe beginFrame inside a sacrificial browser process — on some systems a
   // failed beginFrame crashes the whole browser, so it must be isolated from
   // the real capture browser (03 §6). The verdict is cached per executable.
-  const beginFrameOk = await probeBeginFrameSupport(chrome.executablePath, opts, opts.capture?.disableBeginFrame);
+  const beginFrameOk = await probeBeginFrameSupport(
+    chrome.executablePath,
+    opts,
+    opts.capture?.disableBeginFrame,
+  );
 
   const page: Page = await browser.newPage();
   page.setDefaultTimeout(30_000);
@@ -163,7 +167,9 @@ export interface RenderVideoOpts extends RenderToFramesOpts {
 }
 
 /** Convenience: stream frames directly into an encoder → video-only file. */
-export async function renderVideoOnly(opts: RenderVideoOpts): Promise<{ frames: number; beginFrame: boolean }> {
+export async function renderVideoOnly(
+  opts: RenderVideoOpts,
+): Promise<{ frames: number; beginFrame: boolean }> {
   await ensureOutDir(opts.out);
   const src = await openFrameSource(opts);
   const enc = new StreamingEncoder({

@@ -85,7 +85,8 @@ export function parseCompositionHtml(html: string, opts?: { path?: string; isRoo
     });
   }
 
-  const width = parseTime(getAttr(compEl ?? ({} as El), ATTR.width)) ?? Number(getAttr(compEl ?? ({} as El), ATTR.width));
+  const width =
+    parseTime(getAttr(compEl ?? ({} as El), ATTR.width)) ?? Number(getAttr(compEl ?? ({} as El), ATTR.width));
   const height = Number(getAttr(compEl ?? ({} as El), ATTR.height));
   const duration = parseTime(getAttr(compEl ?? ({} as El), ATTR.duration));
   const fps = parseTime(getAttr(compEl ?? ({} as El), ATTR.fps));
@@ -124,7 +125,15 @@ export function parseCompositionHtml(html: string, opts?: { path?: string; isRoo
       const tag = localName(el);
       const src = getAttr(el, "src");
       const kind =
-        tag === "video" ? "video" : tag === "audio" ? "audio" : tag === "img" ? "image" : tag === "iframe" ? "iframe" : "element";
+        tag === "video"
+          ? "video"
+          : tag === "audio"
+            ? "audio"
+            : tag === "img"
+              ? "image"
+              : tag === "iframe"
+                ? "iframe"
+                : "element";
       const clip: ClipSpec = {
         id: thisClipId,
         domIndex: domIndex++,
@@ -135,7 +144,8 @@ export function parseCompositionHtml(html: string, opts?: { path?: string; isRoo
           end,
         },
         audio: {
-          hasAudio: tag === "video" ? parseBool(getAttr(el, ATTR.hasAudio), !hasAttr(el, "muted")) : tag === "audio",
+          hasAudio:
+            tag === "video" ? parseBool(getAttr(el, ATTR.hasAudio), !hasAttr(el, "muted")) : tag === "audio",
           start: parseTime(getAttr(el, ATTR.audioStart)),
           end: parseTime(getAttr(el, ATTR.audioEnd)),
           offset: parseTime(getAttr(el, ATTR.audioOffset)),
@@ -149,7 +159,9 @@ export function parseCompositionHtml(html: string, opts?: { path?: string; isRoo
           })(),
         },
         media: { tag, src, kind },
-        attrs: Object.fromEntries((el.attrs ?? []).filter((a) => a.name.startsWith("data-")).map((a) => [a.name, a.value])),
+        attrs: Object.fromEntries(
+          (el.attrs ?? []).filter((a) => a.name.startsWith("data-")).map((a) => [a.name, a.value]),
+        ),
         classes: classesOf(el),
         textSnippet: textSnippetOf(el),
       };
@@ -184,7 +196,9 @@ export function parseCompositionHtml(html: string, opts?: { path?: string; isRoo
           kind: tag === "video" ? "video" : tag === "audio" ? "audio" : tag === "img" ? "image" : "iframe",
           tag,
           clipId: parentClipId,
-          attrs: Object.fromEntries((el.attrs ?? []).filter((a) => a.name.startsWith("data-")).map((a) => [a.name, a.value])),
+          attrs: Object.fromEntries(
+            (el.attrs ?? []).filter((a) => a.name.startsWith("data-")).map((a) => [a.name, a.value]),
+          ),
         });
       }
     }
@@ -203,7 +217,7 @@ export function parseCompositionHtml(html: string, opts?: { path?: string; isRoo
       if (!src) continue;
       const isCompSrc = hasAttr(el, ATTR.compositionSrc);
       mediaRefs.push({
-        kind: isCompSrc ? "sub" : MEDIA_TAG_KIND[tag] ?? "other",
+        kind: isCompSrc ? "sub" : (MEDIA_TAG_KIND[tag] ?? "other"),
         src,
         remote: /^https?:\/\//.test(src),
         elementDomIndex: domIndex,

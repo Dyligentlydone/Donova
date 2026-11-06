@@ -1,5 +1,5 @@
-import { basename, join } from "node:path";
 import { mkdir } from "node:fs/promises";
+import { basename, join } from "node:path";
 import type { ClipSpec, CompositionSpec } from "@framecraft/contract";
 import { runFfmpeg } from "@framecraft/engine";
 
@@ -26,10 +26,13 @@ export interface AudioTrackJob {
   speed: number; // media speed (video data-speed)
 }
 
-function tracksFromClips(root: CompositionSpec, compFor?: (sub: string) => CompositionSpec | undefined): AudioTrackJob[] {
+function tracksFromClips(
+  root: CompositionSpec,
+  compFor?: (sub: string) => CompositionSpec | undefined,
+): AudioTrackJob[] {
   const jobs: AudioTrackJob[] = [];
   const walk = (spec: CompositionSpec, offset: number, scale: number): void => {
-    const clipById = new Map(spec.clips.map((c) => [c.id, c]));
+    const _clipById = new Map(spec.clips.map((c) => [c.id, c]));
     for (const clip of spec.clips) {
       const abs = clip.attrs["data-clip-absolute"] === "true";
       const localScale = abs ? 1 : scale;
@@ -53,7 +56,8 @@ function tracksFromClips(root: CompositionSpec, compFor?: (sub: string) => Compo
       for (const mi of spec.mediaItems) {
         if (mi.clipId !== clip.id || (mi.kind !== "audio" && mi.kind !== "video")) continue;
         const isAudio = mi.kind === "audio";
-        const vidAudio = mi.kind === "video" && mi.attrs["data-has-audio"] !== "false" && mi.attrs.muted === undefined;
+        const vidAudio =
+          mi.kind === "video" && mi.attrs["data-has-audio"] !== "false" && mi.attrs.muted === undefined;
         if (!isAudio && !vidAudio) continue;
         const aOffset = Number(mi.attrs["data-audio-offset"] ?? "0") || 0;
         const aStart = Number(mi.attrs["data-audio-start"] ?? "0") || 0;
@@ -82,7 +86,11 @@ function tracksFromClips(root: CompositionSpec, compFor?: (sub: string) => Compo
   return jobs;
 }
 
-export function buildAudioGraph(jobs: AudioTrackJob[]): { inputs: string[]; filter: string; hasAudio: boolean } {
+export function buildAudioGraph(jobs: AudioTrackJob[]): {
+  inputs: string[];
+  filter: string;
+  hasAudio: boolean;
+} {
   if (jobs.length === 0) return { inputs: [], filter: "", hasAudio: false };
   const inputs: string[] = [];
   const chains: string[] = [];
@@ -94,7 +102,10 @@ export function buildAudioGraph(jobs: AudioTrackJob[]): { inputs: string[]; filt
     const parts: string[] = [];
     const pre: string[] = [];
     if (j.mediaStart > 0 || j.duration > 0) {
-      pre.push(`atrim=start=${j.mediaStart.toFixed(6)}:duration=${j.duration.toFixed(6)}`, "asetpts=PTS-STARTPTS");
+      pre.push(
+        `atrim=start=${j.mediaStart.toFixed(6)}:duration=${j.duration.toFixed(6)}`,
+        "asetpts=PTS-STARTPTS",
+      );
     }
     if (j.speed !== 1) pre.push(`atempo=${j.speed.toFixed(6)}`);
     const vols: string[] = [];
@@ -111,10 +122,7 @@ export function buildAudioGraph(jobs: AudioTrackJob[]): { inputs: string[]; filt
     chains.push(`${inLabel}${parts.join(",")}${outLabel}`);
     mixLabels.push(outLabel);
   });
-  const filter =
-    chains.join(";") +
-    ";" +
-    `${mixLabels.join("")}amix=inputs=${mixLabels.length}:normalize=0,aresample=48000[aout]`;
+  const filter = `${chains.join(";")};${mixLabels.join("")}amix=inputs=${mixLabels.length}:normalize=0,aresample=48000[aout]`;
   return { inputs, filter, hasAudio: true };
 }
 
@@ -130,7 +138,19 @@ export async function mixAudio(
   await mkdir(outPath.includes("/") ? outPath.slice(0, outPath.lastIndexOf("/")) : ".", { recursive: true });
   const args: string[] = [];
   for (const src of g.inputs) args.push("-i", join(projectDir, src));
-  args.push("-filter_complex", g.filter, "-map", "[aout]", "-c:a", "aac", "-b:a", "192k", "-ar", "48000", outPath);
+  args.push(
+    "-filter_complex",
+    g.filter,
+    "-map",
+    "[aout]",
+    "-c:a",
+    "aac",
+    "-b:a",
+    "192k",
+    "-ar",
+    "48000",
+    outPath,
+  );
   await runFfmpeg(ffmpeg, args, { cwd: projectDir });
   return outPath;
 }

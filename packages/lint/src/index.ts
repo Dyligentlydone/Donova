@@ -1,11 +1,20 @@
-import { ATTR, type CompositionSpec, type ContractIssue, parseCompositionHtml, parseMotionAttr } from "@framecraft/contract";
+import {
+  ATTR,
+  type CompositionSpec,
+  type ContractIssue,
+  parseCompositionHtml,
+  parseMotionAttr,
+} from "@framecraft/contract";
 
 /**
  * Static lint — 07 §2. Runs purely on parsed HTML; no browser needed.
  * Rules are additive; each returns ContractIssue with severity + suggestion.
  */
 
-export function lintHtml(html: string, opts?: { path?: string; isRoot?: boolean }): { spec: CompositionSpec; issues: ContractIssue[] } {
+export function lintHtml(
+  html: string,
+  opts?: { path?: string; isRoot?: boolean },
+): { spec: CompositionSpec; issues: ContractIssue[] } {
   const { spec } = parseCompositionHtml(html, opts);
   const issues: ContractIssue[] = [...spec.errors, ...spec.warnings];
 
@@ -46,7 +55,12 @@ export function lintHtml(html: string, opts?: { path?: string; isRoot?: boolean 
   // --- Clips ---
   for (const clip of spec.clips) {
     if (clip.timing.start < 0) {
-      issues.push({ rule: "clip-negative-start", severity: "error", message: `Clip ${clip.id} starts < 0.`, clipId: clip.id });
+      issues.push({
+        rule: "clip-negative-start",
+        severity: "error",
+        message: `Clip ${clip.id} starts < 0.`,
+        clipId: clip.id,
+      });
     }
     if (spec.isRoot && clip.timing.start + clip.timing.duration > spec.duration + 1e-6) {
       issues.push({
@@ -61,13 +75,22 @@ export function lintHtml(html: string, opts?: { path?: string; isRoot?: boolean 
     if (clip.attrs[ATTR.speed] != null) {
       const s = Number(clip.attrs[ATTR.speed]);
       if (!Number.isFinite(s) || s <= 0) {
-        issues.push({ rule: "invalid-speed", severity: "error", message: `data-speed must be > 0 (clip ${clip.id}).`, clipId: clip.id });
+        issues.push({
+          rule: "invalid-speed",
+          severity: "error",
+          message: `data-speed must be > 0 (clip ${clip.id}).`,
+          clipId: clip.id,
+        });
       }
     }
   }
 
   // --- Timeline registration ---
-  if (spec.isRoot && spec.clips.some((c) => c.attrs["data-fc-motion"] == null) && spec.timelines.length === 0) {
+  if (
+    spec.isRoot &&
+    spec.clips.some((c) => c.attrs["data-fc-motion"] == null) &&
+    spec.timelines.length === 0
+  ) {
     // Timed clips but no animation runtime at all is suspicious only when there are
     // visible clips meant to animate — keep as info.
     issues.push({
@@ -90,7 +113,9 @@ export function lintHtml(html: string, opts?: { path?: string; isRoot?: boolean 
 
 export function formatIssues(issues: ContractIssue[]): string {
   const icons = { error: "✖", warn: "▲", info: "•" } as const;
-  return issues.map((i) => `${icons[i.severity]} ${i.rule}: ${i.message}${i.suggestion ? `\n   → ${i.suggestion}` : ""}`).join("\n");
+  return issues
+    .map((i) => `${icons[i.severity]} ${i.rule}: ${i.message}${i.suggestion ? `\n   → ${i.suggestion}` : ""}`)
+    .join("\n");
 }
 
 export function summarize(issues: ContractIssue[]): { errors: number; warnings: number; info: number } {

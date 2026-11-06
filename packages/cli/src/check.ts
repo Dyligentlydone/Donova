@@ -1,10 +1,10 @@
 import { readFile } from "node:fs/promises";
 import { join, resolve } from "node:path";
+import type { ContractIssue } from "@framecraft/contract";
 import { ensureChrome, startFileServer } from "@framecraft/engine";
 import { formatIssues, lintHtml, summarize } from "@framecraft/lint";
 import { getRuntimeSource } from "@framecraft/runtime";
 import puppeteer from "puppeteer-core";
-import type { ContractIssue } from "@framecraft/contract";
 
 export interface CheckResult {
   issues: ContractIssue[];
@@ -17,7 +17,11 @@ export interface CheckResult {
  * Browser pass: boot the page, run runtime, seek through the timeline,
  * collect pageerror/console.error + overflow findings.
  */
-export async function checkProject(projectDir: string, composition = "index.html", opts?: { browser?: boolean }): Promise<CheckResult> {
+export async function checkProject(
+  projectDir: string,
+  composition = "index.html",
+  opts?: { browser?: boolean },
+): Promise<CheckResult> {
   const dir = resolve(projectDir);
   const html = await readFile(join(dir, composition), "utf8");
   const { issues } = lintHtml(html, { path: composition, isRoot: true });
@@ -26,7 +30,7 @@ export async function checkProject(projectDir: string, composition = "index.html
   if (opts?.browser !== false) {
     const chrome = await ensureChrome({ headlessShell: true });
     const server = await startFileServer(dir);
-    let browser;
+    let browser: Awaited<ReturnType<typeof puppeteer.launch>> | undefined;
     try {
       browser = await puppeteer.launch({
         executablePath: chrome.executablePath,
@@ -63,7 +67,8 @@ export async function checkProject(projectDir: string, composition = "index.html
         for (const el of document.querySelectorAll("[data-start]")) {
           const e = el.getBoundingClientRect();
           if (e.width === 0) continue;
-          const over = e.right > r.right + 2 || e.bottom > r.bottom + 2 || e.left < r.left - 2 || e.top < r.top - 2;
+          const over =
+            e.right > r.right + 2 || e.bottom > r.bottom + 2 || e.left < r.left - 2 || e.top < r.top - 2;
           if (over && getComputedStyle(el).display !== "none") {
             bad.push(`<${el.tagName.toLowerCase()}> overflows composition bounds`);
           }
@@ -91,7 +96,9 @@ export function reportCheck(res: CheckResult): string {
     parts.push(res.runtimeErrors.map((e) => `✖ runtime: ${e}`).join("\n"));
   }
   const s = summarize(res.issues);
-  parts.push(`\n${s.errors} errors, ${s.warnings} warnings, ${s.info} info, ${res.runtimeErrors.length} runtime errors`);
+  parts.push(
+    `\n${s.errors} errors, ${s.warnings} warnings, ${s.info} info, ${res.runtimeErrors.length} runtime errors`,
+  );
   parts.push(res.ok ? "✓ check passed" : "✖ check failed");
   return parts.join("\n");
 }

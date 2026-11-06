@@ -77,7 +77,11 @@ export async function ensureChrome(opts?: { headlessShell?: boolean }): Promise<
       platform: platform as never,
     });
     if (existsSync(executablePath)) {
-      cachedChrome = { executablePath, version: found.buildId, headless: preferred === "chrome-headless-shell" ? "shell" : "new" };
+      cachedChrome = {
+        executablePath,
+        version: found.buildId,
+        headless: preferred === "chrome-headless-shell" ? "shell" : "new",
+      };
       return cachedChrome;
     }
   }
@@ -99,7 +103,11 @@ export async function ensureChrome(opts?: { headlessShell?: boolean }): Promise<
   if (!(await canDownload({ browser: "chrome-headless-shell" as never, buildId, cacheDir: cacheDir() }))) {
     throw new Error(`Cannot download chrome-headless-shell ${buildId}.`);
   }
-  const installed = await install({ browser: "chrome-headless-shell" as never, buildId, cacheDir: cacheDir() });
+  const installed = await install({
+    browser: "chrome-headless-shell" as never,
+    buildId,
+    cacheDir: cacheDir(),
+  });
   cachedChrome = {
     executablePath: installed.executablePath,
     version: installed.buildId,

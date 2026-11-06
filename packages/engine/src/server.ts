@@ -1,5 +1,5 @@
 import { createReadStream, existsSync, statSync } from "node:fs";
-import { createServer, type Server } from "node:http";
+import { type Server, createServer } from "node:http";
 import { extname, join, normalize, resolve, sep } from "node:path";
 
 const MIME: Record<string, string> = {

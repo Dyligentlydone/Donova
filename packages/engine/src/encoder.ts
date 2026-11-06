@@ -1,4 +1,4 @@
-import { spawn, type ChildProcess } from "node:child_process";
+import { type ChildProcess, spawn } from "node:child_process";
 import { mkdir } from "node:fs/promises";
 import { dirname } from "node:path";
 
@@ -38,8 +38,9 @@ export class StreamingEncoder {
       const s = d.toString();
       this.stderrTail = (this.stderrTail + s).slice(-4000);
       buf += s;
-      let idx: number;
-      while ((idx = buf.indexOf("\n")) >= 0) {
+      for (;;) {
+        const idx = buf.indexOf("\n");
+        if (idx < 0) break;
         const line = buf.slice(0, idx);
         buf = buf.slice(idx + 1);
         opts.onStderr?.(line);
@@ -82,7 +83,14 @@ export class StreamingEncoder {
       args.push("-c:v", "libvpx-vp9", "-crf", String(o.crf ?? 32), "-b:v", "0", "-pix_fmt", pixFmt);
       args.push("-auto-alt-ref", "0"); // required for alpha
     } else if (codec === "prores") {
-      args.push("-c:v", "prores_ks", "-profile:v", o.alpha ? "4444" : "422", "-pix_fmt", o.alpha ? "yuva444p12le" : "yuv422p10le");
+      args.push(
+        "-c:v",
+        "prores_ks",
+        "-profile:v",
+        o.alpha ? "4444" : "422",
+        "-pix_fmt",
+        o.alpha ? "yuva444p12le" : "yuv422p10le",
+      );
     }
     return [...args, o.out];
   }

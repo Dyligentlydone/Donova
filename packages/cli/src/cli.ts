@@ -1,10 +1,10 @@
-import { defineCommand, runMain } from "citty";
 import { CLI_NAME, VERSION } from "@framecraft/contract";
 import { render } from "@framecraft/producer";
+import { startStudioServer } from "@framecraft/studio-server";
+import { defineCommand, runMain } from "citty";
 import { checkProject, reportCheck } from "./check.js";
 import { initProject } from "./init.js";
 import { previewProject } from "./preview.js";
-import { startStudioServer } from "@framecraft/studio-server";
 
 const renderCmd = defineCommand({
   meta: { name: "render", description: "Render a composition to video" },
@@ -34,8 +34,7 @@ const renderCmd = defineCommand({
     });
     process.stderr.write("\n");
     console.log(
-      `${res.out}  ${res.width}x${res.height} @${res.fps}fps  ${res.frames} frames  ${res.duration}s` +
-        (res.beginFrame ? "  [beginFrame]" : "  [screenshot]"),
+      `${res.out}  ${res.width}x${res.height} @${res.fps}fps  ${res.frames} frames  ${res.duration}s${res.beginFrame ? "  [beginFrame]" : "  [screenshot]"}`,
     );
   },
 });
@@ -63,7 +62,9 @@ const checkCmd = defineCommand({
     json: { type: "boolean", default: false },
   },
   async run({ args }) {
-    const res = await checkProject(String(args.dir), String(args.composition), { browser: !args["no-browser"] });
+    const res = await checkProject(String(args.dir), String(args.composition), {
+      browser: !args["no-browser"],
+    });
     if (args.json) console.log(JSON.stringify(res, null, 2));
     else console.log(reportCheck(res));
     if (!res.ok) process.exitCode = 1;
@@ -90,7 +91,9 @@ const studioCmd = defineCommand({
     port: { type: "string", default: "0" },
   },
   async run({ args }) {
-    const { url, compositionUrl } = await startStudioServer(String(args.dir), { port: Number(args.port) || 0 });
+    const { url, compositionUrl } = await startStudioServer(String(args.dir), {
+      port: Number(args.port) || 0,
+    });
     console.log(`studio:   ${url}`);
     console.log(`serving:  ${compositionUrl}`);
     await new Promise(() => {});

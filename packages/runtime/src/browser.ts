@@ -115,7 +115,7 @@ const EASE_MAP: Record<string, string> = {
   steps: "steps(1, end)",
 };
 
-const MOTION_TRANSFORM_PROPS = new Set([
+const _MOTION_TRANSFORM_PROPS = new Set([
   "translate",
   "translateX",
   "translateY",
@@ -286,7 +286,7 @@ function collectTimedEls(): void {
   timedEls = [];
   for (const el of document.querySelectorAll<HTMLElement>("[data-start]")) {
     const start = num(attr(el, "data-start"), 0);
-    const dur = num(attr(el, "data-duration"), NaN);
+    const dur = num(attr(el, "data-duration"), Number.NaN);
     const endAttr = attr(el, "data-end");
     const end = endAttr != null ? num(endAttr, start) : Number.isFinite(dur) ? start + dur : start;
     timedEls.push({
@@ -402,7 +402,7 @@ interface VideoOverlay {
   entry: VideoMapEntry;
   pending?: Promise<void>;
 }
-let videoOverlays: VideoOverlay[] = [];
+const videoOverlays: VideoOverlay[] = [];
 
 async function loadVideoMap(): Promise<void> {
   try {
@@ -456,14 +456,22 @@ function updateVideoFrames(t: number): Promise<void> {
     jobs.push(
       new Promise<void>((resolve) => {
         const to = setTimeout(resolve, 2000);
-        ov.img.addEventListener("load", () => {
-          clearTimeout(to);
-          resolve();
-        }, { once: true });
-        ov.img.addEventListener("error", () => {
-          clearTimeout(to);
-          resolve();
-        }, { once: true });
+        ov.img.addEventListener(
+          "load",
+          () => {
+            clearTimeout(to);
+            resolve();
+          },
+          { once: true },
+        );
+        ov.img.addEventListener(
+          "error",
+          () => {
+            clearTimeout(to);
+            resolve();
+          },
+          { once: true },
+        );
         ov.img.src = url;
       }),
     );

@@ -113,33 +113,57 @@ export function parseMotionAttr(raw: string | undefined): { spec?: MotionSpec; i
     return { issues };
   }
   if (typeof json !== "object" || json === null || Array.isArray(json)) {
-    issues.push({ rule: "motion-schema", severity: "error", message: "data-fc-motion must be a JSON object." });
+    issues.push({
+      rule: "motion-schema",
+      severity: "error",
+      message: "data-fc-motion must be a JSON object.",
+    });
     return { issues };
   }
   const spec = json as MotionSpec;
   if (spec.v !== 1) {
-    issues.push({ rule: "motion-schema", severity: "error", message: `Unsupported data-fc-motion v=${String(spec.v)}.` });
+    issues.push({
+      rule: "motion-schema",
+      severity: "error",
+      message: `Unsupported data-fc-motion v=${String(spec.v)}.`,
+    });
   }
   if (spec.split != null && !["words", "chars", "none"].includes(spec.split)) {
-    issues.push({ rule: "motion-schema", severity: "error", message: `Invalid split "${String(spec.split)}".` });
+    issues.push({
+      rule: "motion-schema",
+      severity: "error",
+      message: `Invalid split "${String(spec.split)}".`,
+    });
   }
   if (!Array.isArray(spec.anims)) {
-    issues.push({ rule: "motion-schema", severity: "error", message: "data-fc-motion.anims must be an array." });
+    issues.push({
+      rule: "motion-schema",
+      severity: "error",
+      message: "data-fc-motion.anims must be an array.",
+    });
     return { spec, issues };
   }
   for (const [i, a] of spec.anims.entries()) {
     if (typeof a.t !== "number" || a.t < 0) {
-      issues.push({ rule: "motion-time-range", severity: "error", message: `anims[${i}].t must be ≥ 0 seconds.` });
+      issues.push({
+        rule: "motion-time-range",
+        severity: "error",
+        message: `anims[${i}].t must be ≥ 0 seconds.`,
+      });
     }
     if (typeof a.dur !== "number" || a.dur <= 0) {
-      issues.push({ rule: "motion-time-range", severity: "error", message: `anims[${i}].dur must be > 0 seconds.` });
+      issues.push({
+        rule: "motion-time-range",
+        severity: "error",
+        message: `anims[${i}].dur must be > 0 seconds.`,
+      });
     }
     if (a.ease != null && !EASES.has(a.ease)) {
       issues.push({
         rule: "motion-ease",
         severity: "error",
         message: `Unknown ease "${a.ease}" in anims[${i}].`,
-        suggestion: [...EASES].slice(0, 6).join(", ") + ", …",
+        suggestion: `${[...EASES].slice(0, 6).join(", ")}, …`,
       });
     }
     for (const k of Object.keys(a.props ?? {})) {

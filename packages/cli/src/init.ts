@@ -2,7 +2,10 @@ import { mkdir, writeFile } from "node:fs/promises";
 import { join, resolve } from "node:path";
 
 /** `framecraft init` — scaffold a new project (06 §init). */
-export async function initProject(dir: string, opts?: { name?: string; width?: number; height?: number; duration?: number; fps?: number }): Promise<string[]> {
+export async function initProject(
+  dir: string,
+  opts?: { name?: string; width?: number; height?: number; duration?: number; fps?: number },
+): Promise<string[]> {
   const root = resolve(dir);
   const name = opts?.name ?? "framecraft-project";
   const w = opts?.width ?? 1920;
@@ -49,7 +52,7 @@ export async function initProject(dir: string, opts?: { name?: string; width?: n
   };
 
   await writeFile(join(root, "index.html"), html);
-  await writeFile(join(root, "framecraft.json"), JSON.stringify(config, null, 2) + "\n");
+  await writeFile(join(root, "framecraft.json"), `${JSON.stringify(config, null, 2)}\n`);
   await writeFile(
     join(root, "AGENTS.md"),
     `# ${name}\n\nFramecraft project. Composition: index.html.\n\n- Lint: \`framecraft check\`\n- Preview: \`framecraft preview\`\n- Render: \`framecraft render --out out.mp4\`\n\nContract: timed elements carry data-start + data-duration (+ class="clip").\nRegister one paused GSAP timeline on window.__timelines["main"] when animating with GSAP code.\nStudio-authored animation uses data-fc-motion (never hand-edited GSAP).\n`,

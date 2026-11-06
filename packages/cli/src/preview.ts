@@ -5,7 +5,10 @@ import { startFileServer } from "@framecraft/engine";
  * `framecraft preview` — serve the project + a minimal seek-scrub UI.
  * The full Studio editor is a separate app; this is the fast local check.
  */
-export async function previewProject(projectDir: string, composition = "index.html"): Promise<{ url: string; close: () => Promise<void> }> {
+export async function previewProject(
+  projectDir: string,
+  composition = "index.html",
+): Promise<{ url: string; close: () => Promise<void> }> {
   const dir = resolve(projectDir);
   const inner = await startFileServer(dir);
 

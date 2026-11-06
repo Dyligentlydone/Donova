@@ -32,7 +32,7 @@
     "enabled": true,
     "rules": {
       "recommended": true,
-      "correctness": { "noUnusedVariables": { "level": "error", "options": { "argsIgnorePattern": "^_" } } },
+      "correctness": { "noUnusedVariables": "error" },
       "suspicious": { "noExplicitAny": { "level": "warn" } }
     }
   }

@@ -50,7 +50,12 @@ export async function prepareVideoFrames(
   const clipById = new Map(spec.clips.map((c) => [c.id, c]));
 
   // Collect video sources: timed <video> clips AND untimed <video> inside clips.
-  const videoJobs: Array<{ src: string; attrs: Record<string, string>; window: { start: number; duration: number }; audioStart?: number }> = [];
+  const videoJobs: Array<{
+    src: string;
+    attrs: Record<string, string>;
+    window: { start: number; duration: number };
+    audioStart?: number;
+  }> = [];
   for (const clip of spec.clips) {
     if (clip.media.kind === "video" && clip.media.src) {
       videoJobs.push({
@@ -67,7 +72,9 @@ export async function prepareVideoFrames(
     videoJobs.push({
       src: mi.src,
       attrs: mi.attrs,
-      window: clip ? { start: clip.timing.start, duration: clip.timing.duration } : { start: 0, duration: spec.duration },
+      window: clip
+        ? { start: clip.timing.start, duration: clip.timing.duration }
+        : { start: 0, duration: spec.duration },
     });
   }
 

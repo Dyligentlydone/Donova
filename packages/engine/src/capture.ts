@@ -63,7 +63,9 @@ export class CaptureSession {
         timeout: 10_000,
       });
       const cdp = await page.createCDPSession();
-      const timeout = new Promise<never>((_r, rej) => setTimeout(() => rej(new Error("probe timeout")), 10_000));
+      const timeout = new Promise<never>((_r, rej) =>
+        setTimeout(() => rej(new Error("probe timeout")), 10_000),
+      );
       const probe = (async () => {
         await cdp.send("HeadlessExperimental.enable");
         await cdp.send("HeadlessExperimental.beginFrame", {
@@ -126,7 +128,7 @@ export class CaptureSession {
 
     // Wait for readiness gate (bounded).
     await this.page
-      .waitForFunction('window.__renderReady === true', { timeout: 10_000, polling: 16 })
+      .waitForFunction("window.__renderReady === true", { timeout: 10_000, polling: 16 })
       .catch(() => {
         /* proceed anyway after timeout; lint surface will catch instability */
       });

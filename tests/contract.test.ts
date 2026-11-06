@@ -1,5 +1,12 @@
 import { describe, expect, it } from "vitest";
-import { formatTimecode, parseCompositionHtml, parseMotionAttr, parseTime, planRender, resolveTimeline } from "../packages/contract/src/index.js";
+import {
+  formatTimecode,
+  parseCompositionHtml,
+  parseMotionAttr,
+  parseTime,
+  planRender,
+  resolveTimeline,
+} from "../packages/contract/src/index.js";
 
 describe("parseTime", () => {
   it("parses seconds", () => expect(parseTime("1.5")).toBe(1.5));
@@ -28,7 +35,8 @@ describe("parseCompositionHtml", () => {
     expect(spec.mediaItems[0]?.kind).toBe("video");
     expect(spec.mediaItems[1]?.kind).toBe("audio");
   });
-  it("end-derived duration", () => expect(spec.clips[2]?.timing.duration).toBe(2) /* data-end − data-start */);
+  it("end-derived duration", () =>
+    expect(spec.clips[2]?.timing.duration).toBe(2) /* data-end − data-start */);
   it("flags no errors", () => expect(spec.errors.length).toBe(0));
 });
 
@@ -49,7 +57,9 @@ describe("resolveTimeline + planRender", () => {
 
 describe("parseMotionAttr", () => {
   it("parses valid spec", () => {
-    const { spec, issues } = parseMotionAttr('{"v":1,"anims":[{"t":0,"dur":0.5,"ease":"power2.out","props":{"opacity":[0,1]}}]}');
+    const { spec, issues } = parseMotionAttr(
+      '{"v":1,"anims":[{"t":0,"dur":0.5,"ease":"power2.out","props":{"opacity":[0,1]}}]}',
+    );
     expect(issues.length).toBe(0);
     expect(spec?.anims[0]?.dur).toBe(0.5);
   });
