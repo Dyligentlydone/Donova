@@ -101,7 +101,49 @@ export async function render(opts: RenderOpts): Promise<RenderResult> {
     const mixed = jobs.length
       ? await mixAudio(ffmpeg, projectDir, jobs, join(projectDir, ".framecraft", "audio-mix.aac"))
       : null;
-    await muxAudio(ffmpeg, videoOnly, mixed, opts.out);
+
+    // Format fan-out (04 §7): mp4/webm/mov go through muxAudio; the rest are
+    // derived from the video-only master.
+    const fmt = opts.format ?? "mp4";
+    if (fmt === "gif") {
+      const { runFfmpeg } = await import("@framecraft/engine");
+      await runFfmpeg(ffmpeg, [
+        "-i",
+        videoOnly,
+        "-vf",
+        "fps=15,split[s0][s1];[s0]palettegen[p];[s1][p]paletteuse=dither=bayer",
+        "-loop",
+        "0",
+        opts.out,
+      ]);
+    } else if (fmt === "png-seq") {
+      const { runFfmpeg } = await import("@framecraft/engine");
+      const { mkdir } = await import("node:fs/promises");
+      await mkdir(opts.out, { recursive: true });
+      await runFfmpeg(ffmpeg, ["-i", videoOnly, join(opts.out, "f%06d.png")]);
+    } else if (fmt === "hls") {
+      const { runFfmpeg } = await import("@framecraft/engine");
+      const { mkdir } = await import("node:fs/promises");
+      const { dirname } = await import("node:path");
+      await mkdir(dirname(opts.out), { recursive: true });
+      const withAudio = mixed ? ["-i", mixed, "-c:a", "aac", "-b:a", "192k"] : [];
+      await runFfmpeg(ffmpeg, [
+        "-i",
+        videoOnly,
+        ...withAudio,
+        "-c:v",
+        "libx264",
+        "-crf",
+        "20",
+        "-hls_time",
+        "4",
+        "-hls_playlist_type",
+        "vod",
+        opts.out,
+      ]);
+    } else {
+      await muxAudio(ffmpeg, videoOnly, mixed, opts.out);
+    }
 
     return {
       out: opts.out,

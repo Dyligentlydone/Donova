@@ -168,6 +168,7 @@ export async function muxAudio(
     }
     return videoPath === outPath ? outPath : outPath;
   }
+  const webm = outPath.endsWith(".webm");
   await runFfmpeg(ffmpeg, [
     "-i",
     videoPath,
@@ -176,12 +177,11 @@ export async function muxAudio(
     "-c:v",
     "copy",
     "-c:a",
-    "aac",
+    webm ? "libopus" : "aac",
     "-b:a",
     "192k",
     "-shortest",
-    "-movflags",
-    "+faststart",
+    ...(webm ? [] : ["-movflags", "+faststart"]),
     outPath,
   ]);
   return outPath;
