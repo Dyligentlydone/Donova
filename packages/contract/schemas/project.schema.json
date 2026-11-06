@@ -1,0 +1,24 @@
+{
+  "$id": "https://framecraft.dev/schemas/project.schema.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Framecraft project (framecraft.json)",
+  "type": "object",
+  "properties": {
+    "id": { "type": "string" },
+    "name": { "type": "string" },
+    "composition": { "type": "string", "default": "index.html" },
+    "fps": { "type": "number" },
+    "width": { "type": "number" },
+    "height": { "type": "number" },
+    "render": {
+      "type": "object",
+      "properties": {
+        "format": { "enum": ["mp4", "webm", "mov", "gif", "png-seq", "hls"] },
+        "quality": { "enum": ["draft", "standard", "high"] },
+        "codec": { "enum": ["h264", "h265", "vp9", "prores"] },
+        "alpha": { "type": "boolean" }
+      }
+    },
+    "version": { "type": "string" }
+  }
+}

@@ -1,0 +1,27 @@
+{
+  "$id": "https://framecraft.dev/schemas/motion.schema.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Framecraft declarative motion (data-fc-motion)",
+  "type": "object",
+  "required": ["v", "anims"],
+  "properties": {
+    "v": { "const": 1 },
+    "split": { "enum": ["words", "chars", "none"] },
+    "stagger": { "type": "number", "minimum": 0 },
+    "children": { "type": "string" },
+    "anims": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["t", "dur", "props"],
+        "properties": {
+          "t": { "type": "number", "minimum": 0 },
+          "dur": { "type": "number", "exclusiveMinimum": 0 },
+          "ease": { "type": "string" },
+          "children": { "type": "string" },
+          "props": { "type": "object" }
+        }
+      }
+    }
+  }
+}

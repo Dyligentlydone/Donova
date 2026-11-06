@@ -1,0 +1,45 @@
+{
+  "name": "@framecraft/cli",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    },
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "dist",
+    "bin",
+    "schemas",
+    "vendor"
+  ],
+  "scripts": {
+    "build": "tsup src/index.ts --format esm --dts --clean",
+    "test": "vitest run --passWithNoTests",
+    "typecheck": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "tsup": "^8.3.5",
+    "vitest": "2.1.9",
+    "typescript": "5.7.3"
+  },
+  "bin": {
+    "framecraft": "./bin/framecraft.mjs",
+    "fc": "./bin/framecraft.mjs"
+  },
+  "dependencies": {
+    "@framecraft/contract": "workspace:*",
+    "@framecraft/producer": "workspace:*",
+    "citty": "^0.1.6",
+    "@framecraft/lint": "workspace:*",
+    "@framecraft/engine": "workspace:*",
+    "@framecraft/runtime": "workspace:*",
+    "puppeteer-core": "^24.10.0",
+    "@framecraft/studio-server": "workspace:*"
+  }
+}

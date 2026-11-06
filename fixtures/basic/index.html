@@ -1,0 +1,42 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8" />
+<style>
+  html, body { margin: 0; padding: 0; background: #0b0e14; }
+  .clip { position: absolute; inset: 0; }
+  #box {
+    position: absolute; width: 120px; height: 120px;
+    left: 60px; top: 120px; background: #4f8cff; border-radius: 12px;
+  }
+  #title {
+    position: absolute; left: 60px; top: 40px;
+    font: 700 44px/1.1 system-ui, sans-serif; color: #fff;
+  }
+  #motion-el {
+    position: absolute; right: 60px; top: 140px;
+    font: 600 32px/1 system-ui, sans-serif; color: #ffd166;
+  }
+</style>
+</head>
+<body>
+<div id="root" data-composition-id="main" data-width="640" data-height="360" data-duration="2" data-fps="30">
+  <div class="clip" data-start="0" data-duration="2">
+    <div id="title">Framecraft</div>
+    <div id="box"></div>
+    <div id="motion-el" data-fc-motion='{"v":1,"anims":[{"t":0.2,"dur":0.8,"ease":"power2.out","props":{"opacity":[0,1],"translateY":["40px","0px"]}}]}'>motion</div>
+  </div>
+  <div class="clip" data-start="1" data-duration="1" data-fade-in="0.2">
+    <div style="position:absolute;left:60px;bottom:50px;font:500 20px system-ui;color:#9bd">second scene</div>
+  </div>
+</div>
+<script src="gsap.min.js"></script>
+<script>
+  window.__timelines = window.__timelines || {};
+  const tl = gsap.timeline({ paused: true });
+  tl.fromTo("#box", { x: 0, rotation: 0 }, { x: 380, rotation: 360, duration: 2, ease: "none" }, 0);
+  tl.fromTo("#title", { opacity: 0 }, { opacity: 1, duration: 0.5, ease: "none" }, 0);
+  window.__timelines["main"] = tl;
+</script>
+</body>
+</html>

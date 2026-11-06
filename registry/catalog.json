@@ -1,0 +1,7 @@
+{
+  "version": 1,
+  "items": [
+    { "name": "fade-title", "type": "block", "path": "blocks/fade-title" },
+    { "name": "caption-strip", "type": "block", "path": "blocks/caption-strip" }
+  ]
+}

@@ -1,0 +1,116 @@
+<!doctype html>
+<meta charset="utf-8" />
+<title>Framecraft Studio</title>
+<style>
+  :root { --bg:#0f1216; --panel:#161b22; --line:#262d38; --text:#e6edf3; --dim:#8b98a9; --acc:#4f8cff; }
+  * { box-sizing: border-box; }
+  body { margin:0; background:var(--bg); color:var(--text); font:13px/1.45 system-ui; height:100vh; display:grid;
+         grid-template-columns: 1fr 300px; grid-template-rows: 1fr 220px; grid-template-areas: "canvas inspector" "timeline inspector"; }
+  #canvas { grid-area:canvas; display:flex; align-items:center; justify-content:center; overflow:hidden; position:relative; }
+  #stage { position:relative; transform-origin:center; }
+  iframe { border:0; display:block; background:#000; }
+  #inspector { grid-area:inspector; background:var(--panel); border-left:1px solid var(--line); overflow-y:auto; padding:12px; }
+  #timeline { grid-area:timeline; background:var(--panel); border-top:1px solid var(--line); overflow:auto; position:relative; }
+  h3 { margin:0 0 10px; font-size:11px; text-transform:uppercase; letter-spacing:.08em; color:var(--dim); }
+  .row { display:flex; gap:6px; margin-bottom:8px; align-items:center; }
+  label { color:var(--dim); width:70px; flex:none; font-size:11px; }
+  input, select { background:#0d1117; border:1px solid var(--line); color:var(--text); border-radius:4px; padding:4px 6px; width:100%; font:12px system-ui; }
+  button { background:#21262e; border:1px solid var(--line); color:var(--text); border-radius:5px; padding:5px 10px; cursor:pointer; }
+  button.primary { background:var(--acc); border-color:var(--acc); color:#fff; }
+  button:hover { filter:brightness(1.2); }
+  .track { position:absolute; height:26px; border-radius:4px; background:#2d3a4f; border:1px solid #3d4d68; overflow:hidden;
+           white-space:nowrap; text-overflow:ellipsis; font-size:10px; padding:5px 6px; cursor:pointer; color:#cfd8e3; }
+  .track.sel { outline:2px solid var(--acc); }
+  #ruler { position:relative; height:20px; border-bottom:1px solid var(--line); }
+  .tick { position:absolute; top:12px; font-size:9px; color:var(--dim); border-left:1px solid var(--line); padding-left:3px; }
+  #cursor { position:absolute; top:0; bottom:0; width:1px; background:var(--acc); pointer-events:none; }
+  #bar { padding:6px 10px; display:flex; gap:8px; align-items:center; }
+  #status { color:var(--dim); font-size:11px; margin-left:auto; }
+</style>
+<div id="canvas"><div id="stage"><iframe id="frame"></iframe></div></div>
+<div id="inspector">
+  <h3>Inspector</h3>
+  <div id="insp-empty" style="color:var(--dim)">Select a clip in the timeline.</div>
+  <div id="insp" style="display:none">
+    <div class="row"><label>clip</label><input id="i-id" disabled></div>
+    <div class="row"><label>start</label><input id="i-start" type="number" step="0.05"></div>
+    <div class="row"><label>duration</label><input id="i-dur" type="number" step="0.05"></div>
+    <div class="row"><label>text</label><input id="i-text"></div>
+    <div class="row"><button id="apply" class="primary">Apply</button></div>
+  </div>
+  <h3 style="margin-top:16px">Actions</h3>
+  <div class="row"><button id="render" class="primary">Render MP4</button><button id="check">Check</button></div>
+  <div id="issues" style="margin-top:10px"></div>
+</div>
+<div id="timeline">
+  <div id="bar"><button id="play">▶</button><span id="tc">0.00</span><span id="status"></span></div>
+  <div id="ruler"></div>
+  <div id="tracks" style="position:relative;height:120px"></div>
+  <div id="cursor"></div>
+</div>
+<script>
+const $ = (s) => document.querySelector(s);
+let spec=null, compUrl='', selected=null, dur=1, playing=false, raf=0, t=0;
+const frame=$('#frame');
+const px = (s) => 60 + s*80; // 80px per second
+const seek = async (tt) => { t=Math.max(0,Math.min(tt,dur)); await frame.contentWindow.__fc?.renderSeek(t); $('#tc').textContent=t.toFixed(2)+'s'; $('#cursor').style.left=px(t)+'px'; };
+async function loadSpec(){
+  const r = await fetch('/api/spec?file=index.html').then(r=>r.json());
+  spec = r.spec; compUrl = r.compositionUrl;
+  dur = spec.duration || 1;
+  frame.style.width = spec.width+'px'; frame.style.height = spec.height+'px';
+  frame.src = compUrl;
+  buildTimeline();
+}
+frame.addEventListener('load', async () => {
+  await new Promise(r=>{const i=setInterval(()=>{if(frame.contentWindow.__playerReady){clearInterval(i);r();}},50);});
+  const st = Math.min($('#canvas').clientWidth/spec.width*.9, $('#canvas').clientHeight/spec.height*.9, 1);
+  $('#stage').style.transform=`scale(${st})`; $('#stage').style.width=spec.width+'px'; $('#stage').style.height=spec.height+'px';
+  seek(0);
+});
+function buildTimeline(){
+  const r=$('#ruler'), tr=$('#tracks'); r.innerHTML=''; tr.innerHTML='';
+  for(let s=0;s<=Math.ceil(dur);s++){const d=document.createElement('div');d.className='tick';d.style.left=px(s)+'px';d.textContent=s+'s';r.appendChild(d);}
+  spec.clips.forEach((c,i)=>{
+    const el=document.createElement('div');el.className='track'+(selected===c.id?' sel':'');
+    el.style.left=px(c.timing.start)+'px';el.style.width=Math.max(20,c.timing.duration*80-4)+'px';el.style.top=(8+i*30)+'px';
+    el.textContent=(c.media.tag||'clip')+' · '+(c.textSnippet||c.id);
+    el.onclick=()=>select(c.id); tr.appendChild(el);
+  });
+}
+function select(id){
+  selected=id; const c=spec.clips.find(x=>x.id===id); if(!c)return;
+  $('#insp-empty').style.display='none'; $('#insp').style.display='block';
+  $('#i-id').value=c.id; $('#i-start').value=c.timing.start; $('#i-dur').value=c.timing.duration;
+  $('#i-text').value=c.textSnippet||'';
+  buildTimeline();
+}
+$('#apply').onclick=async()=>{
+  const c=spec.clips.find(x=>x.id===selected); if(!c)return;
+  const mutations=[{op:'setAttr',domIndex:c.domIndex,attr:'data-start',value:$('#i-start').value},
+                   {op:'setAttr',domIndex:c.domIndex,attr:'data-duration',value:$('#i-dur').value}];
+  if($('#i-text').value && $('#i-text').value!==(c.textSnippet||''))
+    mutations.push({op:'setText',domIndex:c.domIndex,value:$('#i-text').value});
+  await fetch('/api/mutation',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({file:'index.html',mutations})});
+  frame.contentWindow.location.reload(); loadSpec();
+};
+$('#play').onclick=()=>{
+  playing=!playing; $('#play').textContent=playing?'⏸':'▶'; let last=performance.now();
+  const tick=async(n)=>{ if(!playing)return; const dt=(n-last)/1000; last=n; await seek(t+dt>dur?0:t+dt); raf=requestAnimationFrame(tick); };
+  if(playing)raf=requestAnimationFrame(tick); else cancelAnimationFrame(raf);
+};
+$('#render').onclick=async()=>{
+  $('#status').textContent='rendering…';
+  const {id}=await fetch('/api/render',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({out:'out.mp4'})}).then(r=>r.json());
+  const poll=setInterval(async()=>{
+    const j=await fetch('/api/render/'+id).then(r=>r.json());
+    $('#status').textContent=j.status+(j.progress?` ${j.progress[0]}/${j.progress[1]}`:'');
+    if(j.status==='done'||j.status==='error'){clearInterval(poll);$('#status').textContent=j.status==='done'?'done → '+j.out:'error: '+j.error;}
+  },500);
+};
+$('#check').onclick=async()=>{
+  const {issues}=await fetch('/api/lint?file=index.html').then(r=>r.json());
+  $('#issues').innerHTML=issues.map(i=>`<div style="color:${i.severity==='error'?'#ff7b72':i.severity==='warn'?'#e3b341':'#8b98a9'}">• ${i.rule}: ${i.message}</div>`).join('')||'<span style="color:#3fb950">clean</span>';
+};
+loadSpec();
+</script>
