@@ -1,6 +1,9 @@
 import { CLI_NAME, VERSION } from "@framecraft/contract";
 import { render } from "@framecraft/producer";
 import { startStudioServer } from "@framecraft/studio-server";
+import { compareVideos } from "./compare.js";
+import { snapshotTimes } from "./snapshot.js";
+import { addBlock } from "./add.js";
 import { defineCommand, runMain } from "citty";
 import { checkProject, reportCheck } from "./check.js";
 import { initProject } from "./init.js";
@@ -100,9 +103,59 @@ const studioCmd = defineCommand({
   },
 });
 
+const snapshotCmd = defineCommand({
+  meta: { name: "snapshot", description: "Capture PNGs at specific times" },
+  args: {
+    dir: { type: "positional", default: "." },
+    composition: { type: "string", default: "index.html" },
+    times: { type: "string", description: "comma-separated seconds", required: true },
+    out: { type: "string", description: "output dir", default: "snapshots" },
+  },
+  async run({ args }) {
+    const times = String(args.times).split(",").map(Number).filter(Number.isFinite);
+    const outs = await snapshotTimes(String(args.dir), String(args.composition), times, String(args.out));
+    for (const o of outs) console.log(o);
+  },
+});
+
+const compareCmd = defineCommand({
+  meta: { name: "compare", description: "PSNR between two videos" },
+  args: {
+    a: { type: "positional", required: true },
+    b: { type: "positional", required: true },
+  },
+  async run({ args }) {
+    const r = await compareVideos(String(args.a), String(args.b));
+    console.log(`PSNR: ${r.psnr === Infinity ? "∞ (identical)" : `${r.psnr.toFixed(2)} dB`}`);
+  },
+});
+
+const addCmd = defineCommand({
+  meta: { name: "add", description: "Install a registry block into compositions/" },
+  args: {
+    name: { type: "positional", required: true },
+    dir: { type: "string", default: "." },
+  },
+  async run({ args }) {
+    const r = await addBlock(String(args.dir), String(args.name));
+    console.log(`installed ${args.name} → ${r.dest}`);
+    console.log(`files: ${r.files.join(", ")}`);
+    console.log(`use:  <div class="clip" data-start="…" data-duration="…" data-composition-src="compositions/${args.name}/index.html"></div>`);
+  },
+});
+
 const main = defineCommand({
   meta: { name: CLI_NAME, version: VERSION, description: "Framecraft — HTML to video" },
-  subCommands: { init: initCmd, check: checkCmd, render: renderCmd, preview: previewCmd, studio: studioCmd },
+  subCommands: {
+    init: initCmd,
+    check: checkCmd,
+    render: renderCmd,
+    preview: previewCmd,
+    studio: studioCmd,
+    snapshot: snapshotCmd,
+    compare: compareCmd,
+    add: addCmd,
+  },
 });
 
 export function run(): void {

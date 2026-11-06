@@ -39,7 +39,7 @@
     <div class="row"><button id="apply" class="primary">Apply</button></div>
   </div>
   <h3 style="margin-top:16px">Actions</h3>
-  <div class="row"><button id="render" class="primary">Render MP4</button><button id="check">Check</button></div>
+  <div class="row"><button id="pick">Pick on canvas</button><button id="render" class="primary">Render MP4</button><button id="check">Check</button></div>
   <div id="issues" style="margin-top:10px"></div>
 </div>
 <div id="timeline">
@@ -107,6 +107,31 @@ $('#render').onclick=async()=>{
     $('#status').textContent=j.status+(j.progress?` ${j.progress[0]}/${j.progress[1]}`:'');
     if(j.status==='done'||j.status==='error'){clearInterval(poll);$('#status').textContent=j.status==='done'?'done → '+j.out:'error: '+j.error;}
   },500);
+};
+// Canvas pick: click an element inside the composition to select its clip.
+let picking=false, pickEl=null, pickHandler=null;
+$('#pick').onclick=()=>{
+  picking=!picking; $('#pick').classList.toggle('primary',picking);
+  const doc=frame.contentDocument; if(!doc)return;
+  if(picking){
+    pickEl=doc.createElement('div');
+    pickEl.style.cssText='position:fixed;pointer-events:none;border:2px solid #4f8cff;z-index:2147483647;display:none';
+    doc.body.appendChild(pickEl);
+    const timed=[...doc.querySelectorAll('[data-start]')];
+    const idxOf=(el)=>{const c=el.closest('[data-start]');return c?timed.indexOf(c):-1;};
+    pickHandler=(e)=>{
+      const i=idxOf(e.target); if(i<0)return;
+      e.preventDefault();e.stopPropagation();
+      const c=spec.clips[i]; if(c){select(c.id);seek(c.timing.start);}
+      picking=false;$('#pick').classList.remove('primary');pickEl.remove();doc.removeEventListener('mousemove',hover,true);doc.removeEventListener('click',pickHandler,true);
+    };
+    const hover=(e)=>{
+      const i=idxOf(e.target); if(i<0){pickEl.style.display='none';return;}
+      const r=e.target.closest('[data-start]').getBoundingClientRect();
+      pickEl.style.display='block';pickEl.style.left=r.left+'px';pickEl.style.top=r.top+'px';pickEl.style.width=r.width+'px';pickEl.style.height=r.height+'px';
+    };
+    doc.addEventListener('mousemove',hover,true);doc.addEventListener('click',pickHandler,true);
+  } else { pickEl?.remove(); }
 };
 $('#check').onclick=async()=>{
   const {issues}=await fetch('/api/lint?file=index.html').then(r=>r.json());
