@@ -51,6 +51,12 @@ export async function startFileServer(root: string): Promise<FileServer> {
       const url = new URL(req.url ?? "/", "http://localhost");
       let path = normalize(decodeURIComponent(url.pathname));
       if (path.endsWith(sep) || path === "/") path = join(path, "index.html");
+      // Compositions have no favicon; browsers request it per page and a 404
+      // shows up as a console error in `check`. Answer 204 instead.
+      if (path === `${sep}favicon.ico`) {
+        res.writeHead(204).end();
+        return;
+      }
       const file = resolve(join(base, path));
       if (!file.startsWith(base + sep) && file !== base) {
         res.writeHead(403).end();

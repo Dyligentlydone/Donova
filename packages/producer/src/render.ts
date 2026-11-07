@@ -1,4 +1,4 @@
-import { readFile } from "node:fs/promises";
+import { readFile, readdir } from "node:fs/promises";
 import { join, resolve } from "node:path";
 import { parseCompositionHtml, planRender, resolveTimeline } from "@framecraft/contract";
 import { locateFfmpeg, prepareVideoFrames, renderVideoOnly, startFileServer } from "@framecraft/engine";
@@ -65,7 +65,13 @@ export async function render(opts: RenderOpts): Promise<RenderResult> {
   // capture never relies on Chrome's video seeking (03 §5).
   await stage("extract-frames", () => prepareVideoFrames(ffmpeg, ffprobe, projectDir, spec, plan.fps));
 
-  // --range: seconds → frame window on the render plan.
+  // --range: seconds → frame window on the render plan. Hard-fail a range that
+  // runs past the composition instead of silently clamping.
+  if (opts.range && opts.range.end > spec.duration + 0.05) {
+    throw new Error(
+      `--range end ${opts.range.end}s exceeds composition duration ${spec.duration.toFixed(2)}s`,
+    );
+  }
   const frameRange = opts.range
     ? {
         start: Math.max(0, Math.floor(opts.range.start * plan.fps)),
@@ -80,7 +86,9 @@ export async function render(opts: RenderOpts): Promise<RenderResult> {
   try {
     const quality = opts.quality ?? "standard";
     const codec = opts.codec ?? (opts.format === "webm" ? "vp9" : opts.format === "mov" ? "prores" : "h264");
-    const videoOnly = `${opts.out}.video-only.tmp${opts.format === "webm" ? ".webm" : ".mp4"}`;
+    // Temp container must match the codec: prores can't live in mp4.
+    const tmpExt = codec === "prores" ? ".mov" : opts.format === "webm" ? ".webm" : ".mp4";
+    const videoOnly = `${opts.out}.video-only.tmp${tmpExt}`;
     const workers = Math.max(1, opts.workers ?? 1);
     let frames = 0;
     let beginFrame = false;
@@ -131,6 +139,7 @@ export async function render(opts: RenderOpts): Promise<RenderResult> {
             format: opts.alpha ? "png" : "jpeg",
             jpegQuality: quality === "draft" ? 70 : quality === "high" ? 92 : 85,
             scale,
+            alpha: opts.alpha,
           },
           onProgress: opts.onProgress,
         }),
@@ -193,6 +202,18 @@ export async function render(opts: RenderOpts): Promise<RenderResult> {
           audioDuration: frameRange ? (frameRange.end - frameRange.start) / plan.fps : undefined,
         }),
       );
+    }
+
+    // Cleanup: drop the video-only temp + any per-render work dir. Keep the
+    // frames cache (frames/, video-map.json) — it's the expensive part.
+    {
+      const { rm } = await import("node:fs/promises");
+      await rm(videoOnly, { force: true }).catch(() => {});
+      const cacheDir = join(projectDir, ".framecraft");
+      for (const e of await readdir(cacheDir).catch(() => [] as string[])) {
+        if (e.startsWith("render-")) await rm(join(cacheDir, e), { recursive: true, force: true });
+      }
+      if (mixed) await rm(mixed, { force: true }).catch(() => {});
     }
 
     const rangeSecs = frameRange ? (frameRange.end - frameRange.start) / plan.fps : spec.duration;

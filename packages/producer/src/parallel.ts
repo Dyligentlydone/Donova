@@ -86,6 +86,7 @@ export async function renderParallel(opts: ParallelOpts): Promise<string> {
               format: opts.encoder.alpha ? "png" : "jpeg",
               jpegQuality: 85,
               scale: opts.scale,
+              alpha: opts.encoder.alpha,
             },
             onProgress: (d) => {
               progress[w] = d;

@@ -3,7 +3,20 @@
   "description": "Static lower-third subtitle text style (non-kinetic broadcast look).",
   "tags": ["subtitle", "captions", "broadcast"],
   "vars": [
-    {"name": "text", "default": "Subtitle", "hint": "Line text"},
-    {"name": "cap-color", "default": "#ffffff", "hint": "Text color"}
-  ]
+    {
+      "name": "sub-size",
+      "description": "Sub Size"
+    },
+    {
+      "name": "cap-color",
+      "description": "Cap Color"
+    },
+    {
+      "name": "text",
+      "description": "Text"
+    }
+  ],
+  "type": "block",
+  "version": "0.1.0",
+  "files": ["index.html"]
 }

@@ -205,7 +205,10 @@ function buildMotionAnims(): void {
       continue;
     }
     if (!spec || !Array.isArray(spec.anims)) continue;
-    const elStart = num(attr(el, "data-start"), 0);
+    // Anim `t` is relative to the element's timed ancestor (the .clip it sits
+    // in), falling back to the element's own data-start, then 0.
+    const timed = el.hasAttribute("data-start") ? el : el.closest("[data-start]");
+    const elStart = num(attr(timed ?? el, "data-start"), 0);
 
     const targets: Element[] = (() => {
       if (spec.children) return [...el.querySelectorAll(spec.children)];
@@ -677,9 +680,7 @@ async function waitReady(): Promise<void> {
   // actually have a source — an <img> with no src (e.g. an off-window video
   // frame overlay) reports naturalWidth 0 forever and used to stall every
   // frame for the full 2s timeout (MV7).
-  const imgs = [...document.querySelectorAll("img")].filter(
-    (i) => i.getAttribute("src") && !i.complete,
-  );
+  const imgs = [...document.querySelectorAll("img")].filter((i) => i.getAttribute("src") && !i.complete);
   if (imgs.length) {
     await Promise.race([
       Promise.all(

@@ -24,7 +24,7 @@ interface Tool {
   run: (a: Record<string, unknown>) => Promise<unknown>;
 }
 
-const req = (name: string, props: Record<string, unknown>, required: string[]) => ({
+const req = (_name: string, props: Record<string, unknown>, required: string[]) => ({
   type: "object",
   properties: { dir: { type: "string", description: "project dir" }, ...props },
   required,
@@ -35,7 +35,7 @@ const TOOLS: Tool[] = [
     name: "framecraft_check",
     description: "Validate a Framecraft project (contract + runtime errors, layout, contrast)",
     inputSchema: req("framecraft_check", {}, []),
-    run: (a) => checkProject({ dir: (a.dir as string) ?? "." }),
+    run: (a) => checkProject((a.dir as string) ?? "."),
   },
   {
     name: "framecraft_probe",
@@ -58,11 +58,12 @@ const TOOLS: Tool[] = [
       ["times"],
     ),
     run: (a) =>
-      snapshotTimes({
-        dir: (a.dir as string) ?? ".",
-        times: a.times as number[],
-        out: (a.out as string) ?? "snaps",
-      }),
+      snapshotTimes(
+        (a.dir as string) ?? ".",
+        "index.html",
+        a.times as number[],
+        (a.out as string) ?? "snaps",
+      ),
   },
   {
     name: "framecraft_transcribe",
@@ -147,13 +148,10 @@ const TOOLS: Tool[] = [
   {
     name: "framecraft_style",
     description: "Style file ops: init | show | path",
-    inputSchema: req(
-      "framecraft_style",
-      { action: { type: "string", enum: ["init", "show", "path"] } },
-      ["action"],
-    ),
-    run: (a) =>
-      styleCmd({ action: a.action as "init" | "show" | "path", dir: (a.dir as string) ?? "." }),
+    inputSchema: req("framecraft_style", { action: { type: "string", enum: ["init", "show", "path"] } }, [
+      "action",
+    ]),
+    run: (a) => styleCmd({ action: a.action as "init" | "show" | "path", dir: (a.dir as string) ?? "." }),
   },
   {
     name: "framecraft_doctor",
@@ -178,6 +176,7 @@ function err(id: unknown, code: number, message: string): void {
 
 let buffer = "";
 process.stdin.setEncoding("utf8");
+process.stdin.on("end", () => process.exit(0));
 process.stdin.on("data", async (chunk) => {
   buffer += chunk;
   for (;;) {

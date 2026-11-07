@@ -1,13 +1,13 @@
+import { execFile } from "node:child_process";
 import { existsSync, statSync } from "node:fs";
 import { join, resolve } from "node:path";
-import { execFile } from "node:child_process";
 import { promisify } from "node:util";
 import { render } from "@framecraft/producer";
 import { checkProject } from "./check.js";
 import { probeCmd, timelineCmd } from "./inspect.js";
 import { snapshotTimes } from "./snapshot.js";
 
-const execFileP = promisify(execFile);
+const _execFileP = promisify(execFile);
 
 /**
  * `framecraft eval` — rule-scored checklist for a project (MV10). Each rule
@@ -55,7 +55,12 @@ export async function evalProject(opts: {
 
   // 3. frames differ (motion present) — 3 snapshots compared by size
   try {
-    const snaps = await snapshotTimes(dir, "index.html", [0.1, duration / 2, Math.max(0.2, duration - 0.2)], join(dir, ".framecraft", "eval-snaps"));
+    const snaps = await snapshotTimes(
+      dir,
+      "index.html",
+      [0.1, duration / 2, Math.max(0.2, duration - 0.2)],
+      join(dir, ".framecraft", "eval-snaps"),
+    );
     const sizes = snaps.map((f) => statSync(f).size);
     const unique = new Set(sizes).size;
     add("motion", 1, unique >= 2, `${unique}/3 distinct frames`);
@@ -67,15 +72,32 @@ export async function evalProject(opts: {
   const out = opts.renderOut ?? join(dir, "eval-draft.mp4");
   try {
     const t0 = Date.now();
-    await render({ projectDir: dir, composition: "index.html", out, quality: "draft", workers: 1 });
-    const probe = (await probeCmd(out)) as { duration?: number; audio?: { codec?: string } };
+    await render({
+      projectDir: dir,
+      composition: "index.html",
+      out,
+      quality: "draft",
+      workers: 1,
+      scale: 0.5,
+    });
+    const probe = (await probeCmd(out)) as { duration?: number; hasAudio?: boolean };
     const durOk =
       typeof probe.duration === "number" && duration > 0
         ? Math.abs(probe.duration - duration) / duration <= 0.1
         : false;
-    add("render", 2, existsSync(out) && durOk, `${probe.duration?.toFixed(1)}s vs ${duration.toFixed(1)}s (${((Date.now() - t0) / 1000).toFixed(0)}s)`);
+    add(
+      "render",
+      2,
+      existsSync(out) && durOk,
+      `${probe.duration?.toFixed(1)}s vs ${duration.toFixed(1)}s (${((Date.now() - t0) / 1000).toFixed(0)}s)`,
+    );
     const needAudio = true; // plan: footage edits carry audio; flag absence
-    add("audio", 1, probe.audio?.codec != null || !needAudio, probe.audio?.codec ? `codec ${probe.audio.codec}` : "no audio stream");
+    add(
+      "audio",
+      1,
+      probe.hasAudio === true || !needAudio,
+      probe.hasAudio ? "audio stream present" : "no audio stream",
+    );
   } catch (e) {
     add("render", 2, false, `render failed: ${e instanceof Error ? e.message.slice(0, 80) : e}`);
     add("audio", 1, false, "skipped");

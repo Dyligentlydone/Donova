@@ -27,6 +27,10 @@ export async function scaffoldCmd(opts: {
   if (!p.width || !p.height) {
     throw new CliError(ERR.INVALID_PROJECT, `cannot probe video dims: ${mediaAbs}`);
   }
+  // Displayed dims: a ±90/±270 display matrix swaps width and height.
+  const rot = Math.abs(p.rotation ?? 0);
+  const dispW = rot === 90 || rot === 270 ? p.height : p.width;
+  const dispH = rot === 90 || rot === 270 ? p.width : p.height;
 
   const dir = resolve(opts.dir ?? ".");
   await mkdir(dir, { recursive: true });
@@ -72,10 +76,8 @@ export async function scaffoldCmd(opts: {
 
   const html = scaffoldFootage({
     source: src,
-    sourceWidth: p.width,
-    sourceHeight: p.height,
-    outWidth: opts.width ?? p.width,
-    outHeight: opts.height ?? p.height,
+    outWidth: opts.width ?? dispW,
+    outHeight: opts.height ?? dispH,
     plan,
   });
   const out = resolve(join(dir, opts.out ?? "index.html"));
@@ -84,7 +86,7 @@ export async function scaffoldCmd(opts: {
     path: out,
     segments: plan.segments.length,
     duration: plan.duration,
-    width: opts.width ?? p.width,
-    height: opts.height ?? p.height,
+    width: opts.width ?? dispW,
+    height: opts.height ?? dispH,
   };
 }

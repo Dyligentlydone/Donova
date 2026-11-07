@@ -54,6 +54,8 @@ export interface ProbeResult {
   width?: number;
   height?: number;
   fps?: number;
+  /** Display-matrix rotation in degrees (e.g. -90 for portrait iPhone footage). */
+  rotation?: number;
   hasAudio: boolean;
   codec?: string;
   sampleRate?: number;
@@ -82,16 +84,22 @@ export async function probe(ffprobe: string, path: string): Promise<ProbeResult>
       sample_rate?: string;
       channels?: number;
       pix_fmt?: string;
+      side_data_list?: Array<{ rotation?: number | string }>;
+      tags?: Record<string, string>;
     }>;
   };
   const video = data.streams?.find((s) => s.codec_type === "video");
   const audio = data.streams?.find((s) => s.codec_type === "audio");
   const [rn, rd] = (video?.r_frame_rate ?? "0/1").split("/").map(Number);
+  const sd = video?.side_data_list?.find((s) => s.rotation != null)?.rotation;
+  const tagRot = video?.tags?.rotate;
+  const rotation = sd != null ? Number(sd) : tagRot != null ? Number(tagRot) : undefined;
   return {
     duration: Number(data.format?.duration ?? 0),
     width: video?.width,
     height: video?.height,
     fps: rd ? (rn ?? 0) / rd : undefined,
+    rotation: Number.isFinite(rotation) ? rotation : undefined,
     hasAudio: !!audio,
     codec: video?.codec_name ?? audio?.codec_name,
     sampleRate: audio?.sample_rate ? Number(audio.sample_rate) : undefined,

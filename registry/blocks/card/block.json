@@ -3,10 +3,84 @@
   "description": "Glass info card: pill label + title + body. Neutral defaults — drive colors via data-var-*.",
   "tags": ["card", "overlay", "glass"],
   "vars": [
-    {"name": "title", "default": "TITLE", "hint": "Main line"},
-    {"name": "body", "default": "", "hint": "Optional second line"},
-    {"name": "pill", "default": "", "hint": "Small uppercase tag text (hidden if empty)"},
-    {"name": "accent", "default": "#4f8cff", "hint": "Pill/border accent"},
-    {"name": "pos", "default": "top", "hint": "top|bottom placement zone"}
-  ]
+    {
+      "name": "card-align",
+      "description": "Card Align"
+    },
+    {
+      "name": "card-pad",
+      "description": "Card Pad"
+    },
+    {
+      "name": "card-bg",
+      "description": "Card Bg"
+    },
+    {
+      "name": "card-edge",
+      "description": "Card Edge"
+    },
+    {
+      "name": "card-radius",
+      "description": "Card Radius"
+    },
+    {
+      "name": "card-pad-y",
+      "description": "Card Pad Y"
+    },
+    {
+      "name": "card-pad-x",
+      "description": "Card Pad X"
+    },
+    {
+      "name": "card-maxw",
+      "description": "Card Maxw"
+    },
+    {
+      "name": "pill-show",
+      "description": "Pill Show"
+    },
+    {
+      "name": "pill-size",
+      "description": "Pill Size"
+    },
+    {
+      "name": "accent",
+      "description": "Accent"
+    },
+    {
+      "name": "title-size",
+      "description": "Title Size"
+    },
+    {
+      "name": "card-color",
+      "description": "Card Color"
+    },
+    {
+      "name": "body-size",
+      "description": "Body Size"
+    },
+    {
+      "name": "card-sub",
+      "description": "Card Sub"
+    },
+    {
+      "name": "body-mt",
+      "description": "Body Mt"
+    },
+    {
+      "name": "pill",
+      "description": "Pill"
+    },
+    {
+      "name": "title",
+      "description": "Title"
+    },
+    {
+      "name": "body",
+      "description": "Body"
+    }
+  ],
+  "type": "block",
+  "version": "0.1.0",
+  "files": ["index.html"]
 }

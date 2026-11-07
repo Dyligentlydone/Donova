@@ -3,7 +3,20 @@
   "description": "Call-to-action pill (follow/subscribe/etc.) that slides up and holds.",
   "tags": ["cta", "pill", "outro"],
   "vars": [
-    {"name": "text", "default": "Follow for more", "hint": "Pill text"},
-    {"name": "accent", "default": "#4f8cff", "hint": "Pill color"}
-  ]
+    {
+      "name": "accent",
+      "description": "Accent"
+    },
+    {
+      "name": "cta-size",
+      "description": "Cta Size"
+    },
+    {
+      "name": "text",
+      "description": "Text"
+    }
+  ],
+  "type": "block",
+  "version": "0.1.0",
+  "files": ["index.html"]
 }

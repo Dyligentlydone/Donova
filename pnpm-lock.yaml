@@ -213,6 +213,9 @@ importers:
       '@framecraft/producer':
         specifier: workspace:*
         version: link:../producer
+      '@framecraft/runtime':
+        specifier: workspace:*
+        version: link:../runtime
       parse5:
         specifier: ^7.2.1
         version: 7.3.0

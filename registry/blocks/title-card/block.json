@@ -3,8 +3,32 @@
   "description": "Opening title: big line + optional subtitle, word-staggered in.",
   "tags": ["title", "opener", "text"],
   "vars": [
-    {"name": "title", "default": "Title", "hint": "Main line"},
-    {"name": "sub", "default": "", "hint": "Optional subtitle"},
-    {"name": "accent", "default": "#ffffff", "hint": "Title color"}
-  ]
+    {
+      "name": "title-size",
+      "description": "Title Size"
+    },
+    {
+      "name": "accent",
+      "description": "Accent"
+    },
+    {
+      "name": "sub-size",
+      "description": "Sub Size"
+    },
+    {
+      "name": "card-sub",
+      "description": "Card Sub"
+    },
+    {
+      "name": "title",
+      "description": "Title"
+    },
+    {
+      "name": "sub",
+      "description": "Sub"
+    }
+  ],
+  "type": "block",
+  "version": "0.1.0",
+  "files": ["index.html"]
 }

@@ -37,14 +37,15 @@ export async function initProject(
     const { scaffoldFootage } = await import("@framecraft/media");
     const { ffprobe } = await locateFfmpeg();
     const p = await probe(ffprobe, mediaAbs);
+    const rot = Math.abs(p.rotation ?? 0);
     const sw = p.width ?? 1920;
     const sh = p.height ?? 1080;
+    const dispW = rot === 90 || rot === 270 ? sh : sw;
+    const dispH = rot === 90 || rot === 270 ? sw : sh;
     const html = scaffoldFootage({
       source: `assets/${basename(mediaAbs)}`,
-      sourceWidth: sw,
-      sourceHeight: sh,
-      outWidth: opts?.width ?? sw,
-      outHeight: opts?.height ?? sh,
+      outWidth: opts?.width ?? dispW,
+      outHeight: opts?.height ?? dispH,
       plan: {
         version: 1,
         source: basename(mediaAbs),

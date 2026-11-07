@@ -7,12 +7,15 @@ export async function compareVideos(a: string, b: string): Promise<{ psnr: numbe
   const { execFile } = await import("node:child_process");
   const { promisify } = await import("node:util");
   const run = promisify(execFile);
+  let stderr = "";
   try {
-    await run(ffmpeg, ["-i", a, "-i", b, "-lavfi", "psnr", "-f", "null", "-"], { maxBuffer: 1 << 20 });
+    const res = await run(ffmpeg, ["-i", a, "-i", b, "-lavfi", "psnr", "-f", "null", "-"], {
+      maxBuffer: 1 << 20,
+    });
+    stderr = res.stderr ?? "";
   } catch (e) {
-    const stderr = (e as { stderr?: string }).stderr ?? String(e);
-    const m = /average:(\d+(?:\.\d+)?|inf)/.exec(stderr);
-    return { psnr: m ? (m[1] === "inf" ? Number.POSITIVE_INFINITY : Number(m[1])) : 0, raw: stderr };
+    stderr = (e as { stderr?: string }).stderr ?? String(e);
   }
-  return { psnr: Number.POSITIVE_INFINITY, raw: "" };
+  const m = /average:(\d+(?:\.\d+)?|inf)/.exec(stderr);
+  return { psnr: m ? (m[1] === "inf" ? Number.POSITIVE_INFINITY : Number(m[1])) : 0, raw: stderr };
 }

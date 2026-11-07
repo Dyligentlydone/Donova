@@ -4,5 +4,6 @@
   "version": "0.1.0",
   "description": "Bottom caption pill with word-by-word reveal",
   "tags": ["caption", "subtitle", "text"],
-  "files": ["index.html"]
+  "files": ["index.html"],
+  "vars": []
 }

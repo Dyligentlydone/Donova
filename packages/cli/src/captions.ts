@@ -34,24 +34,20 @@ export async function captionsCmd(opts: {
 }): Promise<{ path: string; captions: number; mode: string }> {
   const dir = resolve(opts.dir);
   const transcriptPath = resolve(dir, opts.transcript);
-  const transcript: Transcript = normalizeTranscript(
-    JSON.parse(await readFile(transcriptPath, "utf8")),
-  );
+  const transcript: Transcript = normalizeTranscript(JSON.parse(await readFile(transcriptPath, "utf8")));
   const plan: CutPlan | undefined = opts.cuts
     ? (JSON.parse(await readFile(resolve(dir, opts.cuts), "utf8")) as CutPlan)
     : undefined;
 
   // Word → comp time. Without a plan, comp time == source time.
   const toComp = (srcT: number) => (plan ? mapToComp(plan, srcT) : srcT);
-  const emphasis = new Set(
-    (opts.emphasis ?? []).map((w) => w.toLowerCase().replace(/[^\w$]/g, "")),
-  );
+  const emphasis = new Set((opts.emphasis ?? []).map((w) => w.toLowerCase().replace(/[^\w$]/g, "")));
 
   const words = transcript.words;
   const mode = opts.mode ?? "word";
 
   // Group words into caption units.
-  const units: Array<{ text: string; srcStart: number; srcEnd: number; em: boolean }>[] = [];
+  const units: Array<{ text: string; srcStart: number; srcEnd: number; em: boolean }> = [];
   if (mode === "word") {
     for (const w of words) {
       const em = emphasis.has(w.w.toLowerCase().replace(/[^\w$]/g, ""));
@@ -87,9 +83,7 @@ export async function captionsCmd(opts: {
     const dur = Math.max(0.12, u.srcEnd - u.srcStart);
     const cls = mode === "word" ? (u.em ? "fc-cap fc-cap-em" : "fc-cap") : "fc-pcap";
     els.push(
-      `  <div class="clip" data-start="${start.toFixed(3)}" data-duration="${dur.toFixed(3)}">\n` +
-        `    <span class="${cls}" data-fc-motion='${POP}'>${ESC(u.text)}</span>\n` +
-        `  </div>`,
+      `  <div class="clip" data-start="${start.toFixed(3)}" data-duration="${dur.toFixed(3)}">\n    <span class="${cls}" data-fc-motion='${POP}'>${ESC(u.text)}</span>\n  </div>`,
     );
   }
   if (!els.length) {
@@ -97,18 +91,25 @@ export async function captionsCmd(opts: {
   }
 
   // Insert before the closing </div> of the root composition (last </div>).
+  // Regeneration is idempotent: strip any previously generated block first.
   const indexPath = join(dir, "index.html");
   const html = await readFile(indexPath, "utf8").catch(() => {
     throw new CliError(ERR.FILE_NOT_FOUND, `no index.html in ${dir}`);
   });
-  const rootClose = html.lastIndexOf("</div>");
+  const BEGIN = "<!-- generated captions";
+  const END = "<!-- /generated captions -->";
+  const bIdx = html.indexOf(BEGIN);
+  const eIdx = html.indexOf(END);
+  const stripped = bIdx >= 0 && eIdx > bIdx ? html.slice(0, bIdx) + html.slice(eIdx + END.length) : html;
+  const rootClose = stripped.lastIndexOf("</div>");
   if (rootClose < 0) throw new CliError(ERR.INVALID_PROJECT, "index.html has no composition root");
-  const block = `\n  <!-- generated captions (${mode}) — regenerate with framecraft captions -->\n${els.join("\n")}\n`;
+  const block = `\n  ${BEGIN} (${mode}) — regenerate with framecraft captions -->\n${els.join("\n")}\n  ${END}\n`;
 
   // Ensure caption styles exist: inline the word-captions block <style> if absent.
-  let out = html.slice(0, rootClose) + block + html.slice(rootClose);
+  let out = stripped.slice(0, rootClose) + block + stripped.slice(rootClose);
   if (!out.includes(".fc-cap") && !out.includes(".fc-pcap")) {
-    const style = `\n<style>\n  .fc-cap { position:absolute; left:50%; bottom:30%; transform:translateX(-50%); font:var(--fc-cap-font,800 64px/1.1 system-ui,sans-serif); color:var(--fc-cap-color,#fff); text-shadow:var(--fc-cap-shadow,0 2px 12px rgba(0,0,0,0.7)); white-space:nowrap; pointer-events:none; }\n  .fc-cap-em { color:var(--fc-cap-accent,#ffd166); }\n  .fc-pcap { position:absolute; left:50%; bottom:12%; transform:translateX(-50%); font:var(--fc-cap-font,700 44px/1.25 system-ui,sans-serif); color:var(--fc-cap-color,#fff); background:var(--fc-cap-bg,rgba(0,0,0,0.55)); padding:.25em .6em; border-radius:.35em; text-align:center; white-space:nowrap; pointer-events:none; }\n</style>`;
+    const style =
+      "\n<style>\n  .fc-cap { position:absolute; left:50%; bottom:30%; transform:translateX(-50%); font:var(--fc-cap-font,800 64px/1.1 system-ui,sans-serif); color:var(--fc-cap-color,#fff); text-shadow:var(--fc-cap-shadow,0 2px 12px rgba(0,0,0,0.7)); white-space:nowrap; pointer-events:none; }\n  .fc-cap-em { color:var(--fc-cap-accent,#ffd166); }\n  .fc-pcap { position:absolute; left:50%; bottom:12%; transform:translateX(-50%); font:var(--fc-cap-font,700 44px/1.25 system-ui,sans-serif); color:var(--fc-cap-color,#fff); background:var(--fc-cap-bg,rgba(0,0,0,0.55)); padding:.25em .6em; border-radius:.35em; text-align:center; white-space:nowrap; pointer-events:none; }\n</style>";
     out = out.replace("</style>", `</style>${style}`);
     if (!out.includes("</style>")) out = out.replace("</head>", `${style}\n</head>`);
   }

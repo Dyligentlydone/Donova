@@ -2,7 +2,14 @@ import { readFile } from "node:fs/promises";
 import { writeFile } from "node:fs/promises";
 import { dirname, join, resolve } from "node:path";
 import { parseCompositionHtml } from "@framecraft/contract";
-import { CaptureSession, ensureChrome, locateFfmpeg, runFfmpeg, startFileServer } from "@framecraft/engine";
+import {
+  CaptureSession,
+  ensureChrome,
+  locateFfmpeg,
+  prepareVideoFrames,
+  runFfmpeg,
+  startFileServer,
+} from "@framecraft/engine";
 import { getRuntimeSource } from "@framecraft/runtime";
 import puppeteer from "puppeteer-core";
 
@@ -20,6 +27,13 @@ export async function snapshotTimes(
   const html = await readFile(join(dir, composition), "utf8");
   const { spec } = parseCompositionHtml(html, { isRoot: true, path: composition });
   const fps = spec.fps ?? 30;
+
+  // Compositions with <video> need frame overlays (.framecraft/video-map.json)
+  // or snapshots show the raw element — often black at early times.
+  const { ffmpeg, ffprobe } = await locateFfmpeg();
+  if (/<video[\s>]/i.test(html)) {
+    await prepareVideoFrames(ffmpeg, ffprobe, dir, spec, fps);
+  }
 
   const chrome = await ensureChrome({ headlessShell: true });
   const server = await startFileServer(dir);

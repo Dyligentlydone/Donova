@@ -1,17 +1,18 @@
 import { cpus } from "node:os";
+import { fileURLToPath } from "node:url";
 import { CLI_NAME, VERSION } from "@framecraft/contract";
 import { render } from "@framecraft/producer";
 import { startStudioServer } from "@framecraft/studio-server";
 import { defineCommand, runMain } from "citty";
 import { addBlock } from "./add.js";
+import { captionsCmd } from "./captions.js";
 import { checkProject, reportCheck } from "./check.js";
 import { compareVideos } from "./compare.js";
 import { copyPrompt } from "./copyPrompt.js";
-import { captionsCmd } from "./captions.js";
 import { cutsCmd } from "./cuts.js";
 import { doctor, reportDoctor } from "./doctor.js";
-import { evalProject } from "./evals.js";
 import { ERR, guardJson, jsonErr, jsonOut } from "./errors.js";
+import { evalProject } from "./evals.js";
 import { initProject } from "./init.js";
 import { probeCmd, timelineCmd } from "./inspect.js";
 import { previewProject } from "./preview.js";
@@ -72,7 +73,7 @@ const renderCmd = defineCommand({
         alpha: args.alpha,
         workers,
         range,
-        scale: args.draft ? 0.5 : args.scale ? Number(args.scale) : undefined,
+        scale: args.draft || args.quality === "draft" ? 0.5 : args.scale ? Number(args.scale) : undefined,
         onProgress: args.json
           ? undefined
           : (done, total) => {
@@ -243,6 +244,30 @@ const addCmd = defineCommand({
             ? `use:  <audio class="clip" data-start="…" data-duration="…" src="${r.files[0]}"></audio>`
             : `use:  <div class="clip" data-start="…" data-duration="…" data-composition-src="compositions/${args.name}/index.html"></div>`,
         );
+      }
+    });
+  },
+});
+
+const catalogCmd = defineCommand({
+  meta: { name: "catalog", description: "List registry blocks and SFX" },
+  args: { ...JSON_ARG, type: { type: "string", description: "block | sfx | all" } },
+  async run({ args }) {
+    await guardJson(args.json, async () => {
+      const { readFile } = await import("node:fs/promises");
+      const { join } = await import("node:path");
+      const regRoot = fileURLToPath(new URL("../../../registry", import.meta.url));
+      const catalog = JSON.parse(await readFile(join(regRoot, "catalog.json"), "utf8")) as {
+        items: Array<{ name: string; type?: string; description?: string }>;
+      };
+      const items = catalog.items.filter(
+        (i) => !args.type || args.type === "all" || (i.type ?? "block") === args.type,
+      );
+      if (args.json) jsonOut({ items });
+      else {
+        for (const i of items) {
+          console.log(`${(i.type ?? "block").padEnd(6)} ${i.name.padEnd(22)} ${i.description ?? ""}`);
+        }
       }
     });
   },
@@ -512,8 +537,7 @@ const evalCliCmd = defineCommand({
     if (res == null) return;
     if (args.json) jsonOut(res);
     else {
-      for (const r of res.rules)
-        console.log(` ${r.pass ? "✓" : "✗"} ${r.name} (w${r.weight}) — ${r.note}`);
+      for (const r of res.rules) console.log(` ${r.pass ? "✓" : "✗"} ${r.name} (w${r.weight}) — ${r.note}`);
       console.log(`score ${(res.score * 100).toFixed(0)}% → ${res.pass ? "PASS" : "FAIL"}`);
     }
   },
@@ -550,6 +574,7 @@ const main = defineCommand({
     snapshot: snapshotCmd,
     compare: compareCmd,
     add: addCmd,
+    catalog: catalogCmd,
     doctor: doctorCmd,
     transcribe: transcribeCliCmd,
     cuts: cutsCliCmd,

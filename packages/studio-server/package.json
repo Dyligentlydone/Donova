@@ -26,6 +26,7 @@
     "@framecraft/engine": "workspace:*",
     "@framecraft/producer": "workspace:*",
     "@framecraft/lint": "workspace:*",
+    "@framecraft/runtime": "workspace:*",
     "parse5": "^7.2.1"
   }
 }

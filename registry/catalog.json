@@ -2,9 +2,24 @@
   "version": 1,
   "items": [
     { "name": "fade-title", "type": "block", "path": "blocks/fade-title", "tags": ["title", "text"] },
-    { "name": "caption-strip", "type": "block", "path": "blocks/caption-strip", "tags": ["captions", "text"] },
-    { "name": "word-captions", "type": "block", "path": "blocks/word-captions", "tags": ["captions", "footage"] },
-    { "name": "phrase-captions", "type": "block", "path": "blocks/phrase-captions", "tags": ["captions", "footage"] },
+    {
+      "name": "caption-strip",
+      "type": "block",
+      "path": "blocks/caption-strip",
+      "tags": ["captions", "text"]
+    },
+    {
+      "name": "word-captions",
+      "type": "block",
+      "path": "blocks/word-captions",
+      "tags": ["captions", "footage"]
+    },
+    {
+      "name": "phrase-captions",
+      "type": "block",
+      "path": "blocks/phrase-captions",
+      "tags": ["captions", "footage"]
+    },
     { "name": "card", "type": "block", "path": "blocks/card", "tags": ["card", "overlay"] },
     { "name": "alert-card", "type": "block", "path": "blocks/alert-card", "tags": ["card", "alert"] },
     { "name": "stat-card", "type": "block", "path": "blocks/stat-card", "tags": ["stat", "card"] },
@@ -14,9 +29,24 @@
     { "name": "progress-bar", "type": "block", "path": "blocks/progress-bar", "tags": ["progress"] },
     { "name": "flash", "type": "block", "path": "blocks/flash", "tags": ["flash", "transition"] },
     { "name": "grade", "type": "block", "path": "blocks/grade", "tags": ["grade", "vignette"] },
-    { "name": "zoom-transition", "type": "block", "path": "blocks/zoom-transition", "tags": ["zoom", "transition"] },
-    { "name": "motion-presets", "type": "block", "path": "blocks/motion-presets", "tags": ["motion", "reference"] },
-    { "name": "subtitle-line", "type": "block", "path": "blocks/subtitle-line", "tags": ["subtitle", "captions"] },
+    {
+      "name": "zoom-transition",
+      "type": "block",
+      "path": "blocks/zoom-transition",
+      "tags": ["zoom", "transition"]
+    },
+    {
+      "name": "motion-presets",
+      "type": "block",
+      "path": "blocks/motion-presets",
+      "tags": ["motion", "reference"]
+    },
+    {
+      "name": "subtitle-line",
+      "type": "block",
+      "path": "blocks/subtitle-line",
+      "tags": ["subtitle", "captions"]
+    },
     { "name": "sfx-pop", "type": "sfx", "path": "sfx/pop", "tags": ["pop", "ui"] },
     { "name": "sfx-whoosh", "type": "sfx", "path": "sfx/whoosh", "tags": ["whoosh", "transition"] },
     { "name": "sfx-riser", "type": "sfx", "path": "sfx/riser", "tags": ["riser"] },

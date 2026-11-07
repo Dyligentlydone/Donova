@@ -3,8 +3,32 @@
   "description": "Danger/warning variant of card — pops with a shake on entry.",
   "tags": ["card", "alert", "danger"],
   "vars": [
-    {"name": "title", "default": "ALERT", "hint": "Main line"},
-    {"name": "body", "default": "", "hint": "Optional second line"},
-    {"name": "accent", "default": "#e5484d", "hint": "Alert color"}
-  ]
+    {
+      "name": "alert-bg",
+      "description": "Alert Bg"
+    },
+    {
+      "name": "accent",
+      "description": "Accent"
+    },
+    {
+      "name": "title-size",
+      "description": "Title Size"
+    },
+    {
+      "name": "body-size",
+      "description": "Body Size"
+    },
+    {
+      "name": "title",
+      "description": "Title"
+    },
+    {
+      "name": "body",
+      "description": "Body"
+    }
+  ],
+  "type": "block",
+  "version": "0.1.0",
+  "files": ["index.html"]
 }

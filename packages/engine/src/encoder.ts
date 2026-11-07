@@ -78,6 +78,9 @@ export class StreamingEncoder {
     const codec = o.codec ?? "h264";
     if (codec === "h264") {
       args.push("-c:v", "libx264", "-preset", o.preset ?? "medium", "-crf", String(o.crf ?? 18));
+      // JPEG pipe input is full-range; without the format filter libx264 keeps
+      // yuvj420p and players misread the range.
+      if (!o.alpha) args.push("-vf", "format=yuv420p");
       args.push("-pix_fmt", pixFmt);
       args.push("-movflags", "+faststart");
     } else if (codec === "h265") {
@@ -90,9 +93,9 @@ export class StreamingEncoder {
         "-c:v",
         "prores_ks",
         "-profile:v",
-        o.alpha ? "4444" : "422",
+        o.alpha ? "4444" : "standard",
         "-pix_fmt",
-        o.alpha ? "yuva444p12le" : "yuv422p10le",
+        o.alpha ? "yuva444p10le" : "yuv422p10le",
       );
     }
     return [...args, o.out];

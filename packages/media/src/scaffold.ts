@@ -10,8 +10,6 @@ import type { CutPlan } from "./types.js";
  */
 export function scaffoldFootage(opts: {
   source: string;
-  sourceWidth: number;
-  sourceHeight: number;
   outWidth: number;
   outHeight: number;
   plan: CutPlan;
@@ -19,14 +17,10 @@ export function scaffoldFootage(opts: {
   /** Keep source audio on the video elements (default true). */
   audio?: boolean;
 }): string {
-  const { source, sourceWidth, sourceHeight, outWidth, outHeight, plan, fps = 30, audio = true } = opts;
+  const { source, outWidth, outHeight, plan, fps = 30, audio = true } = opts;
 
-  // Cover-crop math: scale source to fill output, overflow hidden by .clip.
-  const scale = Math.max(outWidth / sourceWidth, outHeight / sourceHeight);
-  const dispW = Math.round(sourceWidth * scale * 100) / 100;
-  const dispH = Math.round(sourceHeight * scale * 100) / 100;
-  const offX = Math.round((outWidth - dispW) / 2);
-  const offY = Math.round((outHeight - dispH) / 2);
+  // object-fit:cover handles the cover-crop for any source dims/rotation —
+  // the browser already applies display-matrix rotation to <video>.
 
   const duration = Math.round(plan.duration * 1000) / 1000;
   const segs = plan.segments
@@ -49,9 +43,8 @@ export function scaffoldFootage(opts: {
   .clip { position: absolute; inset: 0; overflow: hidden; }
   .clip video {
     position: absolute;
-    width: ${dispW}px; height: ${dispH}px;
-    left: ${offX}px; top: ${offY}px;
-    object-fit: fill;
+    inset: 0; width: 100%; height: 100%;
+    object-fit: cover;
   }
 </style>
 </head>

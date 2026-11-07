@@ -10,11 +10,11 @@ export async function removeBackgroundCmd(opts: {
 }): Promise<{ path: string; kind: "image" | "video"; frames?: number }> {
   const isImage = /\.(png|jpe?g|webp)$/i.test(opts.media);
   if (isImage) {
-    const out = opts.out ?? opts.media.replace(/\.[^.]+$/, "") + "-cutout.png";
+    const out = opts.out ?? `${opts.media.replace(/\.[^.]+$/, "")}-cutout.png`;
     const r = await removeBackgroundImage(opts.media, out);
     return { ...r, kind: "image" };
   }
-  const out = opts.out ?? opts.media.replace(/\.[^.]+$/, "") + "-cutout.webm";
+  const out = opts.out ?? `${opts.media.replace(/\.[^.]+$/, "")}-cutout.webm`;
   const r = await removeBackgroundVideo({
     input: opts.media,
     out,

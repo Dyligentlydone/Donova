@@ -1,5 +1,9 @@
 {
   "name": "motion-presets",
   "description": "Named data-fc-motion recipes to copy onto any element — no visual output of its own.",
-  "tags": ["motion", "presets", "reference"]
+  "tags": ["motion", "presets", "reference"],
+  "vars": [],
+  "type": "block",
+  "version": "0.1.0",
+  "files": ["index.html"]
 }

@@ -9,13 +9,8 @@ declare module "onnxruntime-node" {
     readonly dims: readonly number[];
   }
   export class InferenceSession {
-    static create(
-      path: string,
-      options?: { executionProviders?: string[] },
-    ): Promise<InferenceSession>;
-    run(
-      feeds: Record<string, Tensor>,
-    ): Promise<Record<string, Tensor>>;
+    static create(path: string, options?: { executionProviders?: string[] }): Promise<InferenceSession>;
+    run(feeds: Record<string, Tensor>): Promise<Record<string, Tensor>>;
     inputNames: string[];
     outputNames: string[];
   }

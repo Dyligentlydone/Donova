@@ -26,6 +26,8 @@ export interface RenderToFramesOpts {
     disableBeginFrame?: boolean;
     /** Output scale (device scale factor). 0.5 → half-res draft frames. */
     scale?: number;
+    /** Transparent background + PNG alpha in captured frames. */
+    alpha?: boolean;
   };
   /** Encoder pixel dims when they differ from viewport (scaled capture). */
   encoderWidth?: number;
@@ -132,6 +134,7 @@ export async function openFrameSource(opts: RenderToFramesOpts): Promise<FrameSo
     jpegQuality: opts.capture?.jpegQuality,
     disableBeginFrame: opts.capture?.disableBeginFrame,
     scale: opts.capture?.scale,
+    alpha: opts.capture?.alpha === true,
   });
   await capture.init();
   if (beginFrameOk) await capture.enableBeginFrame();

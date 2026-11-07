@@ -4,6 +4,11 @@
   "version": "0.1.0",
   "description": "Centered title that fades/rises in — motion-preset driven",
   "tags": ["title", "text", "fade", "intro"],
-  "vars": { "--fc-title-color": "#ffffff" },
+  "vars": [
+    {
+      "name": "title-color",
+      "description": "Title Color"
+    }
+  ],
   "files": ["index.html"]
 }

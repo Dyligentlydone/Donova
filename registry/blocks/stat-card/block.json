@@ -3,8 +3,32 @@
   "description": "One huge number/word + small label. For 'zero dollars' moments.",
   "tags": ["card", "stat", "number"],
   "vars": [
-    {"name": "value", "default": "0", "hint": "Big number/text"},
-    {"name": "label", "default": "", "hint": "Small caption under it"},
-    {"name": "accent", "default": "#ffffff", "hint": "Value color"}
-  ]
+    {
+      "name": "stat-size",
+      "description": "Stat Size"
+    },
+    {
+      "name": "accent",
+      "description": "Accent"
+    },
+    {
+      "name": "label-size",
+      "description": "Label Size"
+    },
+    {
+      "name": "card-sub",
+      "description": "Card Sub"
+    },
+    {
+      "name": "value",
+      "description": "Value"
+    },
+    {
+      "name": "label",
+      "description": "Label"
+    }
+  ],
+  "type": "block",
+  "version": "0.1.0",
+  "files": ["index.html"]
 }

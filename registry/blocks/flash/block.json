@@ -3,7 +3,12 @@
   "description": "80–120ms full-frame color hit for beat moments.",
   "tags": ["flash", "transition", "beat"],
   "vars": [
-    {"name": "color", "default": "#ffffff", "hint": "Flash color"},
-    {"name": "dur", "default": "0.1", "hint": "Seconds at full opacity"}
-  ]
+    {
+      "name": "flash",
+      "description": "Flash"
+    }
+  ],
+  "type": "block",
+  "version": "0.1.0",
+  "files": ["index.html"]
 }

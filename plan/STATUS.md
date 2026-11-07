@@ -1,6 +1,6 @@
 # STATUS — what exists today (read before building)
 
-Last updated: 2026-11-07 (full test pass — see §0). Update this file whenever you finish an MV task.
+Last updated: 2026-11-07 (fix pass — all P0s + most P1s resolved; see §0). Update this file whenever you finish an MV task.
 
 The original plan (`00`–`16`) describes a from-scratch build. A first working version
 was built quickly (≈ 4.2k lines of TS) and **partially** covers M0–M6. Most tasks in
@@ -10,54 +10,89 @@ foundation to harden, not as finished tasks.
 
 **Priority now:** the MV track in `17-VIBE-EDIT.md` / `16-BUILD-ORDER.md`.
 
-## 0. Test pass 2026-11-07: open issues (START HERE)
+## 0. State after the 2026-11-07 fix pass
 
-MV0–MV10 code exists (commits `4069a8f`, then the MV3–MV6 commit; MV8–MV10 + the
-`bgRemoval` fix are in the working tree / latest commit). Sections 1–2 below are
-partly stale (e.g. `vitest.golden.config.ts` now exists; the CLI has ~22 commands).
-A full test pass was run; this list is the work remaining, **in priority order**.
-Re-run the "How it was tested" block after each fix.
+**All P0s fixed and verified. Most P1s fixed.** Gates: `pnpm build` 9/9,
+`pnpm typecheck` 16/16, `pnpm lint` clean, `pnpm test` 17/17, `pnpm test:golden` 2/2.
 
-### Verified working
-- `pnpm build` 9/9, `pnpm test` 17/17, `pnpm test:golden` 2/2 (byte-identical GSAP fixture, media fixture).
+### P0 fixes — verified
+1. **Studio preview**: project now served same-origin at `/project/*` by the studio server with
+   `<script src="/__fc-runtime.js">` injected into served HTML. Verified: iframe boots the runtime
+   (`__playerReady`/`__fc` true under headless chrome). Files: `server.ts` (+`/project` proxy,
+   `/__fc-runtime.js` route, `getRuntimeSource` import), `studio-server/package.json` (+runtime dep).
+2. **`data-fc-motion` timing**: anim `t` is now relative to `el.closest("[data-start]")`
+   (`runtime/src/browser.ts` `buildMotionAnims`). Verified: stat-card at 19.5–22.5s renders "41.8s /
+   clean cuts / dead air removed" in a 20.6s snapshot; caption pops play at their clip.
+3. **Rotated footage**: `probe` returns `rotation` (display-matrix/tags); `init`/`scaffold` swap w/h
+   for ±90/±270; scaffold video CSS is now `inset:0; width/height:100%; object-fit:cover`.
+   Verified: snapshots of the −90° iPhone clip are correctly framed, not stretched.
+4. **Alpha capture**: `CaptureOpts.alpha` → CDP `setDefaultBackgroundColorOverride` rgba(0,0,0,0) +
+   `omitBackground` on screenshots; plumbed `render → renderVideoOnly/parallel → CaptureSession`.
+5. **MOV**: temp video uses `.mov` for prores; encoder profile `standard`/`4444`, pix_fmt
+   `yuva444p10le`/`yuv422p10le`. Verified: `render --format mov --alpha` → prores `yuva444p12le` MP4→MOV.
+   (ffmpeg reports `yuva444p12le` — encoder requests 10le and ffmpeg picks the closest 4444 alpha fmt;
+   result is a valid alpha ProRes.)
+6. **`compare`**: parses stderr on success too — identical files → `average:inf` → psnr null-in-JSON is
+   *correct* (Infinity isn't JSON); different files return real dB.
+7. **MCP**: `framecraft_check`/`framecraft_snapshot` signatures fixed; server exits on stdin EOF.
+   Verified: tools/call check + snapshot return results over stdio.
+8. **Agent write guard**: `write_file` refuses `assets/`, `media/`, and media extensions.
+
+### P1 fixes — verified
+- `captions` idempotent: BEGIN/END markers; regenerate strips the previous block (155→155 not 310).
+- `catalog` command added (`--type`, `--json`).
+- `--quality draft` implies scale 0.5; `--range` end > duration hard-fails with a clear error.
+- `eval` audio rule reads `hasAudio` (verified "audio stream present"); eval render uses scale 0.5.
+- `add` after-install: agent wires a reference `.clip` into index.html; replies now summarize run
+  results (`(check: ok=true, errors=0, warnings=16)` style).
+- Anthropic provider: real tool loop (≤8 rounds, tool_result feedback); rules fallback unchanged.
+- `undo`: undoes the last turn *with changes*; deletes created files, restores modified ones.
+- File server answers `/favicon.ico` with 204 (no more check noise).
+- `snapshot` runs `prepareVideoFrames` when the comp has `<video>` (was black frames before).
+- `remove-background`: mask upsample forced to 1 channel (`extractChannel(0)`) — stripes gone;
+  3× min-filter erosion at 320² tightens U²-Net's loose silhouette; verified working cutout.
+- `tts say` reads text via `-f file` (leading-`--` text can't be parsed as flags).
+- Audio mix ends with `alimiter=limit=0.95`.
+- h264 encoder adds `-vf format=yuv420p` for non-alpha (was yuvj420p full-range mislabel).
+- Render cleans up: video-only tmp, `render-*` work dirs, audio-mix.aac (keeps frames/video-map cache).
+- Registry: `block.json` `vars` regenerated from actual `--fc-*`/`data-fc-var` usage (dead vars
+  removed, missing declared); `caption-strip` got `top:auto` (was stretched by `.clip{inset:0}` CSS).
+
+### Still open (deferred, not blocking)
+- **U²-Net edge slack**: cutout keeps a ~20–60px background halo on plain-wall shots — model
+  resolution limit, not plumbing. Plan's answer is the MODNet eval (MV8 noted in 17-VIBE-EDIT).
+- **Anthropic chat path untested** — no `ANTHROPIC_API_KEY` on this machine; the loop is implemented
+  but needs a live key to verify.
+- **Studio timeline lanes**: clips still render one-per-row (no lane packing). Cosmetic.
+- **`clip-past-duration` warnings** (16 on fc-e2e): some generated caption clips extend ~0.5s past
+  the 41.84s plan duration. Harmless but should be clamped in `captions`.
+- **Block defaults are centered**: stat/card blocks cover the face at default position. Agents/users
+  should position them; consider a `--fc-y` offset convention later.
+- **Sub-comp scaling semantics**: inner `data-fc-motion` times scale to the host clip duration — by
+  design, but document it in block authoring notes.
+- **`framecraft check` warnings** don't distinguish block-sourced vs user clips in messages.
+- **Error codes**: most non-validation failures still return `E_INTERNAL` (unknown block, tts
+  provider, missing file). citty's missing-positional-arg error bypasses `--json` (prints help text).
+- **Missing `data-composition-src` targets** surface only as a browser 404 in `check`; no static
+  fs-existence lint rule yet.
+- **`remove-background` video path** is untested (image path verified); the Studio
+  "Remove background" inspector button (MV8) is not built; `edge`/`kokoro` TTS providers are stubs.
+- **`eval` draft render** writes `eval-render.mp4` at the project root instead of `.framecraft/`.
+- **No `clean` command** for `.framecraft/frames` cache (~hundreds of MB on real footage).
+
+### Verified working (carried over)
 - Real footage E2E on `IMG_4063.MOV` (rotated −90°, 47.8s): `init --footage` → `transcribe` (155 words)
   → `cuts` (6 segs, 5.96s removed) → `scaffold` 1080×1920 → `add stat-card/sfx-impact` → `captions`
-  (155) → `check` (0 errors) → `render --workers auto`: **1255 frames, 41.8s, h264+aac in 47s**
-  (was ~11 min). Framing + captions correct in the MP4. Raw footage md5 unchanged.
-- `doctor`, `style init/show/path`, `skills update`, `copy-prompt`, `add` (blocks + sfx), `probe`,
-  `timeline`, `check`, `snapshot`, `render` mp4/webm/gif/`--range`/`--draft`/`--workers`, `tts --provider say`,
-  `eval`, `mcp` initialize/tools/list/probe/timeline/cuts/style. `remove-background` runs end to end
-  (model download, CoreML inference, clean 320² person mask) but the **output alpha is still striped**; see the fix notes below.
-- GSAP timeline seeks correctly (3 distinct frames). Sub-comp loading + `data-var-*` text/CSS slots work.
-- Studio server: `/api/spec|assets|lint|style|turns|chat|undo|render` respond; path traversal blocked on
-  `/api/file` GET+PUT; render job produced an MP4.
+  (155) → `check` (0 errors) → `render --workers auto`: **1255 frames, 41.8s, h264+aac in 47s**.
+- `doctor`, `style`, `skills update`, `copy-prompt`, `add`, `catalog`, `probe`, `timeline`, `check`,
+  `snapshot` (+contact-sheet, video overlays), `render` mp4/webm/mov/gif/`--range`/`--draft`/`--workers`/`--alpha`,
+  `tts --provider say`, `eval` (score .875, pass), `mcp` initialize/tools/calls, `remove-background` image.
+- Studio server: `/api/spec|assets|lint|style|turns|chat|undo|render` + same-origin `/project/*` proxy.
 - 16 blocks: `check` clean, no runtime errors, no Date/random/setInterval.
+- 15 self-generated SFX install under `media/sfx/`; `add sfx-*` prints an `<audio>` usage hint.
 
-### P0 — broken core behaviour
-1. **Studio preview is dead in a real browser.** The UI (`:4141`) iframes the composition from a
-   *different* port (`startFileServer`, e.g. `:62668`) → cross-origin; every
-   `frame.contentWindow.__fc/__playerReady/contentDocument` access throws `SecurityError`. Also the
-   runtime is never injected into the iframe page (`typeof __fc === "undefined"`), so: no scaling, no
-   seek/play (timecode stuck 0.00), no clip visibility (all 155 captions drawn at once), Pick broken.
-   Fix: serve the project from the studio server itself under `/project/*` (same origin) and inject
-   `<script src="/runtime.js">` (runtime `dist/runtime.global.js`) into served HTML.
-   Files: `packages/studio-server/src/server.ts`, `src/ui/index.html`.
-2. **`data-fc-motion` on a non-timed child animates at absolute t=0.** `buildMotionAnims` uses the
-   element's own `data-start` (`packages/runtime/src/browser.ts` ~L208); should use
-   `el.closest("[data-start]")`. Effect: every block with motion on an inner div (stat-card, card,
-   alert-card, cta, title-card, lower-third…) and every generated caption pop is invisible/static
-   unless placed at t≈0. Confirmed: stat-card at 20s never appears in the E2E render.
-3. **Rotated footage in preview/snapshot.** `scaffold` ignores `side_data rotation` (iPhone −90°):
-   it uses 1920×1080 for cover math → `<video>` box 3413×1920 with `object-fit:fill` → stretched/over-zoomed
-   in Studio + `snapshot`. The render looks right only because ffmpeg auto-rotates extracted frames.
-   Fix: swap w/h when |rotation| = 90 in `probe` (`packages/cli/src/inspect.ts` / engine ffprobe) and use
-   `object-fit:cover` with `width/height:100%` in `packages/media/src/scaffold.ts`.
-4. **Alpha render produces opaque output.** Transparent-background comp → `--format webm --alpha`
-   gives alpha min 228 (should be 0 outside content). Capture input is `rgb24`; screenshot needs
-   `omitBackground: true` + transparent default background (CDP `Emulation.setDefaultBackgroundColorOverride`
-   rgba 0) when `alpha`. Files: `packages/engine/src/capture.ts`, `renderer.ts`.
-5. **`--format mov` fails both ways.** `producer/src/render.ts` L83 writes the ProRes temp as `.mp4`
-   (use `.mov` for prores); `engine/src/encoder.ts` L92–95: `-profile:v 422` invalid for prores_ks (use
+### Original issue log (historical — superseded by the list above)
+The earlier write-up of each bug remains below for context; items marked fixed are verified.
    `2`/`standard` or `3`/`hq`; 4444 = `4`), and `yuva444p12le` unsupported → `yuva444p10le`.
 6. **`compare` never returns a PSNR** (always `psnr: null`, even vs a testsrc video). ffmpeg exits 0,
    so the parse in the `catch` never runs and it returns `Infinity` (JSON → null). Parse stderr on success.

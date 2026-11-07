@@ -3,7 +3,20 @@
   "description": "Thin progress line across the frame top (or bottom).",
   "tags": ["progress", "bar", "chrome"],
   "vars": [
-    {"name": "accent", "default": "#4f8cff", "hint": "Bar color"},
-    {"name": "pos", "default": "top", "hint": "top|bottom"}
-  ]
+    {
+      "name": "pb-top",
+      "description": "Pb Top"
+    },
+    {
+      "name": "pb-h",
+      "description": "Pb H"
+    },
+    {
+      "name": "accent",
+      "description": "Accent"
+    }
+  ],
+  "type": "block",
+  "version": "0.1.0",
+  "files": ["index.html"]
 }

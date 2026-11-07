@@ -9,6 +9,7 @@ import { parseCompositionHtml } from "@framecraft/contract";
 import { startFileServer } from "@framecraft/engine";
 import { lintHtml } from "@framecraft/lint";
 import { render } from "@framecraft/producer";
+import { getRuntimeSource } from "@framecraft/runtime";
 import * as parse5 from "parse5";
 import { Agent } from "./agent.js";
 
@@ -159,8 +160,7 @@ export async function startStudioServer(
   // the exact CLI surface; renderDraft goes through the in-process renderer.
   const execFileP = promisify(execFile);
   const cliBin =
-    process.env.FRAMECRAFT_CLI ??
-    fileURLToPath(new URL("../../cli/bin/framecraft.mjs", import.meta.url));
+    process.env.FRAMECRAFT_CLI ?? fileURLToPath(new URL("../../cli/bin/framecraft.mjs", import.meta.url));
 
   const runCmd = async (cmd: string, args: Record<string, unknown>): Promise<unknown> => {
     if (cmd === "renderDraft") {
@@ -215,8 +215,7 @@ export async function startStudioServer(
         : "";
       let duration = 0;
       try {
-        duration = parseCompositionHtml(indexHtml, { path: "index.html", isRoot: true }).spec
-          .duration;
+        duration = parseCompositionHtml(indexHtml, { path: "index.html", isRoot: true }).spec.duration;
       } catch {
         /* leave 0 */
       }
@@ -256,7 +255,8 @@ export async function startStudioServer(
         const fp = safePath(root, f);
         if (!fp || !existsSync(fp)) return send(404, { error: "not found" });
         const { spec } = parseCompositionHtml(await readFile(fp, "utf8"), { path: f, isRoot: true });
-        return send(200, { spec, compositionUrl: `${compServer.url}/${f}` });
+        // Same-origin /project URL so the UI can reach into the iframe (renderSeek, spec).
+        return send(200, { spec, compositionUrl: `/project/${f}` });
       }
       if (p === "/api/file" && req.method === "GET") {
         const fp = safePath(root, url.searchParams.get("path") ?? "");
@@ -342,7 +342,12 @@ export async function startStudioServer(
       }
       if (p === "/api/style" && req.method === "GET") {
         const fp = join(root, "style.md");
-        return send(200, existsSync(fp) ? { path: "style.md", content: await readFile(fp, "utf8") } : { path: "style.md", content: null });
+        return send(
+          200,
+          existsSync(fp)
+            ? { path: "style.md", content: await readFile(fp, "utf8") }
+            : { path: "style.md", content: null },
+        );
       }
       if (p === "/api/style" && req.method === "PUT") {
         const body = JSON.parse(await readBody(req)) as { content: string };
@@ -380,6 +385,42 @@ export async function startStudioServer(
         return send(200, { files: await walk(root) });
       }
 
+      // --- Composition preview (same-origin proxy → project file server).
+      // HTML responses get the runtime injected so the iframe exposes __fc/__playerReady.
+      if (p === "/__fc-runtime.js") {
+        return send(200, getRuntimeSource(), "text/javascript; charset=utf-8");
+      }
+      if (p === "/project" || p.startsWith("/project/")) {
+        const rel = decodeURIComponent(p.slice("/project".length) || "/index.html");
+        const up = await fetch(`${compServer.url}${rel}`, {
+          headers: req.headers.range ? { range: req.headers.range } : {},
+        });
+        const type = up.headers.get("content-type") ?? "application/octet-stream";
+        const headers: Record<string, string | undefined> = {
+          "Content-Type": type,
+          "Cache-Control": "no-store",
+        };
+        for (const h of ["content-range", "accept-ranges", "content-length"]) {
+          const v = up.headers.get(h);
+          if (v) headers[h] = v;
+        }
+        if (type.includes("text/html")) {
+          let html = await up.text();
+          const tag = '<script src="/__fc-runtime.js"></script>';
+          html = html.includes("/__fc-runtime.js") ? html : html.replace(/<\/head>/i, `${tag}\n</head>`);
+          Reflect.deleteProperty(headers, "content-length");
+          res.writeHead(up.status, headers);
+          res.end(html);
+          return;
+        }
+        res.writeHead(up.status, headers);
+        if (up.body) {
+          const { Readable } = await import("node:stream");
+          Readable.fromWeb(up.body as import("node:stream/web").ReadableStream).pipe(res);
+        } else res.end();
+        return;
+      }
+
       // --- Studio UI assets ---
       if (p === "/" || p === "/studio" || p === "/studio/") {
         const ui = join(uiDir, "index.html");
@@ -406,5 +447,9 @@ export async function startStudioServer(
   await new Promise<void>((r) => server.listen(port, "127.0.0.1", r));
   const addr = server.address();
   const bound = typeof addr === "object" && addr ? addr.port : 0;
-  return { url: `http://127.0.0.1:${bound}`, server, compositionUrl: compServer.url };
+  return {
+    url: `http://127.0.0.1:${bound}`,
+    server,
+    compositionUrl: `http://127.0.0.1:${bound}/project/index.html`,
+  };
 }

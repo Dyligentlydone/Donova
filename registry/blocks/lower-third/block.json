@@ -3,8 +3,28 @@
   "description": "Name/context strip at lower third, slides in from the left.",
   "tags": ["lower-third", "name", "context"],
   "vars": [
-    {"name": "name", "default": "Name", "hint": "Primary line"},
-    {"name": "detail", "default": "", "hint": "Secondary line"},
-    {"name": "accent", "default": "#4f8cff", "hint": "Bar color"}
-  ]
+    {
+      "name": "accent",
+      "description": "Accent"
+    },
+    {
+      "name": "l3-name-size",
+      "description": "L3 Name Size"
+    },
+    {
+      "name": "l3-detail-size",
+      "description": "L3 Detail Size"
+    },
+    {
+      "name": "name",
+      "description": "Name"
+    },
+    {
+      "name": "detail",
+      "description": "Detail"
+    }
+  ],
+  "type": "block",
+  "version": "0.1.0",
+  "files": ["index.html"]
 }

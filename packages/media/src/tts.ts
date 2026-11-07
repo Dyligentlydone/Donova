@@ -40,10 +40,16 @@ async function sayProvider(
   voice: string | undefined,
   ffmpeg: string,
 ): Promise<void> {
-  const tmp = join(await mkdtemp(join(tmpdir(), "fc-tts-")), "vo.aiff");
+  const tmpDir = await mkdtemp(join(tmpdir(), "fc-tts-"));
+  const tmp = join(tmpDir, "vo.aiff");
   const args = ["-o", tmp];
   if (voice) args.push("-v", voice);
-  args.push(text);
+  // -f reads the text from a file — positional text that starts with "-" would
+  // be parsed as a flag.
+  const txtPath = join(tmpDir, "text.txt");
+  const { writeFile } = await import("node:fs/promises");
+  await writeFile(txtPath, text);
+  args.push("-f", txtPath);
   await execFileP("say", args);
   await execFileP(ffmpeg, ["-y", "-i", tmp, "-ar", "48000", "-ac", "1", out]);
 }
@@ -60,11 +66,13 @@ export async function tts(opts: {
   const ffprobe = opts.ffprobe ?? "ffprobe";
   const provider: TtsProvider =
     opts.provider ??
-    (process.platform === "darwin" ? "say" : (() => {
-      throw new Error(
-        `no default TTS provider on ${process.platform}. Pass --provider (say|edge|kokoro).`,
-      );
-    })());
+    (process.platform === "darwin"
+      ? "say"
+      : (() => {
+          throw new Error(
+            `no default TTS provider on ${process.platform}. Pass --provider (say|edge|kokoro).`,
+          );
+        })());
 
   switch (provider) {
     case "say":
@@ -78,9 +86,7 @@ export async function tts(opts: {
         "edge provider not bundled yet — install edge-tts and set FRAMECRAFT_TTS_EDGE, or use --provider say",
       );
     case "kokoro":
-      throw new Error(
-        "kokoro provider not bundled yet — needs a python env; use --provider say on macOS",
-      );
+      throw new Error("kokoro provider not bundled yet — needs a python env; use --provider say on macOS");
     default:
       throw new Error(`unknown TTS provider ${provider}`);
   }

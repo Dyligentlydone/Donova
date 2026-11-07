@@ -8,6 +8,8 @@ export interface CaptureOpts {
   jpegQuality?: number;
   /** Output scale (device scale factor). 0.5 → half-res frames (draft mode). */
   scale?: number;
+  /** Transparent page background + PNG alpha channel in captured frames. */
+  alpha?: boolean;
   /** Force screenshot mode even when beginFrame is available. */
   disableBeginFrame?: boolean;
 }
@@ -101,6 +103,14 @@ export class CaptureSession {
     });
     this.intervalMs = Math.round(1000 / this.opts.fps);
     this.cdp = await this.page.createCDPSession();
+    if (this.opts.alpha) {
+      // Required for transparency to survive into captured PNGs.
+      await this.cdp
+        .send("Emulation.setDefaultBackgroundColorOverride", {
+          color: { r: 0, g: 0, b: 0, a: 0 },
+        })
+        .catch(() => {});
+    }
     if (this.opts.disableBeginFrame) this.useBeginFrame = false;
   }
 
@@ -165,6 +175,7 @@ export class CaptureSession {
           type: this.opts.format === "jpeg" ? "jpeg" : "png",
           quality: this.opts.format === "jpeg" ? (this.opts.jpegQuality ?? 85) : undefined,
           captureBeyondViewport: false,
+          omitBackground: this.opts.alpha === true,
         }),
       );
     }
