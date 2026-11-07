@@ -16,7 +16,10 @@ export async function addBlock(projectDir: string, name: string): Promise<{ dest
       items: Array<{ name: string; path: string }>;
     };
     const hit = catalog.items.find((i) => i.name === name);
-    if (!hit) throw new Error(`block "${name}" not in registry. Available: ${catalog.items.map((i) => i.name).join(", ")}`);
+    if (!hit)
+      throw new Error(
+        `block "${name}" not in registry. Available: ${catalog.items.map((i) => i.name).join(", ")}`,
+      );
     return addBlock(projectDir, hit.path.split("/").pop() ?? name);
   }
   const meta = JSON.parse(await readFile(join(blockDir, "block.json"), "utf8")) as { files?: string[] };

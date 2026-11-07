@@ -1,10 +1,10 @@
 import { readFile } from "node:fs/promises";
-import { join, resolve } from "node:path";
+import { writeFile } from "node:fs/promises";
+import { dirname, join, resolve } from "node:path";
 import { parseCompositionHtml } from "@framecraft/contract";
-import { CaptureSession, ensureChrome, startFileServer } from "@framecraft/engine";
+import { CaptureSession, ensureChrome, locateFfmpeg, runFfmpeg, startFileServer } from "@framecraft/engine";
 import { getRuntimeSource } from "@framecraft/runtime";
 import puppeteer from "puppeteer-core";
-import { writeFile } from "node:fs/promises";
 
 /**
  * `framecraft snapshot` — capture specific times as PNGs (agent tool: lets an
@@ -23,7 +23,7 @@ export async function snapshotTimes(
 
   const chrome = await ensureChrome({ headlessShell: true });
   const server = await startFileServer(dir);
-  let browser;
+  let browser: Awaited<ReturnType<typeof puppeteer.launch>> | undefined;
   try {
     browser = await puppeteer.launch({
       executablePath: chrome.executablePath,
@@ -35,7 +35,12 @@ export async function snapshotTimes(
     await page.goto(`${server.url}/${composition}`, { waitUntil: "load", timeout: 30_000 });
     await page.evaluate(getRuntimeSource());
     await page.waitForFunction("window.__playerReady === true", { timeout: 15_000 });
-    const cap = new CaptureSession(page, { width: spec.width, height: spec.height, fps, disableBeginFrame: true });
+    const cap = new CaptureSession(page, {
+      width: spec.width,
+      height: spec.height,
+      fps,
+      disableBeginFrame: true,
+    });
     await cap.init();
     const { mkdir } = await import("node:fs/promises");
     await mkdir(outDir, { recursive: true });
@@ -53,4 +58,54 @@ export async function snapshotTimes(
     await browser?.close().catch(() => {});
     await server.close();
   }
+}
+
+/**
+ * `framecraft snapshot --contact-sheet` — tile snapshots into one labeled image
+ * (17 §3.5). Each tile gets a `t=X.XXs` burn-in so an agent can read times
+ * from a single image instead of N separate files.
+ */
+export async function contactSheet(
+  outs: string[],
+  times: number[],
+  outPath: string,
+  cols = 3,
+): Promise<string> {
+  const { ffmpeg } = await locateFfmpeg();
+  const dir = dirname(outPath);
+  const labeled: string[] = [];
+  for (let i = 0; i < outs.length; i++) {
+    const dst = join(dir, `.fc-labeled-${i}.png`);
+    await runFfmpeg(ffmpeg, [
+      "-loop",
+      "1",
+      "-t",
+      "1",
+      "-i",
+      outs[i] ?? "",
+      "-vf",
+      `drawtext=text='t=${(times[i] ?? 0).toFixed(2)}s':x=20:y=20:fontsize=48:fontcolor=white:box=1:boxcolor=black@0.6:boxborderw=12`,
+      "-frames:v",
+      "1",
+      dst,
+    ]);
+    labeled.push(dst);
+  }
+  const listPath = join(dir, ".fc-sheet.txt");
+  await writeFile(listPath, labeled.map((f) => `file '${f.replace(/'/g, "'\\''")}'`).join("\n"));
+  const rows = Math.ceil(labeled.length / cols);
+  await runFfmpeg(ffmpeg, [
+    "-f",
+    "concat",
+    "-safe",
+    "0",
+    "-i",
+    listPath,
+    "-vf",
+    `scale=540:-1,tile=${cols}x${rows}`,
+    "-frames:v",
+    "1",
+    outPath,
+  ]);
+  return outPath;
 }

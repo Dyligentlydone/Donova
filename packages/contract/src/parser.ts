@@ -118,9 +118,10 @@ export function parseCompositionHtml(html: string, opts?: { path?: string; isRoo
     const start = parseTime(getAttr(el, ATTR.start));
     const isTimed = hasAttr(el, ATTR.start);
     const thisTag = localName(el);
-    const isMediaTag = thisTag === "video" || thisTag === "audio" || thisTag === "img" || thisTag === "iframe";
+    const isMediaTag =
+      thisTag === "video" || thisTag === "audio" || thisTag === "img" || thisTag === "iframe";
     const mediaIndex = isMediaTag ? (mediaCounts[thisTag] ?? 0) : undefined;
-    if (isMediaTag) mediaCounts[thisTag] = mediaIndex! + 1;
+    if (isMediaTag) mediaCounts[thisTag] = (mediaIndex ?? 0) + 1;
     const thisClipId = `clip-${clipSeq}`;
     const childParent = isTimed ? thisClipId : parentClipId;
 
@@ -151,7 +152,10 @@ export function parseCompositionHtml(html: string, opts?: { path?: string; isRoo
         audio: {
           hasAudio:
             tag === "video" ? parseBool(getAttr(el, ATTR.hasAudio), !hasAttr(el, "muted")) : tag === "audio",
-          start: parseTime(getAttr(el, ATTR.audioStart)),
+          start:
+            parseTime(getAttr(el, ATTR.mediaStart)) ??
+            parseTime(getAttr(el, ATTR.audioStart)) ??
+            parseTime(getAttr(el, ATTR.trimStart)),
           end: parseTime(getAttr(el, ATTR.audioEnd)),
           offset: parseTime(getAttr(el, ATTR.audioOffset)),
           fadeIn: parseTime(getAttr(el, ATTR.audioFadeIn)),
@@ -185,8 +189,24 @@ export function parseCompositionHtml(html: string, opts?: { path?: string; isRoo
       // class="clip" is the full-frame scene convention — only warn for
       // container-ish elements (div/section/etc.), not inline bits like
       // <span> caption words or <b>/<em> inside a scene.
-      const CONTAINER_TAGS = new Set(["div", "section", "article", "main", "aside", "header", "footer", "figure"]);
-      if (kind === "element" && CONTAINER_TAGS.has(tag) && !clip.classes.includes(CLIP_CLASS)) {
+      const CONTAINER_TAGS = new Set([
+        "div",
+        "section",
+        "article",
+        "main",
+        "aside",
+        "header",
+        "footer",
+        "figure",
+      ]);
+      // Only top-level timed containers — nested timed elements (caption words,
+      // card rows) inherit their parent's scene box and don't need .clip.
+      if (
+        kind === "element" &&
+        CONTAINER_TAGS.has(tag) &&
+        parentClipId == null &&
+        !clip.classes.includes(CLIP_CLASS)
+      ) {
         issues.push({
           rule: "clip-missing-class",
           severity: "warn",

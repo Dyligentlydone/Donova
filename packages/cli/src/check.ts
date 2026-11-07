@@ -39,7 +39,9 @@ export async function checkProject(
         defaultViewport: { width: 640, height: 360 },
       });
       const page = await browser.newPage();
-      page.on("pageerror", (e) => runtimeErrors.push(`pageerror: ${e.message}`));
+      page.on("pageerror", (e) =>
+        runtimeErrors.push(`pageerror: ${e instanceof Error ? e.message : String(e)}`),
+      );
       page.on("console", (m) => {
         if (m.type() !== "error") return;
         // Browsers auto-request /favicon.ico; a missing one is not a defect.
@@ -55,14 +57,16 @@ export async function checkProject(
       const dur = spec.duration || 2;
       const fps = spec.fps ?? 30;
       const steps = Math.min(Math.ceil(dur * 4), 60); // sample ~4 probes/sec, max 60
+      const seek = (tt: number) =>
+        (window as unknown as { __fc?: { renderSeek(t: number): Promise<void> } }).__fc?.renderSeek?.(tt);
       for (let i = 0; i <= steps; i++) {
         const t = (dur * i) / steps;
-        await page.evaluate(async (tt: number) => window.__fc?.renderSeek?.(tt), t);
+        await page.evaluate(seek, t);
       }
 
       // Layout probe at mid-point: elements clipped outside the composition root.
       const tMid = dur / 2;
-      await page.evaluate(async (tt: number) => window.__fc?.renderSeek?.(tt), tMid);
+      await page.evaluate(seek, tMid);
       const overflow = await page.evaluate(() => {
         const root = document.querySelector("[data-composition-id]");
         if (!root) return [];

@@ -7,8 +7,7 @@
       "node_modules/**",
       ".turbo/**",
       "coverage/**",
-      "fixtures/**/project/**",
-      "fixtures/**/golden/**",
+      "fixtures/**",
       "_analysis/**",
       "packages/runtime/src/generated/**",
       "apps/render-worker/**",
@@ -16,6 +15,12 @@
     ]
   },
   "organizeImports": { "enabled": true },
+  "overrides": [
+    {
+      "include": ["packages/runtime/src/browser.ts"],
+      "linter": { "rules": { "suspicious": { "noExplicitAny": "off" } } }
+    }
+  ],
   "formatter": {
     "enabled": true,
     "lineWidth": 110,

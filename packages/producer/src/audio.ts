@@ -60,7 +60,7 @@ function tracksFromClips(
           mi.kind === "video" && mi.attrs["data-has-audio"] !== "false" && mi.attrs.muted === undefined;
         if (!isAudio && !vidAudio) continue;
         const aOffset = Number(mi.attrs["data-audio-offset"] ?? "0") || 0;
-        const aStart = Number(mi.attrs["data-audio-start"] ?? "0") || 0;
+        const aStart = Number(mi.attrs["data-media-start"] ?? mi.attrs["data-audio-start"] ?? "0") || 0;
         jobs.push({
           src: mi.src,
           timelineStart: start + aOffset * localScale,
@@ -161,6 +161,7 @@ export async function muxAudio(
   videoPath: string,
   audioPath: string | null,
   outPath: string,
+  opts?: { audioStart?: number; audioDuration?: number },
 ): Promise<string> {
   if (!audioPath) {
     if (videoPath !== outPath) {
@@ -169,9 +170,18 @@ export async function muxAudio(
     return videoPath === outPath ? outPath : outPath;
   }
   const webm = outPath.endsWith(".webm");
+  const trim =
+    opts?.audioStart != null || opts?.audioDuration != null
+      ? [
+          "-ss",
+          (opts?.audioStart ?? 0).toFixed(6),
+          ...(opts?.audioDuration != null ? ["-t", opts.audioDuration.toFixed(6)] : []),
+        ]
+      : [];
   await runFfmpeg(ffmpeg, [
     "-i",
     videoPath,
+    ...trim,
     "-i",
     audioPath,
     "-c:v",

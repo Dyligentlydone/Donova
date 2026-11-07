@@ -48,7 +48,9 @@ const MIME: Record<string, string> = {
 async function readBody(req: import("node:http").IncomingMessage): Promise<string> {
   return new Promise((r) => {
     let d = "";
-    req.on("data", (c) => (d += c));
+    req.on("data", (c) => {
+      d += c;
+    });
     req.on("end", () => r(d));
   });
 }
@@ -60,7 +62,7 @@ function safePath(root: string, p: string): string | null {
 
 /** DOM mutation ops — byte-preserving where the change is attr-only. */
 async function applyMutation(
-  file: string,
+  _file: string,
   html: string,
   mutations: Array<Record<string, unknown>>,
 ): Promise<string> {
@@ -148,7 +150,7 @@ export async function startStudioServer(
     fileURLToPath(new URL("../src/ui/", import.meta.url)),
     fileURLToPath(new URL("../../src/ui/", import.meta.url)),
   ];
-  const uiDir = uiCandidates.find((d) => existsSync(join(d, "index.html"))) ?? uiCandidates[0]!;
+  const uiDir = uiCandidates.find((d) => existsSync(join(d, "index.html"))) ?? uiCandidates[0] ?? "";
 
   const server = createServer(async (req, res) => {
     const url = new URL(req.url ?? "/", "http://x");
@@ -219,7 +221,9 @@ export async function startStudioServer(
               fps: body.fps,
               quality: body.quality ?? "standard",
               workers: body.workers ?? 1,
-              onProgress: (d, t) => (job.progress = [d, t]),
+              onProgress: (d, t) => {
+                job.progress = [d, t];
+              },
             });
             job.status = "done";
             job.out = r.out;

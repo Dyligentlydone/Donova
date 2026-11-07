@@ -16,6 +16,12 @@ export interface RenderOpts {
   workers?: number;
   codec?: "h264" | "h265" | "vp9" | "prores";
   alpha?: boolean;
+  /** Render only [startSec, endSec) of the composition (--range). */
+  range?: { start: number; end: number };
+  /** Capture scale; 0.5 halves output resolution (draft mode). */
+  scale?: number;
+  /** Stage timings for `render --profile`. */
+  onStage?: (name: string, ms: number) => void;
   onProgress?: (done: number, total: number) => void;
 }
 
@@ -27,6 +33,8 @@ export interface RenderResult {
   width: number;
   height: number;
   beginFrame: boolean;
+  /** Stage timings, present when onStage is provided. */
+  stages?: Record<string, number>;
 }
 
 const QUALITY_CRF = { draft: 26, standard: 18, high: 12 } as const;
@@ -43,11 +51,30 @@ export async function render(opts: RenderOpts): Promise<RenderResult> {
   const timeline = resolveTimeline(spec);
   const plan = planRender(spec, timeline, { fps: opts.fps });
 
-  const { ffmpeg } = await locateFfmpeg();
+  const { ffmpeg, ffprobe } = await locateFfmpeg();
+  const stages: Record<string, number> = {};
+  const stage = async <T>(name: string, fn: () => Promise<T>): Promise<T> => {
+    const t0 = Date.now();
+    const r = await fn();
+    stages[name] = (stages[name] ?? 0) + (Date.now() - t0);
+    opts.onStage?.(name, stages[name]);
+    return r;
+  };
 
-  // Deterministic media prep: extract per-frame PNGs for every <video> clip so
+  // Deterministic media prep: extract per-frame images for every <video> clip so
   // capture never relies on Chrome's video seeking (03 §5).
-  await prepareVideoFrames(ffmpeg, projectDir, spec, plan.fps);
+  await stage("extract-frames", () => prepareVideoFrames(ffmpeg, ffprobe, projectDir, spec, plan.fps));
+
+  // --range: seconds → frame window on the render plan.
+  const frameRange = opts.range
+    ? {
+        start: Math.max(0, Math.floor(opts.range.start * plan.fps)),
+        end: Math.min(plan.totalFrames, Math.ceil(opts.range.end * plan.fps)),
+      }
+    : undefined;
+  const scale = opts.scale && opts.scale > 0 && opts.scale < 1 ? opts.scale : undefined;
+  const encW = scale ? Math.round(spec.width * scale) : spec.width;
+  const encH = scale ? Math.round(spec.height * scale) : spec.height;
 
   const server = await startFileServer(projectDir);
   try {
@@ -61,38 +88,53 @@ export async function render(opts: RenderOpts): Promise<RenderResult> {
     if (workers > 1) {
       const { renderParallel } = await import("./parallel.js");
       const workDir = join(projectDir, ".framecraft", `render-${Date.now()}`);
-      const videoPath = await renderParallel({
-        ffmpeg,
-        serverUrl: server.url,
-        composition: compFile,
-        spec,
-        plan,
-        workers,
-        workDir,
-        encoder: { crf: QUALITY_CRF[quality], codec, alpha: opts.alpha },
-        onProgress: opts.onProgress,
-      });
+      const videoPath = await stage("capture+encode", () =>
+        renderParallel({
+          ffmpeg,
+          serverUrl: server.url,
+          composition: compFile,
+          spec,
+          plan,
+          workers,
+          workDir,
+          range: frameRange,
+          scale,
+          encoder: { crf: QUALITY_CRF[quality], codec, alpha: opts.alpha },
+          onProgress: opts.onProgress,
+        }),
+      );
       const { copyFile } = await import("node:fs/promises");
       await copyFile(videoPath, videoOnly);
-      frames = plan.totalFrames;
+      frames = frameRange ? frameRange.end - frameRange.start : plan.totalFrames;
       beginFrame = false;
     } else {
-      const res = await renderVideoOnly({
-        url: `${server.url}/${compFile}`,
-        duration: spec.duration,
-        fps: plan.fps,
-        width: spec.width,
-        height: spec.height,
-        ffmpeg,
-        out: videoOnly,
-        encoder: { crf: QUALITY_CRF[quality], codec, alpha: opts.alpha },
-        // JPEG q80 is HyperFrames' default capture; PNG only when alpha is needed.
-        capture: {
-          format: opts.alpha ? "png" : "jpeg",
-          jpegQuality: quality === "draft" ? 70 : quality === "high" ? 92 : 85,
-        },
-        onProgress: opts.onProgress,
-      });
+      const res = await stage("capture+encode", () =>
+        renderVideoOnly({
+          url: `${server.url}/${compFile}`,
+          duration: spec.duration,
+          fps: plan.fps,
+          width: spec.width,
+          height: spec.height,
+          ffmpeg,
+          out: videoOnly,
+          startFrame: frameRange?.start,
+          endFrame: frameRange?.end,
+          encoder: {
+            crf: QUALITY_CRF[quality],
+            codec,
+            alpha: opts.alpha,
+          },
+          encoderWidth: encW,
+          encoderHeight: encH,
+          // JPEG q80 is HyperFrames' default capture; PNG only when alpha is needed.
+          capture: {
+            format: opts.alpha ? "png" : "jpeg",
+            jpegQuality: quality === "draft" ? 70 : quality === "high" ? 92 : 85,
+            scale,
+          },
+          onProgress: opts.onProgress,
+        }),
+      );
       frames = res.frames;
       beginFrame = res.beginFrame;
     }
@@ -100,7 +142,9 @@ export async function render(opts: RenderOpts): Promise<RenderResult> {
     // Audio: mix all audio-bearing clips into one track, mux with video.
     const jobs = tracksFromClips(spec);
     const mixed = jobs.length
-      ? await mixAudio(ffmpeg, projectDir, jobs, join(projectDir, ".framecraft", "audio-mix.aac"))
+      ? await stage("audio-mix", () =>
+          mixAudio(ffmpeg, projectDir, jobs, join(projectDir, ".framecraft", "audio-mix.aac")),
+        )
       : null;
 
     // Format fan-out (04 §7): mp4/webm/mov go through muxAudio; the rest are
@@ -143,17 +187,24 @@ export async function render(opts: RenderOpts): Promise<RenderResult> {
         opts.out,
       ]);
     } else {
-      await muxAudio(ffmpeg, videoOnly, mixed, opts.out);
+      await stage("mux", () =>
+        muxAudio(ffmpeg, videoOnly, mixed, opts.out, {
+          audioStart: opts.range?.start,
+          audioDuration: frameRange ? (frameRange.end - frameRange.start) / plan.fps : undefined,
+        }),
+      );
     }
 
+    const rangeSecs = frameRange ? (frameRange.end - frameRange.start) / plan.fps : spec.duration;
     return {
       out: opts.out,
       frames,
       fps: plan.fps,
-      duration: spec.duration,
-      width: spec.width,
-      height: spec.height,
+      duration: rangeSecs,
+      width: encW,
+      height: encH,
       beginFrame,
+      stages: Object.keys(stages).length ? stages : undefined,
     };
   } finally {
     await server.close();

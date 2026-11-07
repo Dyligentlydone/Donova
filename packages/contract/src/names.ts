@@ -73,6 +73,9 @@ export const ATTR = {
   track: "data-track",
   trimStart: "data-trim-start",
   trimEnd: "data-trim-end",
+  /** Canonical "seconds into the source media" attr (MV0). `data-trim-start`
+   *  and `data-audio-start` are read as legacy aliases. */
+  mediaStart: "data-media-start",
 } as const;
 
 export const CLIP_CLASS = "clip" as const;

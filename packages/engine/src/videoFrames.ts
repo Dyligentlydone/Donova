@@ -2,7 +2,7 @@ import { createHash } from "node:crypto";
 import { mkdir, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import type { CompositionSpec } from "@framecraft/contract";
-import { runFfmpeg } from "./ffmpeg.js";
+import { probe, runFfmpeg } from "./ffmpeg.js";
 
 /**
  * Deterministic <video> handling (03 §5).
@@ -42,11 +42,29 @@ export interface VideoMap {
 
 const CACHE_DIRNAME = ".framecraft";
 /** Opaque footage → JPG (fast decode/encode, ~10x smaller than PNG), as in
- *  HyperFrames videoFrameExtractor's `auto` format. */
+ *  HyperFrames videoFrameExtractor's `auto` format. Alpha footage → PNG. */
 const FRAME_EXT = "jpg";
+const ALPHA_FRAME_EXT = "png";
+
+/** Pixel formats carrying an alpha channel. */
+const ALPHA_PIXFMT = /^(yuva|rgba|bgra|argb|abgr|gbrap?|ya8|ya16|ayuv|pal8)/;
+
+async function sourceHasAlpha(ffprobe: string, srcPath: string): Promise<boolean> {
+  try {
+    const p = await probe(ffprobe, srcPath);
+    if (p.pixFmt && ALPHA_PIXFMT.test(p.pixFmt)) return true;
+    // VP9 stores alpha in a side channel; ffprobe exposes it via codec/pix_fmt
+    // only in some builds — treat vp9-in-webm cautiously by checking pix_fmt suffix.
+    if (p.codec === "vp9" && (p.pixFmt ?? "").includes("a")) return true;
+    return false;
+  } catch {
+    return false;
+  }
+}
 
 export async function prepareVideoFrames(
   ffmpeg: string,
+  ffprobe: string,
   projectDir: string,
   spec: CompositionSpec,
   fps: number,
@@ -96,35 +114,42 @@ export async function prepareVideoFrames(
     const absDir = join(outBase, `v${vIdx}-${hash}`);
     await mkdir(absDir, { recursive: true });
 
-    const trimStart = Number(job.attrs["data-trim-start"] ?? job.audioStart ?? 0) || 0;
+    const trimStart =
+      Number(job.attrs["data-media-start"] ?? job.attrs["data-trim-start"] ?? job.audioStart ?? 0) || 0;
     const speed = Number(job.attrs["data-speed"] ?? "1") || 1;
     const duration = job.window.duration;
     const frameCount = Math.max(1, Math.ceil(duration * fps));
+    const srcPath = join(projectDir, src);
+    const alpha = await sourceHasAlpha(ffprobe, srcPath);
+    const ext = alpha ? ALPHA_FRAME_EXT : FRAME_EXT;
 
     // Extract exactly the frames needed: media time [trimStart, trimStart + duration*speed].
     const mediaDur = duration * speed;
+    const p = await probe(ffprobe, srcPath).catch(() => ({ codec: undefined }));
+    // VP9 alpha requires the libvpx decoder (native vp9 drops the alpha plane).
+    const decoderArgs = alpha && p.codec === "vp9" ? ["-c:v", "libvpx-vp9"] : [];
     await runFfmpeg(ffmpeg, [
+      ...decoderArgs,
       "-ss",
       trimStart.toFixed(6),
       "-t",
       mediaDur.toFixed(6),
       "-i",
-      join(projectDir, src),
+      srcPath,
       "-vf",
       `fps=${fps}`,
-      "-q:v",
-      "2",
+      ...(alpha ? [] : ["-q:v", "2"]),
       "-start_number",
       "0",
       "-f",
       "image2",
-      join(absDir, `f%06d.${FRAME_EXT}`),
+      join(absDir, `f%06d.${ext}`),
     ]);
 
     entries.push({
       selector: `video[src="${src}"]`,
       index: job.mediaIndex,
-      ext: FRAME_EXT,
+      ext,
       dir,
       fps,
       start: job.window.start,

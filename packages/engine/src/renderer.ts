@@ -24,7 +24,12 @@ export interface RenderToFramesOpts {
     format?: "png" | "jpeg";
     jpegQuality?: number;
     disableBeginFrame?: boolean;
+    /** Output scale (device scale factor). 0.5 → half-res draft frames. */
+    scale?: number;
   };
+  /** Encoder pixel dims when they differ from viewport (scaled capture). */
+  encoderWidth?: number;
+  encoderHeight?: number;
   /** If true, show the (headed) browser — debugging only. */
   headed?: boolean;
   /** Extra flags appended to deterministicFlags(). */
@@ -103,7 +108,10 @@ export async function openFrameSource(opts: RenderToFramesOpts): Promise<FrameSo
   const browser: Browser = await puppeteer.launch({
     executablePath: chrome.executablePath,
     headless: headlessMode,
-    args: [...(beginFrameOk ? deterministicFlags() : screenshotModeFlags()), ...(opts.extraChromeFlags ?? [])],
+    args: [
+      ...(beginFrameOk ? deterministicFlags() : screenshotModeFlags()),
+      ...(opts.extraChromeFlags ?? []),
+    ],
     userDataDir: profileDirFor(`${opts.url}#${opts.startFrame ?? 0}`),
     defaultViewport: { width: opts.width, height: opts.height, deviceScaleFactor: 1 },
     protocolTimeout: 120_000,
@@ -123,6 +131,7 @@ export async function openFrameSource(opts: RenderToFramesOpts): Promise<FrameSo
     format: opts.capture?.format ?? "jpeg",
     jpegQuality: opts.capture?.jpegQuality,
     disableBeginFrame: opts.capture?.disableBeginFrame,
+    scale: opts.capture?.scale,
   });
   await capture.init();
   if (beginFrameOk) await capture.enableBeginFrame();
@@ -178,8 +187,8 @@ export async function renderVideoOnly(
     ffmpeg: opts.ffmpeg,
     out: opts.out,
     fps: opts.fps,
-    width: opts.width,
-    height: opts.height,
+    width: opts.encoderWidth ?? opts.width,
+    height: opts.encoderHeight ?? opts.height,
     crf: opts.encoder?.crf,
     preset: opts.encoder?.preset,
     codec: opts.encoder?.codec,

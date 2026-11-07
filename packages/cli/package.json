@@ -35,6 +35,7 @@
     "@framecraft/engine": "workspace:*",
     "@framecraft/runtime": "workspace:*",
     "puppeteer-core": "^24.10.0",
-    "@framecraft/studio-server": "workspace:*"
+    "@framecraft/studio-server": "workspace:*",
+    "@framecraft/media": "workspace:*"
   }
 }

@@ -6,6 +6,8 @@ export interface CaptureOpts {
   fps: number;
   format?: "png" | "jpeg";
   jpegQuality?: number;
+  /** Output scale (device scale factor). 0.5 → half-res frames (draft mode). */
+  scale?: number;
   /** Force screenshot mode even when beginFrame is available. */
   disableBeginFrame?: boolean;
 }
@@ -95,7 +97,7 @@ export class CaptureSession {
     await this.page.setViewport({
       width: this.opts.width,
       height: this.opts.height,
-      deviceScaleFactor: 1,
+      deviceScaleFactor: this.opts.scale ?? 1,
     });
     this.intervalMs = Math.round(1000 / this.opts.fps);
     this.cdp = await this.page.createCDPSession();
@@ -117,6 +119,8 @@ export class CaptureSession {
 
   /** Seek page to time, then capture one frame. */
   async captureFrame(t: number, onFrame: FrameCallback): Promise<void> {
+    const profile = process.env.FRAMECRAFT_PROFILE_CAPTURE === "1";
+    const t0 = performance.now();
     // Drive the runtime seek.
     await this.page.evaluate(async (tt: number) => {
       const w = window as unknown as {
@@ -132,6 +136,14 @@ export class CaptureSession {
       .catch(() => {
         /* proceed anyway after timeout; lint surface will catch instability */
       });
+    if (profile) {
+      const prof = await this.page.evaluate(
+        () => (window as unknown as { __fc?: { _seekProfile?: Record<string, number> } }).__fc?._seekProfile,
+      );
+      process.stderr.write(
+        `\n[seek] frame ${this.frameNo} ${JSON.stringify(prof, (_k, v) => (typeof v === "number" ? Math.round(v) : v))}\n`,
+      );
+    }
 
     const start = performance.now();
     let data: Buffer;
@@ -157,6 +169,13 @@ export class CaptureSession {
       );
     }
     const durationUs = Math.round((performance.now() - start) * 1000);
+    if (profile) {
+      const shot = performance.now() - start;
+      const total = performance.now() - t0;
+      process.stderr.write(
+        `\n[capture] frame ${this.frameNo} t=${t.toFixed(2)} total=${total.toFixed(0)}ms shot=${shot.toFixed(0)}ms\n`,
+      );
+    }
     await onFrame({ frame: this.frameNo++, data, durationUs });
   }
 

@@ -88,7 +88,8 @@ export function lintHtml(
   // --- Timeline registration ---
   if (
     spec.isRoot &&
-    spec.clips.some((c) => c.attrs["data-fc-motion"] == null) &&
+    spec.clips.length > 0 &&
+    !spec.clips.some((c) => c.attrs["data-fc-motion"] != null) &&
     spec.timelines.length === 0
   ) {
     // Timed clips but no animation runtime at all is suspicious only when there are

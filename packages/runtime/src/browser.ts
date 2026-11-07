@@ -507,6 +507,11 @@ function rootTimelines(): any[] {
 }
 
 async function renderSeek(t: number): Promise<void> {
+  const prof: Record<string, number> = {};
+  const mark = (name: string, t0: number) => {
+    prof[name] = (prof[name] ?? 0) + (performance.now() - t0);
+  };
+  let t0 = performance.now();
   currentTime = t;
   const frame = Math.round(t * fps);
 
@@ -529,24 +534,43 @@ async function renderSeek(t: number): Promise<void> {
 
   // 3. Clip visibility + fades.
   applyVisibility(t);
+  mark("visibility", t0);
 
   // 4. Video frame overlays (deterministic path) + media seek.
+  t0 = performance.now();
   await updateVideoFrames(t);
+  mark("videoFrames", t0);
+  t0 = performance.now();
   await seekMedia(t);
+  mark("seekMedia", t0);
 
   // 5. Readiness.
+  t0 = performance.now();
   await waitReady();
+  mark("waitReady", t0);
+  (w.__fc as Record<string, unknown>)._seekProfile = prof;
 }
 
 async function waitReady(): Promise<void> {
   w.__renderReady = false;
   try {
-    if (document.fonts?.ready) await Promise.race([document.fonts.ready, sleep(2000)]);
+    // document.fonts.ready can hang forever in chrome-headless-shell even when
+    // nothing is loading — only await it while fonts are actually loading, and
+    // bound the wait tightly. (MV7: this was a 2s/frame stall.)
+    const fonts = document.fonts;
+    if (fonts && fonts.status === "loading") {
+      await Promise.race([fonts.ready, sleep(500)]);
+    }
   } catch {
     /* ignore */
   }
-  // Images inside the composition must be decoded.
-  const imgs = [...document.querySelectorAll("img")].filter((i) => !i.complete || i.naturalWidth === 0);
+  // Images inside the composition must be decoded. Only wait on images that
+  // actually have a source — an <img> with no src (e.g. an off-window video
+  // frame overlay) reports naturalWidth 0 forever and used to stall every
+  // frame for the full 2s timeout (MV7).
+  const imgs = [...document.querySelectorAll("img")].filter(
+    (i) => i.getAttribute("src") && !i.complete,
+  );
   if (imgs.length) {
     await Promise.race([
       Promise.all(

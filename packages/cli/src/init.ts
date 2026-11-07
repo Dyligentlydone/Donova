@@ -1,10 +1,18 @@
 import { mkdir, writeFile } from "node:fs/promises";
-import { join, resolve } from "node:path";
+import { basename, join, resolve } from "node:path";
 
 /** `framecraft init` — scaffold a new project (06 §init). */
 export async function initProject(
   dir: string,
-  opts?: { name?: string; width?: number; height?: number; duration?: number; fps?: number },
+  opts?: {
+    name?: string;
+    width?: number;
+    height?: number;
+    duration?: number;
+    fps?: number;
+    /** Footage project: copy media into assets/, scaffold segments (17 §3.6). */
+    footage?: string;
+  },
 ): Promise<string[]> {
   const root = resolve(dir);
   const name = opts?.name ?? "framecraft-project";
@@ -15,6 +23,63 @@ export async function initProject(
   await mkdir(root, { recursive: true });
   await mkdir(join(root, "compositions"), { recursive: true });
   await mkdir(join(root, "media"), { recursive: true });
+
+  if (opts?.footage) {
+    // Footage project: copy media under assets/ so the file server + agent
+    // tools see it inside the project root (17 §3.6).
+    const mediaAbs = resolve(opts.footage);
+    const assetsDir = join(root, "assets");
+    await mkdir(assetsDir, { recursive: true });
+    const { copyFile } = await import("node:fs/promises");
+    await copyFile(mediaAbs, join(assetsDir, basename(mediaAbs)));
+
+    const { locateFfmpeg, probe } = await import("@framecraft/engine");
+    const { scaffoldFootage } = await import("@framecraft/media");
+    const { ffprobe } = await locateFfmpeg();
+    const p = await probe(ffprobe, mediaAbs);
+    const sw = p.width ?? 1920;
+    const sh = p.height ?? 1080;
+    const html = scaffoldFootage({
+      source: `assets/${basename(mediaAbs)}`,
+      sourceWidth: sw,
+      sourceHeight: sh,
+      outWidth: opts?.width ?? sw,
+      outHeight: opts?.height ?? sh,
+      plan: {
+        version: 1,
+        source: basename(mediaAbs),
+        silenceThreshold: 0,
+        pad: 0,
+        sourceDuration: p.duration,
+        duration: p.duration,
+        removed: 0,
+        segments: [
+          {
+            srcStart: 0,
+            srcEnd: p.duration,
+            compStart: 0,
+            duration: p.duration,
+            wordStart: 0,
+            wordEnd: -1,
+          },
+        ],
+      },
+      fps,
+    });
+    await writeFile(join(root, "index.html"), html);
+    const config = {
+      $schema: "https://framecraft.dev/schemas/project.schema.json",
+      id: name,
+      name,
+      composition: "index.html",
+      fps,
+      width: opts?.width ?? sw,
+      height: opts?.height ?? sh,
+      render: { format: "mp4", quality: "standard", codec: "h264", alpha: false },
+    };
+    await writeFile(join(root, "framecraft.json"), `${JSON.stringify(config, null, 2)}\n`);
+    return ["index.html", "framecraft.json", `assets/${basename(mediaAbs)}`];
+  }
 
   const html = `<!doctype html>
 <html>
