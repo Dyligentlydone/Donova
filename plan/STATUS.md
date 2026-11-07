@@ -1,6 +1,40 @@
 # STATUS — what exists today (read before building)
 
-Last updated: 2026-11-07 (fix pass — all P0s + most P1s resolved; see §0). Update this file whenever you finish an MV task.
+Last updated: 2026-11-07 (HyperFrames Studio plugged in — see §-1). Update this file whenever you finish an MV task.
+
+## -1. HyperFrames Studio integration (architecture decision)
+
+**Decision: Framecraft adopts HyperFrames Studio (Apache-2.0) as the editing surface** instead of growing
+`@framecraft/studio-server`'s ~300-line UI. Framecraft keeps the differentiators: the footage-first
+pipeline (`transcribe → cuts → scaffold → captions → render`), the in-app agent concept, `--prompt` vocab
+stitching, Parakeet engine, clean defaults, self-owned SFX.
+
+**Verified 2026-11-07:** `hyperframes preview /tmp/fc-e2e` boots on a Framecraft project with zero
+adaptation — preview renders footage+captions, timeline shows thumbnails/waveforms, playback+seek+caption
+sync all work headlessly. Their project contract only requires `index.html`; our attrs are already compatible.
+
+**What was plugged in:** `hyperframes@0.9.20` is now a dep of `@framecraft/cli`.
+`framecraft studio [dir]` → delegates to `hyperframes preview --background` (telemetry off via
+`HYPERFRAMES_NO_TELEMETRY=1` + `DO_NOT_TRACK=1`). Flags: `--port`, `--stop`, `--no-open`, `--local` (legacy
+studio). Files: `packages/cli/src/studio.ts`, `cli.ts` studioCmd.
+
+**Known deltas (7 lint errors on fc-e2e — non-blocking, Studio tolerates):**
+- `missing_timeline_registry` — we don't register `window.__timelines` (our runtime uses `__fc`)
+- `host_missing_composition_id` — our `data-composition-src` hosts lack `data-composition-id`
+- `media_missing_data_start` — `<video>` inside timed clips lacks own `data-start`/`data-duration`
+- `root_missing_composition_id` — our block files lack root `data-composition-id`/`data-width`/`data-height`
+
+**Next steps for full conformance:** emit `data-composition-id` on roots/hosts in `init`/`scaffold`/`add`;
+decide whether our runtime should also register `window.__timelines` (unlocks `hyperframes check`/their
+render pipeline); evaluate whether videos need own `data-start` (may conflict with our clip-wrapper model —
+their lint suggests hoisting videos to stage children).
+
+**Not wired yet (HeyGen-coupled, needs shims/strip later):** their in-Studio agent ("Describe a change"),
+Export button, desktop-app handoff, Capture panel, auth/billing surfaces. Telemetry is env-disabled when
+spawned through `framecraft studio`.
+
+**License notes:** HyperFrames is Apache-2.0 (verified in source + package.json). Vendoring/forking later is
+legal with NOTICE preservation. Their Studio UI shows HeyGen branding until we vendor+rebrand.
 
 The original plan (`00`–`16`) describes a from-scratch build. A first working version
 was built quickly (≈ 4.2k lines of TS) and **partially** covers M0–M6. Most tasks in

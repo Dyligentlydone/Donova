@@ -1,4 +1,5 @@
 import { cpus } from "node:os";
+import { resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { CLI_NAME, VERSION } from "@framecraft/contract";
 import { render } from "@framecraft/producer";
@@ -159,18 +160,31 @@ const previewCmd = defineCommand({
 });
 
 const studioCmd = defineCommand({
-  meta: { name: "studio", description: "Open the Studio editor" },
+  meta: { name: "studio", description: "Open the Studio editor (HyperFrames-powered)" },
   args: {
     dir: { type: "positional", default: "." },
     port: { type: "string", default: "0" },
+    local: { type: "boolean", description: "use the legacy built-in studio", default: false },
+    stop: { type: "boolean", description: "stop the background studio", default: false },
+    "no-open": { type: "boolean", description: "don't open the browser", default: false },
   },
   async run({ args }) {
-    const { url, compositionUrl } = await startStudioServer(String(args.dir), {
+    const dir = resolve(String(args.dir));
+    if (args.local) {
+      const { url, compositionUrl } = await startStudioServer(dir, {
+        port: Number(args.port) || 0,
+      });
+      console.log(`studio:   ${url}`);
+      console.log(`serving:  ${compositionUrl}`);
+      await new Promise(() => {});
+      return;
+    }
+    const { launchHyperframesStudio } = await import("./studio.js");
+    await launchHyperframesStudio(dir, {
       port: Number(args.port) || 0,
+      stop: Boolean(args.stop),
+      noOpen: Boolean(args["no-open"]),
     });
-    console.log(`studio:   ${url}`);
-    console.log(`serving:  ${compositionUrl}`);
-    await new Promise(() => {});
   },
 });
 
