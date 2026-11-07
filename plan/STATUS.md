@@ -2,18 +2,28 @@
 
 Last updated: 2026-11-07 (Studio rebranded to "donova" — see §-5). Update this file whenever you finish an MV task.
 
-## -5. Studio rebrand — first pass (donova)
+## -5. Studio rebrand (donova) — v3 patcher, de-HeyGen surface pass
 
 `packages/cli/src/rebrand.ts` patches the installed hyperframes Studio bundle on every `fc studio`
-launch (idempotent `donova-rebrand` marker): injects a script into `dist/studio/index.html` that
-replaces the SVG wordmark (`svg[aria-label="Hyperframes"]` — compiled JSX paths, not text) with a
-styled lowercase **donova** span, retitles the page to "Donova Studio", and overwrites `favicon.svg`
-with a "d" mark. Verified headlessly at localhost:3005 — top bar reads "donova | fc-e2e".
+launch (versioned `donova-rebrand-v3` marker, re-patches when the patcher changes): injects a script
+into `dist/studio/index.html` that
 
-Why a DOM patcher instead of bundle surgery: the wordmark is minified React JSX, not a string; the
-injected script survives any bundle shape and self-heals after package reinstall. **This is the item-3
-stepping stone** — proper vendoring/rebrand (strip HeyGen auth/export/desktop surfaces, wire our agent)
-still supersedes it.
+- replaces the SVG wordmark (`svg[aria-label="Hyperframes"]` — compiled JSX paths, not text) with a
+  styled lowercase **donova** span
+- retitles the page to "Donova Studio" and overwrites `favicon.svg` with a "d" mark
+- **removes HeyGen surfaces entirely**: the "Open in desktop app" dropdown button, its menu items,
+  and the `aria-label="Get the desktop app"` trigger are `remove()`d — not hidden
+- rewrites any remaining `HeyGen`/`HyperFrames` rendered text to `Donova` via a TreeWalker text-node
+  pass (covers dialogs/toasts/menus rendered later; skips script/style/code/pre)
+
+A MutationObserver re-scrubs added nodes; each added node is checked **itself and** its descendants
+(v2 bug: React mounts controls as direct additions — a descendants-only scan misses them). Verified
+headlessly at localhost:3005: top bar reads "donova | fc-e2e", zero HeyGen text nodes, "Open in
+desktop app" absent, Window menu holds only panel toggles, **Export kept** (it's a local render
+button, not HeyGen). Why a DOM patcher instead of bundle surgery: the wordmark is minified React JSX,
+not a string; the injected script survives any bundle shape and self-heals after package reinstall.
+**Still the item-3 stepping stone** — proper vendoring (strip auth/billing/cloud routes server-side,
+wire our agent into "Describe a change") supersedes it.
 
 ## -4. Feature-parity pass (everything non-gated plugged in)
 
