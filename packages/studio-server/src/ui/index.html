@@ -22,7 +22,7 @@
   .track { position:absolute; height:26px; border-radius:4px; background:#2d3a4f; border:1px solid #3d4d68; overflow:hidden;
            white-space:nowrap; text-overflow:ellipsis; font-size:10px; padding:5px 6px; cursor:pointer; color:#cfd8e3; }
   .track.sel { outline:2px solid var(--acc); }
-  #ruler { position:relative; height:20px; border-bottom:1px solid var(--line); }
+  #ruler { position:relative; height:20px; border-bottom:1px solid var(--line); cursor:ew-resize; }
   .tick { position:absolute; top:12px; font-size:9px; color:var(--dim); border-left:1px solid var(--line); padding-left:3px; }
   #cursor { position:absolute; top:0; bottom:0; width:1px; background:var(--acc); pointer-events:none; }
   #bar { padding:6px 10px; display:flex; gap:8px; align-items:center; }
@@ -94,6 +94,14 @@ let spec=null, compUrl='', selected=null, dur=1, playing=false, raf=0, t=0;
 const frame=$('#frame');
 const px = (s) => 60 + s*80; // 80px per second
 const seek = async (tt) => { t=Math.max(0,Math.min(tt,dur)); await frame.contentWindow.__fc?.renderSeek(t); $('#tc').textContent=t.toFixed(2)+'s'; $('#cursor').style.left=px(t)+'px'; };
+// Seeks coalesce: while one renderSeek is in flight only the newest target is kept,
+// so dragging the playhead never queues a backlog of stale frames.
+let seekBusy=false, pendingT=null;
+const seekTo = async (tt) => {
+  pendingT=Math.max(0,Math.min(tt,dur)); if(seekBusy)return; seekBusy=true;
+  while(pendingT!==null){ const v=pendingT; pendingT=null; await seek(v); }
+  seekBusy=false;
+};
 async function loadSpec(){
   const r = await fetch('/api/spec?file=index.html').then(r=>r.json());
   spec = r.spec; compUrl = r.compositionUrl;
@@ -106,7 +114,8 @@ frame.addEventListener('load', async () => {
   await new Promise(r=>{const i=setInterval(()=>{if(frame.contentWindow.__playerReady){clearInterval(i);r();}},50);});
   const st = Math.min($('#canvas').clientWidth/spec.width*.9, $('#canvas').clientHeight/spec.height*.9, 1);
   $('#stage').style.transform=`scale(${st})`; $('#stage').style.width=spec.width+'px'; $('#stage').style.height=spec.height+'px';
-  seek(0);
+  // The runtime boots at t=0 before __playerReady — no initial seek needed here
+  // (an extra one could land after an early user click and stomp it).
 });
 function buildTimeline(){
   const r=$('#ruler'), tr=$('#tracks'); r.innerHTML=''; tr.innerHTML='';
@@ -150,11 +159,27 @@ $('#apply').onclick=async()=>{
   await fetch('/api/mutation',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({file:'index.html',mutations})});
   frame.contentWindow.location.reload(); loadSpec();
 };
-$('#play').onclick=()=>{
+$('#play').onclick=()=>togglePlay();
+function togglePlay(){
   playing=!playing; $('#play').textContent=playing?'⏸':'▶'; let last=performance.now();
-  const tick=async(n)=>{ if(!playing)return; const dt=(n-last)/1000; last=n; await seek(t+dt>dur?0:t+dt); raf=requestAnimationFrame(tick); };
+  const tick=async(n)=>{ if(!playing)return; const dt=(n-last)/1000; last=n; await seekTo(t+dt>dur?0:t+dt); if(playing)raf=requestAnimationFrame(tick); };
   if(playing)raf=requestAnimationFrame(tick); else cancelAnimationFrame(raf);
-};
+}
+document.addEventListener('keydown',(e)=>{
+  if(e.code==='Space' && !/^(INPUT|TEXTAREA|SELECT)$/.test(e.target.tagName)){ e.preventDefault(); togglePlay(); }
+});
+// Scrub: press anywhere on the ruler or empty track area to move the playhead;
+// drag to scrub continuously. Clip blocks keep their own click/drag handlers.
+const tl=$('#timeline');
+const tlT=(e)=>{ const r=tl.getBoundingClientRect(); return (e.clientX-r.left+tl.scrollLeft-60)/80; };
+tl.addEventListener('mousedown',(e)=>{
+  if(e.target.closest('.track,#bar'))return;
+  e.preventDefault();
+  seekTo(tlT(e));
+  const mv=(ev)=>seekTo(tlT(ev));
+  const up=()=>{ document.removeEventListener('mousemove',mv); document.removeEventListener('mouseup',up); };
+  document.addEventListener('mousemove',mv); document.addEventListener('mouseup',up);
+});
 $('#render').onclick=async()=>{
   $('#status').textContent='rendering…';
   const {id}=await fetch('/api/render',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({out:'out.mp4'})}).then(r=>r.json());

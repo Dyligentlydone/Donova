@@ -736,8 +736,11 @@ async function boot(): Promise<void> {
   buildMotionAnims();
   await loadVideoMap();
 
+  // Boot lands at t=0 before anything observes readiness — hosts may seek from
+  // here without racing an initial paint.
+  await renderSeek(0);
+
   w.__playerReady = true;
-  w.__renderReady = false;
 }
 
 /* --------------------------------- exports -------------------------------- */
