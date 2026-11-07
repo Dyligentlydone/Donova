@@ -405,6 +405,7 @@ interface VideoOverlay {
 const videoOverlays: VideoOverlay[] = [];
 
 async function loadVideoMap(): Promise<void> {
+  if (document.querySelector("video") == null) return;
   try {
     const res = await fetch(".framecraft/video-map.json");
     if (!res.ok) return;
@@ -565,6 +566,15 @@ async function boot(): Promise<void> {
   const root = document.querySelector("[data-composition-id]");
   if (root) {
     fps = num(attr(root, "data-fps"), num(attr(document.body, "data-fps"), 30)) || 30;
+    // The composition root owns its pixel box — clips and absolutely
+    // positioned children resolve against it, not the viewport.
+    const el = root as HTMLElement;
+    const cw = num(attr(el, "data-width"), 0);
+    const ch = num(attr(el, "data-height"), 0);
+    if (getComputedStyle(el).position === "static") el.style.position = "relative";
+    if (cw > 0) el.style.width = `${cw}px`;
+    if (ch > 0) el.style.height = `${ch}px`;
+    el.style.overflow = "hidden";
   }
 
   // Register authored timelines with adapters.

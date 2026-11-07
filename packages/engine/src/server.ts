@@ -57,7 +57,9 @@ export async function startFileServer(root: string): Promise<FileServer> {
         return;
       }
       if (!existsSync(file) || !statSync(file).isFile()) {
-        res.writeHead(404).end("not found");
+        // .framecraft/ is internal render cache — absence is a normal state
+        // (check/preview run without it) and must not noise the console.
+        res.writeHead(path.startsWith(`${sep}.framecraft`) ? 204 : 404).end();
         return;
       }
       const size = statSync(file).size;

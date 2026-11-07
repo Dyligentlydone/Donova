@@ -2,6 +2,7 @@ import { createReadStream, existsSync } from "node:fs";
 import { mkdir, readFile, readdir, writeFile } from "node:fs/promises";
 import { type Server, createServer } from "node:http";
 import { extname, join, normalize, resolve, sep } from "node:path";
+import { fileURLToPath } from "node:url";
 import { parseCompositionHtml } from "@framecraft/contract";
 import { startFileServer } from "@framecraft/engine";
 import { lintHtml } from "@framecraft/lint";
@@ -141,7 +142,13 @@ export async function startStudioServer(
 ): Promise<{ url: string; server: Server; compositionUrl: string }> {
   const root = resolve(projectDir);
   const compServer = await startFileServer(root); // serves the raw project for the iframe
-  const uiDir = new URL("../ui/", import.meta.url).pathname;
+  // UI lives in src/ui during dev; dist/ui when packaged. Check both.
+  const uiCandidates = [
+    fileURLToPath(new URL("../ui/", import.meta.url)),
+    fileURLToPath(new URL("../src/ui/", import.meta.url)),
+    fileURLToPath(new URL("../../src/ui/", import.meta.url)),
+  ];
+  const uiDir = uiCandidates.find((d) => existsSync(join(d, "index.html"))) ?? uiCandidates[0]!;
 
   const server = createServer(async (req, res) => {
     const url = new URL(req.url ?? "/", "http://x");

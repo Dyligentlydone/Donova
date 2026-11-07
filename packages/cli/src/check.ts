@@ -41,7 +41,11 @@ export async function checkProject(
       const page = await browser.newPage();
       page.on("pageerror", (e) => runtimeErrors.push(`pageerror: ${e.message}`));
       page.on("console", (m) => {
-        if (m.type() === "error") runtimeErrors.push(`console.error: ${m.text()}`);
+        if (m.type() !== "error") return;
+        // Browsers auto-request /favicon.ico; a missing one is not a defect.
+        const loc = m.location()?.url ?? "";
+        if (loc.endsWith("/favicon.ico")) return;
+        runtimeErrors.push(`console.error: ${m.text()}`);
       });
       await page.goto(`${server.url}/${composition}`, { waitUntil: "load", timeout: 30_000 });
       await page.evaluate(getRuntimeSource());
