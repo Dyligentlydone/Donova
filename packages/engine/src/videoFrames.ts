@@ -15,8 +15,10 @@ import { runFfmpeg } from "./ffmpeg.js";
  */
 
 export interface VideoMapEntry {
-  /** CSS selector matching the <video> element (src-based). */
+  /** CSS selector matching the <video> element (src-based, fallback). */
   selector: string;
+  /** Index among all <video> elements in document order (authoritative). */
+  index?: number;
   /** Directory of extracted frames, relative to project root (URL path). */
   dir: string;
   fps: number;
@@ -55,6 +57,7 @@ export async function prepareVideoFrames(
     attrs: Record<string, string>;
     window: { start: number; duration: number };
     audioStart?: number;
+    mediaIndex?: number;
   }> = [];
   for (const clip of spec.clips) {
     if (clip.media.kind === "video" && clip.media.src) {
@@ -63,6 +66,7 @@ export async function prepareVideoFrames(
         attrs: clip.attrs,
         window: { start: clip.timing.start, duration: clip.timing.duration },
         audioStart: clip.audio.start,
+        mediaIndex: clip.media.mediaIndex,
       });
     }
   }
@@ -75,6 +79,7 @@ export async function prepareVideoFrames(
       window: clip
         ? { start: clip.timing.start, duration: clip.timing.duration }
         : { start: 0, duration: spec.duration },
+      mediaIndex: mi.mediaIndex,
     });
   }
 
@@ -111,6 +116,7 @@ export async function prepareVideoFrames(
 
     entries.push({
       selector: `video[src="${src}"]`,
+      index: job.mediaIndex,
       dir,
       fps,
       start: job.window.start,

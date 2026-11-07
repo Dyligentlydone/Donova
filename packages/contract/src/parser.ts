@@ -108,6 +108,7 @@ export function parseCompositionHtml(html: string, opts?: { path?: string; isRoo
   // --- Timed elements ---
   let domIndex = 0;
   let clipSeq = 0;
+  const mediaCounts: Record<string, number> = {};
   const visitTimed = (node: Node, parentClipId?: string): void => {
     if (!("tagName" in node)) {
       for (const c of (node as { childNodes?: Node[] }).childNodes ?? []) visitTimed(c, parentClipId);
@@ -116,6 +117,10 @@ export function parseCompositionHtml(html: string, opts?: { path?: string; isRoo
     const el = node as El;
     const start = parseTime(getAttr(el, ATTR.start));
     const isTimed = hasAttr(el, ATTR.start);
+    const thisTag = localName(el);
+    const isMediaTag = thisTag === "video" || thisTag === "audio" || thisTag === "img" || thisTag === "iframe";
+    const mediaIndex = isMediaTag ? (mediaCounts[thisTag] ?? 0) : undefined;
+    if (isMediaTag) mediaCounts[thisTag] = mediaIndex! + 1;
     const thisClipId = `clip-${clipSeq}`;
     const childParent = isTimed ? thisClipId : parentClipId;
 
@@ -158,7 +163,7 @@ export function parseCompositionHtml(html: string, opts?: { path?: string; isRoo
             return Number.isFinite(n) ? n : undefined;
           })(),
         },
-        media: { tag, src, kind },
+        media: { tag, src, kind, mediaIndex },
         attrs: Object.fromEntries(
           (el.attrs ?? []).filter((a) => a.name.startsWith("data-")).map((a) => [a.name, a.value]),
         ),
@@ -177,7 +182,11 @@ export function parseCompositionHtml(html: string, opts?: { path?: string; isRoo
           clipId: clip.id,
         });
       }
-      if (kind === "element" && !clip.classes.includes(CLIP_CLASS)) {
+      // class="clip" is the full-frame scene convention — only warn for
+      // container-ish elements (div/section/etc.), not inline bits like
+      // <span> caption words or <b>/<em> inside a scene.
+      const CONTAINER_TAGS = new Set(["div", "section", "article", "main", "aside", "header", "footer", "figure"]);
+      if (kind === "element" && CONTAINER_TAGS.has(tag) && !clip.classes.includes(CLIP_CLASS)) {
         issues.push({
           rule: "clip-missing-class",
           severity: "warn",
@@ -196,6 +205,7 @@ export function parseCompositionHtml(html: string, opts?: { path?: string; isRoo
           kind: tag === "video" ? "video" : tag === "audio" ? "audio" : tag === "img" ? "image" : "iframe",
           tag,
           clipId: parentClipId,
+          mediaIndex,
           attrs: Object.fromEntries(
             (el.attrs ?? []).filter((a) => a.name.startsWith("data-")).map((a) => [a.name, a.value]),
           ),

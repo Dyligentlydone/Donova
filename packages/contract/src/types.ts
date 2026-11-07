@@ -49,6 +49,8 @@ export interface ClipSpec {
     tag: string; // e.g. 'div', 'img', 'video', 'audio', 'section'
     src?: string;
     kind?: "video" | "audio" | "image" | "iframe" | "element";
+    /** Index among same-tag media elements in document order (disambiguates same-src). */
+    mediaIndex?: number;
   };
   attrs: Record<string, string>; // raw data-* attrs (motion etc.)
   classes: string[];
@@ -72,6 +74,8 @@ export interface CompositionSpec {
     kind: "video" | "audio" | "image" | "iframe";
     tag: string;
     clipId?: string;
+    /** Index among same-tag media elements in document order (disambiguates same-src). */
+    mediaIndex?: number;
     attrs: Record<string, string>;
   }>;
   timelines: TimelineSpec[];

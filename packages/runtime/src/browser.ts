@@ -349,6 +349,9 @@ function collectMedia(): void {
 function seekMedia(t: number, timeoutMs = 4000): Promise<void> {
   const jobs: Promise<void>[] = [];
   for (const m of mediaEls) {
+    // Videos replaced by deterministic frame overlays don't need element
+    // seeks — their audio is muxed by the FFmpeg graph, not the element.
+    if ((m.el as HTMLElement).dataset.fcOverlay === "1") continue;
     const local = (t - m.start) * m.speed;
     const dur = m.el.duration;
     const inWindow = local >= -FRAME_EPS && (!Number.isFinite(dur) || local <= dur + FRAME_EPS);
@@ -388,6 +391,7 @@ function seekMedia(t: number, timeoutMs = 4000): Promise<void> {
 
 interface VideoMapEntry {
   selector: string;
+  index?: number;
   dir: string;
   fps: number;
   start: number;
@@ -411,7 +415,10 @@ async function loadVideoMap(): Promise<void> {
     if (!res.ok) return;
     const map = (await res.json()) as { entries?: VideoMapEntry[] };
     for (const e of map.entries ?? []) {
-      const v = document.querySelector<HTMLVideoElement>(e.selector);
+      const v =
+        typeof e.index === "number"
+          ? document.querySelectorAll<HTMLVideoElement>("video")[e.index]
+          : document.querySelector<HTMLVideoElement>(e.selector);
       if (!v) continue;
       // Overlay <img> exactly covering the video's box.
       const img = document.createElement("img");
@@ -435,6 +442,7 @@ async function loadVideoMap(): Promise<void> {
         holder.appendChild(wrapper);
       }
       v.style.opacity = "0"; // keep for semantics/audio map; frame comes from img
+      v.dataset.fcOverlay = "1";
       videoOverlays.push({ video: v, img, entry: e });
     }
   } catch {
@@ -452,6 +460,11 @@ function frameUrl(e: VideoMapEntry, t: number): string {
 function updateVideoFrames(t: number): Promise<void> {
   const jobs: Promise<void>[] = [];
   for (const ov of videoOverlays) {
+    // Only swap frames for overlays inside (or just before) their window —
+    // off-window clips are display:none anyway.
+    if (t < ov.entry.start - FRAME_EPS || t > ov.entry.start + ov.entry.duration + FRAME_EPS) {
+      continue;
+    }
     const url = frameUrl(ov.entry, t);
     if (ov.img.getAttribute("src") === url) continue;
     jobs.push(
