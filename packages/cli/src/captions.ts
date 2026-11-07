@@ -82,12 +82,18 @@ export async function captionsCmd(opts: {
   });
   const rootDur = Number(/data-duration="([\d.]+)"/.exec(html)?.[1] ?? Number.POSITIVE_INFINITY);
 
-  // Build caption elements; skip words that fell in a cut.
+  // Build caption elements; skip words that fell in a cut. Each caption holds
+  // toward the readability rule (~0.5s + 0.3s/word) but never past the next
+  // caption's start, so holds extend into speech gaps without overlapping.
+  const compStarts = units.map((u) => toComp(u.srcStart));
   const els: string[] = [];
   for (const [i, u] of units.entries()) {
-    const start = toComp(u.srcStart);
+    const start = compStarts[i];
     if (start == null || start >= rootDur) continue;
-    const dur = Math.min(Math.max(0.12, u.srcEnd - u.srcStart), rootDur - start);
+    const natural = Math.max(0.12, u.srcEnd - u.srcStart);
+    const target = 0.5 + 0.3 * u.text.trim().split(/\s+/).length;
+    const nextStart = compStarts.slice(i + 1).find((s) => s != null && s > start) ?? rootDur;
+    const dur = Math.min(Math.max(natural, Math.min(target, nextStart - start)), rootDur - start);
     const cls = mode === "word" ? (u.em ? "fc-cap fc-cap-em" : "fc-cap") : "fc-pcap";
     els.push(
       `  <div id="cap-${i}" class="clip" data-start="${start.toFixed(3)}" data-duration="${dur.toFixed(3)}">\n    <span class="${cls}" data-fc-motion='${POP}'>${ESC(u.text)}</span>\n  </div>`,

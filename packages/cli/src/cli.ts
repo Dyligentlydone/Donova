@@ -511,13 +511,19 @@ const probeCliCmd = defineCommand({
 });
 
 const timelineCliCmd = defineCommand({
-  meta: { name: "timeline", description: "Resolved clip list" },
+  meta: { name: "timeline", description: "Resolved clip list (--lanes for the visual lane view)" },
   args: {
     dir: { type: "positional", default: "." },
     composition: { type: "string", default: "index.html" },
+    lanes: { type: "boolean", description: "HyperFrames visual lane timeline", default: false },
     ...JSON_ARG,
   },
-  async run({ args }) {
+  async run({ args, rawArgs }) {
+    if (args.lanes) {
+      const { runHyperframes } = await import("./hf.js");
+      await runHyperframes(["timeline", ...rawArgs.filter((a) => a !== "--lanes" && a !== "-l")]);
+      return;
+    }
     const res = await guardJson(args.json, () => timelineCmd(String(args.dir), String(args.composition)));
     if (res == null) return;
     if (args.json) jsonOut(res);
@@ -659,6 +665,24 @@ const copyPromptCliCmd = defineCommand({
   },
 });
 
+/**
+ * Passthrough delegates to the bundled `hyperframes` CLI (see hf.ts). All
+ * arguments are forwarded verbatim via citty's rawArgs, so the full upstream
+ * flag surface works — e.g. `framecraft gate --verbose`, `framecraft beats
+ * assets/track.mp3`, `framecraft capture https://example.com --out shots`.
+ * Commands operate on the cwd project unless a dir positional/--dir is passed.
+ */
+function hfDelegate(name: string, hfCmd: string, description: string) {
+  return defineCommand({
+    meta: { name, description },
+    args: {},
+    async run({ rawArgs }) {
+      const { runHyperframes } = await import("./hf.js");
+      await runHyperframes([hfCmd, ...rawArgs]);
+    },
+  });
+}
+
 const main = defineCommand({
   meta: { name: CLI_NAME, version: VERSION, description: "Framecraft — HTML to video" },
   subCommands: {
@@ -686,6 +710,32 @@ const main = defineCommand({
     tts: ttsCliCmd,
     eval: evalCliCmd,
     "remove-background": removeBgCliCmd,
+    // HyperFrames passthrough delegates (telemetry off, exit codes preserved):
+    gate: hfDelegate("gate", "check", "Deep gate: lint + runtime + layout + contrast + audio"),
+    capture: hfDelegate("capture", "capture", "Capture a website for video production"),
+    beats: hfDelegate("beats", "beats", "Detect beats in the music track → beats/*.json"),
+    audio: hfDelegate("audio", "audio", "Measure onsets/hits/loudness/silence in film time"),
+    "media-treatment": hfDelegate(
+      "media-treatment",
+      "media-treatment",
+      "Apply or clear deterministic media treatments",
+    ),
+    "normalize-audio": hfDelegate(
+      "normalize-audio",
+      "normalize-audio",
+      "LUFS-match one audio clip to another",
+    ),
+    diff: hfDelegate("diff", "diff", "Score render vs source video frame-by-frame"),
+    measure: hfDelegate("measure", "measure", "Measure a video: cuts, motion, crops, eases, look"),
+    history: hfDelegate("history", "history", "List/undo/restore recorded project changes"),
+    keyframes: hfDelegate("keyframes", "keyframes", "Inspect keyframes + onion-shot diagnostics"),
+    "grade-compare": hfDelegate(
+      "grade-compare",
+      "grade-compare",
+      "Render candidate grades onto a reference frame",
+    ),
+    benchmark: hfDelegate("benchmark", "benchmark", "Render speed/size sweeps across configs"),
+    present: hfDelegate("present", "present", "Open a slideshow deck in presenter mode"),
   },
 });
 

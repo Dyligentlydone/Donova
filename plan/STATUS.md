@@ -1,6 +1,48 @@
 # STATUS — what exists today (read before building)
 
-Last updated: 2026-11-07 (HyperFrames conformance + registry/skills port complete — see §-2). Update this file whenever you finish an MV task.
+Last updated: 2026-11-07 (HF command delegates wired — see §-3). Update this file whenever you finish an MV task.
+
+## -3. HyperFrames command delegates (plugged like Studio)
+
+Since conformance makes our projects valid HF projects, their *local* CLI commands run on our projects
+natively. `packages/cli/src/hf.ts` provides `runHyperframes()` (bin resolve, telemetry off, exit-code
+preservation); each command is a citty delegate forwarding `rawArgs` verbatim:
+
+| `fc` command | → `hyperframes` | Gives us |
+|---|---|---|
+| `gate` | `check` | Deep gate: lint + runtime + layout + contrast + audio + readability |
+| `capture` | `capture` | Website → captured footage (product-launch workflow) |
+| `beats` | `beats` | Beat detection → `beats/*.json` |
+| `audio` | `audio` | Onsets/hits/loudness/silence per clip in film time |
+| `media-treatment` | `media-treatment` | Deterministic footage looks (`--selector` required) |
+| `normalize-audio` | `normalize-audio` | LUFS-matching between clips |
+| `diff` | `diff` | Score render vs source frame-by-frame |
+| `measure` | `measure` | Video measurement (probe/cuts/events/frames/… subcommands) |
+| `history` | `history` | Recorded project changes + undo/restore |
+| `keyframes` | `keyframes` | Keyframe inspection + onion-shot diagnostics |
+| `grade-compare` | `grade-compare` | Labeled grade comparison PNG |
+| `benchmark` | `benchmark` | Render speed/size sweeps |
+| `present` | `present` | Slideshow presenter mode |
+| `timeline --lanes` | `timeline` | Visual lane timeline (bare `fc timeline` stays our JSON clip list) |
+
+**Verified live on /tmp/fc-e2e:** `gate` (Check passed, catches `line_unread` readability warnings),
+`audio` (per-clip onsets/hits/LUFS/voice-classification), `beats`, `history`, `keyframes`, `timeline
+--lanes`, `present`, `benchmark`; `diff`/`measure`/`capture`/`media-treatment`/`normalize-audio`/
+`grade-compare` verified via usage-error forwarding. **Caveat:** citty intercepts `fc <cmd> --help` —
+upstream flag help lives at `hyperframes <cmd> --help` (bin is a dep, `npx hyperframes` works).
+
+**Skipped:** `inspect` (deprecated upstream → `gate` covers it), `cloud`/`publish`/`open`/`catch-up`/
+`reverse`/`templates`/`billing`/`auth`/`telemetry` (HeyGen-hosted or Pro-gated), `transcribe`/`tts`/
+`remove-background`/`snapshot`/`compare`/`init`/`add`/`catalog`/`render` (ours equal or better).
+
+**Not yet plugged:** `lambda`/`cloudrun` (deploy to *our own* AWS/GCP — not HeyGen-gated, belongs with
+§-4 render infra); `@hyperframes/player` web component + `@hyperframes/shader-transitions` (npm deps
+for later embed/transition work).
+
+**Caption readability fix folded in:** `captions.ts` now extends each caption's hold toward
+`0.5s + 0.3s/word` (HF `line_unread` rule), capped at the next caption's start so holds extend into
+speech gaps without overlapping. Fast-speech sequences can't physically hold — `fc gate` still warns
+there; `--mode phrase` is the real fix for dense delivery.
 
 ## -2. HyperFrames conformance + registry/skills port
 
