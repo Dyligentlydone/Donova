@@ -3,3 +3,5 @@ export * from "./cuts.js";
 export * from "./normalize.js";
 export * from "./transcribe.js";
 export * from "./scaffold.js";
+export * from "./tts.js";
+export * from "./bgRemoval.js";

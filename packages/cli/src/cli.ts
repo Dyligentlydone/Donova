@@ -10,15 +10,18 @@ import { copyPrompt } from "./copyPrompt.js";
 import { captionsCmd } from "./captions.js";
 import { cutsCmd } from "./cuts.js";
 import { doctor, reportDoctor } from "./doctor.js";
+import { evalProject } from "./evals.js";
 import { ERR, guardJson, jsonErr, jsonOut } from "./errors.js";
 import { initProject } from "./init.js";
 import { probeCmd, timelineCmd } from "./inspect.js";
 import { previewProject } from "./preview.js";
+import { removeBackgroundCmd } from "./removeBackground.js";
 import { scaffoldCmd } from "./scaffold.js";
 import { skillsUpdateCmd } from "./skills.js";
 import { contactSheet, snapshotTimes } from "./snapshot.js";
 import { styleCmd } from "./style.js";
 import { transcribeCmd } from "./transcribe.js";
+import { ttsCmd } from "./tts.js";
 
 const JSON_ARG = {
   json: { type: "boolean" as const, description: "machine-readable output", default: false },
@@ -451,6 +454,71 @@ const skillsCliCmd = defineCommand({
   },
 });
 
+const ttsCliCmd = defineCommand({
+  meta: { name: "tts", description: "Text → speech audio file" },
+  args: {
+    text: { type: "positional", required: true },
+    out: { type: "string", default: "vo.wav" },
+    voice: { type: "string" },
+    provider: { type: "string", description: "say | edge | kokoro" },
+    ...JSON_ARG,
+  },
+  async run({ args }) {
+    const res = await guardJson(args.json, () =>
+      ttsCmd({
+        text: String(args.text),
+        out: String(args.out),
+        voice: args.voice,
+        provider: args.provider as "say" | "edge" | "kokoro" | undefined,
+      }),
+    );
+    if (res == null) return;
+    if (args.json) jsonOut(res);
+    else console.log(`tts: ${res.path}  (${res.duration.toFixed(1)}s, ${res.provider}/${res.voice})`);
+  },
+});
+
+const removeBgCliCmd = defineCommand({
+  meta: { name: "remove-background", description: "Cut subject out (image→PNG, video→WebM alpha)" },
+  args: {
+    media: { type: "positional", required: true },
+    out: { type: "string" },
+    start: { type: "string", description: "start seconds (video)" },
+    end: { type: "string", description: "end seconds (video)" },
+    smoothing: { type: "string", default: "0.4" },
+    ...JSON_ARG,
+  },
+  async run({ args }) {
+    const res = await guardJson(args.json, () =>
+      removeBackgroundCmd({
+        media: String(args.media),
+        out: args.out,
+        start: args.start ? Number(args.start) : undefined,
+        end: args.end ? Number(args.end) : undefined,
+        smoothing: Number(args.smoothing),
+      }),
+    );
+    if (res == null) return;
+    if (args.json) jsonOut(res);
+    else console.log(`cutout: ${res.path}  (${res.kind}${res.frames ? `, ${res.frames} frames` : ""})`);
+  },
+});
+
+const evalCliCmd = defineCommand({
+  meta: { name: "eval", description: "Rule-scored project checklist (pass ≥ 0.7)" },
+  args: { dir: { type: "positional", default: "." }, ...JSON_ARG },
+  async run({ args }) {
+    const res = await guardJson(args.json, () => evalProject({ dir: String(args.dir) }));
+    if (res == null) return;
+    if (args.json) jsonOut(res);
+    else {
+      for (const r of res.rules)
+        console.log(` ${r.pass ? "✓" : "✗"} ${r.name} (w${r.weight}) — ${r.note}`);
+      console.log(`score ${(res.score * 100).toFixed(0)}% → ${res.pass ? "PASS" : "FAIL"}`);
+    }
+  },
+});
+
 const mcpCliCmd = defineCommand({
   meta: { name: "mcp", description: "MCP server over stdio for agent clients" },
   args: {},
@@ -493,6 +561,9 @@ const main = defineCommand({
     skills: skillsCliCmd,
     mcp: mcpCliCmd,
     "copy-prompt": copyPromptCliCmd,
+    tts: ttsCliCmd,
+    eval: evalCliCmd,
+    "remove-background": removeBgCliCmd,
   },
 });
 
