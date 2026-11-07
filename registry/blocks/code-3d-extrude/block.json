@@ -1,0 +1,7 @@
+{
+  "name": "code-3d-extrude",
+  "type": "block",
+  "description": "Syntax-highlighted code on a lit, beveled 3D slab that rotates through real space and settles to a readable rest — true WebGL depth and lighting, not a 2D transform.",
+  "tags": ["code", "code-animation", "3d", "webgl", "developer"],
+  "vars": []
+}

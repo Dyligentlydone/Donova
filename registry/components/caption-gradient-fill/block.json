@@ -1,0 +1,7 @@
+{
+  "name": "caption-gradient-fill",
+  "type": "component",
+  "description": "Gradient-clipped text with elastic bounce entrance",
+  "tags": ["captions", "caption-style", "gradient", "colorful"],
+  "vars": []
+}

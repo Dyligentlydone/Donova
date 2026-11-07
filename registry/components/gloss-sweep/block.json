@@ -1,0 +1,17 @@
+{
+  "name": "gloss-sweep",
+  "type": "component",
+  "description": "A card lands with a restrained slam, catches one diagonal specular gloss, and holds perfectly still.",
+  "tags": ["motion-primitive", "celebration", "gloss", "card", "badge", "payoff"],
+  "vars": [
+    {
+      "description": "Text displayed on the card."
+    },
+    {
+      "description": "Color treatment for the card."
+    },
+    {
+      "description": "Angle of the specular gloss in degrees."
+    }
+  ]
+}

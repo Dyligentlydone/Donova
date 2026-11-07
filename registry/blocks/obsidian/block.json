@@ -1,0 +1,7 @@
+{
+  "name": "obsidian",
+  "type": "block",
+  "description": "A dark glass orb catches pink and cyan iridescent light on black. A WebGPU shader from the Shaders library (shaders.com, MIT).",
+  "tags": ["webgpu", "webgpu-shader", "object", "glass", "iridescent", "dark"],
+  "vars": []
+}

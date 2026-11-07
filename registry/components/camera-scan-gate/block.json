@@ -1,0 +1,17 @@
+{
+  "name": "camera-scan-gate",
+  "type": "component",
+  "description": "A camera and QR recognition moment with a viewfinder sweep, bracket lock, confirmation pulse, and verified next beat.",
+  "tags": ["prop", "ui-props", "camera", "qr", "scan", "recognition", "interaction", "demonstrate"],
+  "vars": [
+    {
+      "description": "Any CSS color value used by the scan line and recognition glow."
+    },
+    {
+      "description": "Confirmation label revealed at recognition lock. Blank hides the line."
+    },
+    {
+      "description": "Speed multiplier for the scan sweep phase only."
+    }
+  ]
+}

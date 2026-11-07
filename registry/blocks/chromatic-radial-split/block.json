@@ -1,0 +1,7 @@
+{
+  "name": "chromatic-radial-split",
+  "type": "block",
+  "description": "Shader transition with chromatic aberration radial split",
+  "tags": ["transition", "shader"],
+  "vars": []
+}

@@ -1,0 +1,29 @@
+{
+  "name": "count-up",
+  "type": "component",
+  "description": "A token-native stat counter that eases between values, counting up or down, and lands with a restrained scale pulse.",
+  "tags": ["motion-primitive", "proof", "stats", "counter", "number", "countdown", "deterministic"],
+  "vars": [
+    {
+      "description": "First value shown by the count."
+    },
+    {
+      "description": "Final value where the count lands."
+    },
+    {
+      "description": "Optional text shown before the value."
+    },
+    {
+      "description": "Optional text shown after the value."
+    },
+    {
+      "description": "Color used by the count."
+    },
+    {
+      "description": "Optional soft accent glow under the count. Off by default."
+    },
+    {
+      "description": "Optional departure. Default none: the landed value holds until the frame cuts."
+    }
+  ]
+}

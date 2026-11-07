@@ -1,0 +1,17 @@
+{
+  "name": "swipe-rail",
+  "type": "component",
+  "description": "A contact circle leads a horizontal card rail through a fast drag, momentum carry, and settled snap to the next card.",
+  "tags": ["motion-primitive", "interaction", "gesture", "swipe", "cards", "rail"],
+  "vars": [
+    {
+      "description": "Number of cards rendered in the rail."
+    },
+    {
+      "description": "Active color used by the focused card and contact circle."
+    },
+    {
+      "description": "Text placed before each card number."
+    }
+  ]
+}

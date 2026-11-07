@@ -1,0 +1,7 @@
+{
+  "name": "transitions-cover",
+  "type": "block",
+  "description": "Showcase of cover/uncover slide transitions",
+  "tags": ["transition", "showcase"],
+  "vars": []
+}

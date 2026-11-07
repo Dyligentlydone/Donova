@@ -1,0 +1,23 @@
+{
+  "name": "code-terminal-run",
+  "type": "component",
+  "description": "A token-chrome terminal panel runs one command: the prompt line types deterministically behind an integer-cycle caret, executes after a beat, and output lines print one per cue before a fresh prompt appears.",
+  "tags": ["motion-primitive", "product-demo", "terminal", "typing", "deterministic"],
+  "vars": [
+    {
+      "description": "Leading glyph before the command and the trailing prompt. Empty string hides it."
+    },
+    {
+      "description": "Keystroke rhythm: uniform fixed steps or seeded human chunks."
+    },
+    {
+      "description": "Comma-separated seconds relative to mount start; cue N sets when output line N prints. Empty uses the authored rhythm."
+    },
+    {
+      "description": "Color of the prompt glyph and caret."
+    },
+    {
+      "description": "Outgoing transition. Frame roots own transitions; none holds the end frame."
+    }
+  ]
+}

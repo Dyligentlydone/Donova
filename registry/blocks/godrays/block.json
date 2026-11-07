@@ -1,0 +1,7 @@
+{
+  "name": "godrays",
+  "type": "block",
+  "description": "Rays of light fan out from a corner and drift across a deep blue field. A WebGPU shader from the Shaders library (shaders.com, MIT).",
+  "tags": ["webgpu", "webgpu-shader", "background", "light", "rays"],
+  "vars": []
+}

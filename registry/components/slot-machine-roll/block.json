@@ -1,0 +1,20 @@
+{
+  "name": "slot-machine-roll",
+  "type": "component",
+  "description": "A vertical reel scrolls characters from one value to another.",
+  "tags": ["video-primitive", "motion-primitive", "typography"],
+  "vars": [
+    {
+      "description": "Characters the reels land on, one reel column per character. Whitespace is stripped and every reel starts on a zero."
+    },
+    {
+      "description": "Which way the reels roll: up lifts the zero out through the top, down drops it out through the bottom."
+    },
+    {
+      "description": "Reel height and type size. The roll distance scales with it so the reel always lands exactly one row on."
+    },
+    {
+      "description": "Character colour: ink for light frames, paper for dark ones, accent rides --brand."
+    }
+  ]
+}

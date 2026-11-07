@@ -1,0 +1,29 @@
+{
+  "name": "caret-swap",
+  "type": "component",
+  "description": "A gradient caret expands over one phrase, collapses to the left, then types its replacement with a blinking caret.",
+  "tags": ["motion-primitive", "text-effects", "typography", "swap", "typewriter", "remocn-port"],
+  "vars": [
+    {
+      "description": "The phrase covered by the expanding caret."
+    },
+    {
+      "description": "The replacement phrase, typed one character at a time."
+    },
+    {
+      "description": "Maximum size in pixels. Both phrases shrink together to fit the host."
+    },
+    {
+      "description": "Weight used by both phrases. Every option is included in the bundled Geist font."
+    },
+    {
+      "description": "Color of both phrases."
+    },
+    {
+      "description": "Top color of the caret gradient."
+    },
+    {
+      "description": "Bottom color of the caret gradient."
+    }
+  ]
+}

@@ -1,0 +1,17 @@
+{
+  "name": "notes-typing",
+  "type": "component",
+  "description": "The notes-app confession as a mountable scene: a bold title, then body lines typed character by character on the measured human keystroke rhythm, the caret riding every landed character and jumping down at each paragraph. For a bare prompt line use typed-prompt; for an even mechanical reveal use typewriter",
+  "tags": ["motion-primitive", "notes", "typing", "mock-ui", "vertical"],
+  "vars": [
+    {
+      "description": "Bold note title. A | breaks the line."
+    },
+    {
+      "description": "Pipe-separated body lines, typed one after another."
+    },
+    {
+      "description": "Typing speed multiplier. 1 is the measured human rhythm."
+    }
+  ]
+}

@@ -1,0 +1,20 @@
+{
+  "name": "tabs-slide-indicator",
+  "type": "component",
+  "description": "A pill indicator transition that slides between active tabs",
+  "tags": ["transition-primitive", "transitions-dev-port", "tabs", "indicator"],
+  "vars": [
+    {
+      "description": "Fill of the sliding pill. ink is literal; the rest ride the composition theme tokens."
+    },
+    {
+      "description": "Width of one tab. The slide the timeline drives is scaled to match, so the pill still lands on the next tab."
+    },
+    {
+      "description": "Corner radius of the track and the pill."
+    },
+    {
+      "description": "The tab names, separated by commas. Two or more names rebuild the row."
+    }
+  ]
+}

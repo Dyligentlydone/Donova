@@ -1,0 +1,18 @@
+{
+  "name": "filmed-screen",
+  "type": "component",
+  "description": "Your scene, filmed off a screen: perspective, depth of field that follows an element you name, LED sub-pixels and per-shot colour grades. Shots glide into each other, focus racks between elements, and the focused element stays sharp.",
+  "tags": [
+    "filmed",
+    "screen",
+    "monitor",
+    "led",
+    "camera",
+    "depth-of-field",
+    "html-in-canvas",
+    "shader",
+    "webgl",
+    "effect"
+  ],
+  "vars": []
+}

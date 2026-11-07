@@ -1,0 +1,7 @@
+{
+  "name": "fractal-noise",
+  "type": "block",
+  "description": "Soft grey fractal noise drifts across the frame like slow clouds. A WebGPU shader from the Shaders library (shaders.com, MIT).",
+  "tags": ["webgpu", "webgpu-shader", "background", "noise", "texture", "clouds"],
+  "vars": []
+}

@@ -1,0 +1,7 @@
+{
+  "name": "x-follow-card",
+  "type": "component",
+  "description": "A social follow card with avatar, handle, and follower motion.",
+  "tags": ["social-overlay"],
+  "vars": []
+}

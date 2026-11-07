@@ -1,0 +1,7 @@
+{
+  "name": "ripple-waves",
+  "type": "block",
+  "description": "Shader transition with concentric ripple wave distortion",
+  "tags": ["transition", "shader"],
+  "vars": []
+}

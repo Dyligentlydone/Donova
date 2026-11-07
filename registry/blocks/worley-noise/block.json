@@ -1,0 +1,7 @@
+{
+  "name": "worley-noise",
+  "type": "block",
+  "description": "A field of drifting cells, light at their centres and dark at their edges. A WebGPU shader from the Shaders library (shaders.com, MIT).",
+  "tags": ["webgpu", "webgpu-shader", "background", "texture", "noise", "cells", "monochrome"],
+  "vars": []
+}

@@ -1,6 +1,7 @@
 import { createReadStream, existsSync, statSync } from "node:fs";
 import { type Server, createServer } from "node:http";
 import { extname, join, normalize, resolve, sep } from "node:path";
+import { getGsapSource } from "@framecraft/runtime";
 
 const MIME: Record<string, string> = {
   ".html": "text/html; charset=utf-8",
@@ -55,6 +56,14 @@ export async function startFileServer(root: string): Promise<FileServer> {
       // shows up as a console error in `check`. Answer 204 instead.
       if (path === `${sep}favicon.ico`) {
         res.writeHead(204).end();
+        return;
+      }
+      // Vendored GSAP for imported sub-composition scripts (runtime rewrites
+      // CDN srcs to this path).
+      if (path === `${sep}__fc-gsap.js`) {
+        res.setHeader("Content-Type", "text/javascript; charset=utf-8");
+        res.setHeader("Cache-Control", "no-store");
+        res.writeHead(200).end(getGsapSource());
         return;
       }
       const file = resolve(join(base, path));

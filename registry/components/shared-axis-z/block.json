@@ -1,0 +1,17 @@
+{
+  "name": "shared-axis-z",
+  "type": "component",
+  "description": "Scale-based shared-axis transition for focus shifts and context depth.",
+  "tags": ["motion-primitive", "typography"],
+  "vars": [
+    {
+      "description": "Which way the words travel along the z axis: in swells up from small, out settles down from large."
+    },
+    {
+      "description": "Scales how far the words start from their final size, so the push covers a shorter or longer run in the same time."
+    },
+    {
+      "description": "Word colour: ink for light frames, paper for dark ones, accent rides --brand."
+    }
+  ]
+}

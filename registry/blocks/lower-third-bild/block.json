@@ -1,0 +1,7 @@
+{
+  "name": "lower-third-bild",
+  "type": "block",
+  "description": "News-style lower third with tight-fit text boxes: white headline bar with red drop-shadow, red sub-line with white drop-shadow.",
+  "tags": ["broadcast", "lower-third", "news", "overlay"],
+  "vars": [{}, {}]
+}

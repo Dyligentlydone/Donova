@@ -1,0 +1,7 @@
+{
+  "name": "frost-sequence-camera-orbit",
+  "type": "block",
+  "description": "An orbiting camera follows an ice logo as it breaks apart, reforms into two text moments, and fades.",
+  "tags": ["3d-motion", "ice", "frost", "camera-orbit", "logo", "particles", "webgpu", "two-headlines"],
+  "vars": []
+}

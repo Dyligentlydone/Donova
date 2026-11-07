@@ -1,0 +1,11 @@
+{
+  "name": "multi-device-splay",
+  "type": "component",
+  "description": "Phone, tablet, and desktop product mockups fan from a centered stack into a proud splayed arrangement with a subtle idle float.",
+  "tags": ["motion-primitive", "device", "phone", "tablet", "desktop", "splay"],
+  "vars": [
+    {
+      "description": "Shared accent color used by all three product screens."
+    }
+  ]
+}

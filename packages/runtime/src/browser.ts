@@ -280,6 +280,7 @@ interface TimedEl {
   el: HTMLElement;
   start: number;
   end: number;
+  display: string;
   hasFadeIn: number;
   hasFadeOut: number;
 }
@@ -296,6 +297,9 @@ function collectTimedEls(): void {
       el,
       start,
       end,
+      // Authored inline display (e.g. flex on blocks) is restored on show —
+      // without it the first hide destroys it (blocks collapse to display:block).
+      display: el.style.display || "",
       hasFadeIn: num(attr(el, "data-fade-in"), 0),
       hasFadeOut: num(attr(el, "data-fade-out"), 0),
     });
@@ -306,12 +310,11 @@ function applyVisibility(t: number): void {
   for (const rec of timedEls) {
     const vis = t >= rec.start - FRAME_EPS && t < rec.end + FRAME_EPS;
     // display (not visibility) — matches contract §clips so layout never leaks.
-    const want = vis ? "" : "none";
-    if ((rec.el.style.display || "") !== want && (rec.el.style.display === "none") !== !vis) {
-      // no-op guard; set below
+    if (vis && rec.el.style.display === "none") rec.el.style.display = rec.display;
+    else if (!vis && rec.el.style.display !== "none") {
+      if (rec.el.style.display) rec.display = rec.el.style.display;
+      rec.el.style.display = "none";
     }
-    if (vis && rec.el.style.display === "none") rec.el.style.display = "";
-    else if (!vis && rec.el.style.display !== "none") rec.el.style.display = "none";
 
     // data-fade-in/out convenience fades (composition-time).
     const fi = rec.hasFadeIn;
@@ -391,6 +394,118 @@ async function loadSubComps(): Promise<void> {
           const frag = document.createDocumentFragment();
           for (const n of content) frag.appendChild(document.importNode(n, true));
           host.appendChild(frag);
+
+          // Sub-composition styles assume they own the document — their
+          // `body`/`html`/`#root` selectors would hit OUR page and unprefixed
+          // selectors would leak into siblings. Scope every rule to the host:
+          // document-owning selectors become the host itself, everything else
+          // becomes a descendant of it.
+          const scope = `sub-${subCounter++}`;
+          host.setAttribute("data-fc-sub", scope);
+          const scopeSel = `[data-fc-sub="${scope}"]`;
+          const scopeCss = (css: string): string => {
+            const sheet = new CSSStyleSheet();
+            try {
+              sheet.replaceSync(css);
+            } catch {
+              return "";
+            }
+            const selfSel = /^(?:html|body|#root|#stage|:root|\[data-composition-id\])\b/;
+            const rewrite = (sel: string): string =>
+              sel
+                .split(",")
+                .map((part) => {
+                  const p = part.trim();
+                  if (!p) return p;
+                  if (selfSel.test(p)) return p.replace(selfSel, scopeSel);
+                  return `${scopeSel} ${p}`;
+                })
+                .join(", ");
+            const decls = (rule: CSSStyleRule, isSelf: boolean): string => {
+              // The host owns its clip box — a block's body/html canvas dims
+              // (e.g. 1920x1080) must not resize the host on foreign projects.
+              if (!isSelf) return rule.style.cssText;
+              const keep: string[] = [];
+              for (const prop of rule.style) {
+                if (["width", "height", "min-width", "min-height", "max-width", "max-height"].includes(prop))
+                  continue;
+                keep.push(`${prop}:${rule.style.getPropertyValue(prop)};`);
+              }
+              return keep.join("");
+            };
+            const walk = (rules: CSSRuleList): string =>
+              [...rules]
+                .map((rule) => {
+                  if (rule instanceof CSSStyleRule) {
+                    const isSelf = rule.selectorText.split(",").every((p) => selfSel.test(p.trim()));
+                    return `${rewrite(rule.selectorText)} { ${decls(rule, isSelf)} }`;
+                  }
+                  if ("cssRules" in rule) {
+                    const inner = walk((rule as CSSGroupingRule).cssRules);
+                    if (rule instanceof CSSMediaRule) return `@media ${rule.conditionText} { ${inner} }`;
+                    if (rule instanceof CSSSupportsRule)
+                      return `@supports ${rule.conditionText} { ${inner} }`;
+                    if (rule instanceof CSSLayerBlockRule) return `@layer ${rule.name} { ${inner} }`;
+                    return rule.cssText; // @keyframes/@font-face pass through
+                  }
+                  return rule.cssText;
+                })
+                .join("\n");
+            return walk(sheet.cssRules);
+          };
+          for (const st of doc.querySelectorAll("style, link[rel~='stylesheet']")) {
+            let css = "";
+            if (st instanceof HTMLStyleElement) css = st.textContent ?? "";
+            else {
+              const href = st.getAttribute("href");
+              if (!href) continue;
+              try {
+                const r = await fetch(new URL(href, new URL(src, location.href).href).href);
+                if (r.ok) css = await r.text();
+              } catch {
+                continue;
+              }
+            }
+            const scoped = scopeCss(css);
+            if (!scoped) continue;
+            const el = document.createElement("style");
+            el.textContent = scoped;
+            host.appendChild(el);
+          }
+
+          // Imported <script> nodes are inert (clone never runs). Re-create
+          // them so they execute: external srcs load first (in order), then
+          // inline bodies — matching document order semantics. GSAP CDN srcs
+          // are rewritten to the runtime-served copy for offline determinism.
+          const scripts = [...doc.querySelectorAll("script")];
+          const timelinesBefore = new Map(Object.entries(w.__timelines ?? {}));
+          for (const s of scripts) {
+            const srcAttr = s.getAttribute("src");
+            if (srcAttr) {
+              const rewritten = /gsap[^"']*\.(min\.)?js(\?.*)?$/i.test(srcAttr) ? "/__fc-gsap.js" : srcAttr;
+              await new Promise<void>((res) => {
+                const el = document.createElement("script");
+                el.src = rewritten;
+                el.onload = () => res();
+                el.onerror = () => res(); // missing script must not stall the load
+                host.appendChild(el);
+                setTimeout(res, 5000);
+              });
+            } else if (s.textContent?.trim()) {
+              const el = document.createElement("script");
+              el.textContent = s.textContent;
+              host.appendChild(el);
+            }
+          }
+          // Any __timelines entries this block's scripts registered belong to
+          // the block's LOCAL clock — scope them to the host's window/scale so
+          // renderSeek can map global time back. Object-identity diff keeps a
+          // repeated block's second registration bound to its own host.
+          for (const [key, tl] of Object.entries(w.__timelines ?? {})) {
+            if (timelinesBefore.get(key) !== tl && tl != null) {
+              scopedTimelines.push({ tl, start: hostStart, scale });
+            }
+          }
 
           // Text slots.
           for (const slot of host.querySelectorAll<HTMLElement>("[data-fc-var]")) {
@@ -545,14 +660,18 @@ async function loadVideoMap(): Promise<void> {
       img.style.pointerEvents = "none";
       const wrapper = document.createElement("div");
       wrapper.style.position = "absolute";
-      wrapper.style.inset = "0";
+      wrapper.style.left = `${v.offsetLeft}px`;
+      wrapper.style.top = `${v.offsetTop}px`;
+      wrapper.style.width = `${v.offsetWidth}px`;
+      wrapper.style.height = `${v.offsetHeight}px`;
       wrapper.style.overflow = "hidden";
       wrapper.appendChild(img);
       const holder = v.parentElement;
       if (holder) {
-        const hs = getComputedStyle(holder);
-        if (hs.position === "static") holder.style.position = "relative";
-        holder.appendChild(wrapper);
+        // Insert at the video's own DOM slot — with the hoisted media model
+        // (video IS the .clip) appending to the parent would paint the frame
+        // over every later sibling (blocks, captions).
+        holder.insertBefore(wrapper, v.nextSibling);
       }
       v.style.opacity = "0"; // keep for semantics/audio map; frame comes from img
       v.dataset.fcOverlay = "1";
@@ -612,9 +731,31 @@ let fps = 30;
 let currentTime = 0;
 let booted = false;
 
+/** Timelines registered by imported sub-compositions run on the block's local
+ * clock — renderSeek maps global time through each entry's host window/scale. */
+interface ScopedTimeline {
+  tl: any;
+  start: number;
+  scale: number;
+}
+const scopedTimelines: ScopedTimeline[] = [];
+let subCounter = 0;
+
+function seekTl(tl: any, t: number): void {
+  if (typeof tl?.totalTime === "function") {
+    tl.pause();
+    tl.totalTime(t, true);
+  } else if (typeof tl?.seek === "function") {
+    tl.seek(t);
+  }
+}
+
 function rootTimelines(): any[] {
+  const scoped = new Set(scopedTimelines.map((s) => s.tl));
   const out: any[] = [];
-  for (const [, tl] of Object.entries(w.__timelines ?? {})) out.push(tl);
+  for (const [, tl] of Object.entries(w.__timelines ?? {})) {
+    if (!scoped.has(tl)) out.push(tl);
+  }
   return out;
 }
 
@@ -627,14 +768,10 @@ async function renderSeek(t: number): Promise<void> {
   currentTime = t;
   const frame = Math.round(t * fps);
 
-  // 1. Root GSAP timelines.
-  for (const tl of rootTimelines()) {
-    if (typeof tl?.totalTime === "function") {
-      tl.pause();
-      tl.totalTime(t, true);
-    } else if (typeof tl?.seek === "function") {
-      tl.seek(t);
-    }
+  // 1. Root GSAP timelines (page-level) + scoped sub-comp timelines (local clock).
+  for (const tl of rootTimelines()) seekTl(tl, t);
+  for (const s of scopedTimelines) {
+    seekTl(s.tl, Math.max(0, (t - s.start) / (s.scale || 1)));
   }
 
   // 2. Adapters (WAAPI/CSS animations, motion).

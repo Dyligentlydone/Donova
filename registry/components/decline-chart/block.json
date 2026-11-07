@@ -1,0 +1,17 @@
+{
+  "name": "decline-chart",
+  "type": "component",
+  "description": "A metric line draws downward as its value counts down and the ambient background darkens in lockstep.",
+  "tags": ["motion-primitive", "data", "chart", "decline", "metric", "problem"],
+  "vars": [
+    {
+      "description": "Label shown above the declining value."
+    },
+    {
+      "description": "Metric value at the start of the decline."
+    },
+    {
+      "description": "Metric value at the bottom of the decline."
+    }
+  ]
+}

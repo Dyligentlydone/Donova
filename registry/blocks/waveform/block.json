@@ -1,0 +1,7 @@
+{
+  "name": "waveform",
+  "type": "block",
+  "description": "Equalizer bars in a blue to pink gradient pulse across the middle of the frame, like an audio visualizer. A WebGPU shader from the Shaders library (shaders.com, MIT).",
+  "tags": ["webgpu", "webgpu-shader", "audio", "music", "visualizer", "bars"],
+  "vars": []
+}

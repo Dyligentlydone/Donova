@@ -1,0 +1,20 @@
+{
+  "name": "per-word-crossfade",
+  "type": "component",
+  "description": "Words gently fade into place with a short vertical drift for calm keynote rhythm.",
+  "tags": ["motion-primitive", "typography"],
+  "vars": [
+    {
+      "description": "The line to animate. It is split on whitespace and every word gets its own span, so the stagger picks up the new words."
+    },
+    {
+      "description": "Scales the vertical offset, so the words cover a shorter or longer run in the same time."
+    },
+    {
+      "description": "Scales the blur radius the timeline drives, from a light haze to a full smear."
+    },
+    {
+      "description": "Word colour: ink for light frames, paper for dark ones, accent rides --brand."
+    }
+  ]
+}

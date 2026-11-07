@@ -1,0 +1,17 @@
+{
+  "name": "physical-exit",
+  "type": "component",
+  "description": "A card exits with physical momentum in toss, drop, or slide mode, carrying acceleration and rotation through the final offscreen pose without fading.",
+  "tags": ["motion-primitive", "exit", "momentum", "toss", "drop", "slide"],
+  "vars": [
+    {
+      "description": "Physical behavior used to carry the card offscreen."
+    },
+    {
+      "description": "Word displayed on the exiting card."
+    },
+    {
+      "description": "Color applied to the card edge."
+    }
+  ]
+}

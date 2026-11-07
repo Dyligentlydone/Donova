@@ -1,0 +1,7 @@
+{
+  "name": "cursor-text-select",
+  "type": "component",
+  "description": "An arrow turns into an I-beam over a document, drags a selection across a phrase character by character, raises a format toolbar, turns back into an arrow and clicks Bold.",
+  "tags": ["cursor", "motion-primitive", "text", "selection", "editor", "toolbar"],
+  "vars": [{}, {}, {}, {}]
+}

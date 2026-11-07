@@ -1,0 +1,20 @@
+{
+  "name": "svg-stroke-trace",
+  "type": "component",
+  "description": "An authored SVG path draws from its measured length, holds with subtle drift, and optionally fills when the path is closed.",
+  "tags": ["motion-primitive", "intro", "reveal", "svg", "stroke", "line-draw"],
+  "vars": [
+    {
+      "description": "SVG path data for the authored mark."
+    },
+    {
+      "description": "Width of the traced stroke in SVG viewBox units."
+    },
+    {
+      "description": "Color used by the trace and optional fill."
+    },
+    {
+      "description": "Optional departure. Default none: the finished mark holds until the frame cuts."
+    }
+  ]
+}

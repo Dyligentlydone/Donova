@@ -1,0 +1,7 @@
+{
+  "name": "caption-pill-karaoke",
+  "type": "component",
+  "description": "Pill-shaped container with per-word karaoke color highlight",
+  "tags": ["captions", "caption-style", "karaoke", "pill"],
+  "vars": []
+}

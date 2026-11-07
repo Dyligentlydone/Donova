@@ -1,0 +1,7 @@
+{
+  "name": "strands",
+  "type": "block",
+  "description": "Thin ribbons of pink and blue light weave across a black field. A WebGPU shader from the Shaders library (shaders.com, MIT).",
+  "tags": ["webgpu", "webgpu-shader", "background", "light", "lines", "ribbons"],
+  "vars": []
+}

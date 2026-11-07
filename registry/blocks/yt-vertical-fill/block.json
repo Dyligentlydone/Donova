@@ -1,0 +1,7 @@
+{
+  "name": "yt-vertical-fill",
+  "type": "block",
+  "description": "Portrait media filling a widescreen frame via blurred-scale, mirror, or copy side fills; grid texture and foreground contrast lift (images inside the block; keep live footage in the host)",
+  "tags": ["placeholder", "vertical", "media"],
+  "vars": []
+}

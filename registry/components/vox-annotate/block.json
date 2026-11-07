@@ -1,0 +1,29 @@
+{
+  "name": "vox-annotate",
+  "type": "component",
+  "description": "The Vox-style annotate gesture: a keyword in a held sentence gets a hand-drawn marker while a thin connector draws up to a mono callout label, all as one choreographed beat on the cue.",
+  "tags": ["motion-primitive", "typography", "annotation", "marker", "deterministic"],
+  "vars": [
+    {
+      "description": "Full line of display text."
+    },
+    {
+      "description": "First case-insensitive substring match in text receives the marker and annotation. Empty or unmatched draws nothing."
+    },
+    {
+      "description": "Mono callout label at the end of the connector. Empty draws the marker only."
+    },
+    {
+      "description": "Shape of the hand-drawn marker stroke."
+    },
+    {
+      "description": "Second (from mount start) the annotate gesture starts. Clamped so the gesture completes before any exit."
+    },
+    {
+      "description": "Annotation ink color from the contract token map."
+    },
+    {
+      "description": "Optional departure. Default none: the lockup holds until the frame cuts."
+    }
+  ]
+}

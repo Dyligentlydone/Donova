@@ -1,0 +1,7 @@
+{
+  "name": "hw-underline",
+  "type": "component",
+  "description": "Hand-drawn squiggle underline, double-pass strikethrough, and bracket marks that draw on",
+  "tags": ["handwritten", "annotation", "text-treatment"],
+  "vars": []
+}

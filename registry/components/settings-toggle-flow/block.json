@@ -1,0 +1,7 @@
+{
+  "name": "settings-toggle-flow",
+  "type": "component",
+  "description": "A composed settings flow with preference rows, toggle switches, and active-state feedback",
+  "tags": ["ui-flow", "settings", "toggle"],
+  "vars": []
+}

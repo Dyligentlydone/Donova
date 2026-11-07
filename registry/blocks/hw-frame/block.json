@@ -1,0 +1,7 @@
+{
+  "name": "hw-frame",
+  "type": "block",
+  "description": "Media in a hand-drawn border with corner doodles and a handwritten caption; the unit tilts slightly and boils (images inside the block; keep live footage in the host)",
+  "tags": ["handwritten", "frame", "media"],
+  "vars": []
+}

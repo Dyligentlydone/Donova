@@ -1,0 +1,7 @@
+{
+  "name": "touch-indicator",
+  "type": "component",
+  "description": "A translucent contact-circle gesture actor for mobile UI scenes: it touches the glass on the frame the host target responds, then lifts. Tap or swipe, picked by variable.",
+  "tags": ["cursor", "motion-primitive", "mobile", "gesture", "touch", "pointer"],
+  "vars": [{}, {}, {}, {}]
+}

@@ -1,0 +1,7 @@
+{
+  "name": "mk-usage-arc",
+  "type": "component",
+  "description": "Thin circular gauge that draws on while its percentage counts up; one helper call drives both",
+  "tags": ["data-viz", "gauge", "minimal"],
+  "vars": []
+}

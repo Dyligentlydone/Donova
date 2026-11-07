@@ -1,0 +1,7 @@
+{
+  "name": "product-turntable",
+  "type": "block",
+  "description": "A product turns a full revolution on a studio plinth in a seamless loop. Drop in a GLB or glTF model, or keep the built-in drink can with your own label.",
+  "tags": ["3d-object", "three-js", "webgl", "product", "turntable", "glb", "loop"],
+  "vars": []
+}

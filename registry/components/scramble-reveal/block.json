@@ -1,0 +1,20 @@
+{
+  "name": "scramble-reveal",
+  "type": "component",
+  "description": "A deterministic hacker-style text reveal that cycles fixed glyph rows and locks the target string from left to right.",
+  "tags": ["motion-primitive", "text-effects", "scramble", "reveal", "deterministic"],
+  "vars": [
+    {
+      "description": "Target string that resolves from deterministic wrong glyphs."
+    },
+    {
+      "description": "Color used by the text, prefix, and optional terminal frame."
+    },
+    {
+      "description": "Terminal frame or clean text-only presentation."
+    },
+    {
+      "description": "Optional departure. Default none: the locked string holds until the frame cuts."
+    }
+  ]
+}

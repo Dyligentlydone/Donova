@@ -1,0 +1,7 @@
+{
+  "name": "svg-line-draw-loader",
+  "type": "component",
+  "description": "An Anime.js-style path drawing loader implemented as a seekable GSAP stroke timeline.",
+  "tags": ["video-primitive", "advanced-motion", "anime-inspired", "hyperframes-native"],
+  "vars": []
+}

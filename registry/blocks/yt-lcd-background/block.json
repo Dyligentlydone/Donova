@@ -1,0 +1,7 @@
+{
+  "name": "yt-lcd-background",
+  "type": "block",
+  "description": "Textured paper board: scanlines with slow drift, optional pixel grid, static grain, and display text with a blur-focus entrance and chromatic-fringe title",
+  "tags": ["background", "texture", "creator"],
+  "vars": []
+}

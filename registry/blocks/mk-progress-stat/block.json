@@ -1,0 +1,7 @@
+{
+  "name": "mk-progress-stat",
+  "type": "block",
+  "description": "Big-numeral statistic with count-up, label, thin progress track filling to value/max, and caption; light and dark schemes",
+  "tags": ["data-viz", "stat", "minimal"],
+  "vars": []
+}

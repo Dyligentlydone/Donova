@@ -1,0 +1,17 @@
+{
+  "name": "velocity-throw-snap",
+  "type": "component",
+  "description": "A five-shot rail whips past on a fast decaying curve, then overshoots and snaps the selected hero shot exactly to center.",
+  "tags": ["motion-primitive", "feature-tour", "rail", "velocity", "throw", "snap", "physics"],
+  "vars": [
+    {
+      "description": "Zero-based index of the shot centered at the settle."
+    },
+    {
+      "description": "Highlight color used by the hero shot."
+    },
+    {
+      "description": "Text placed before each shot number."
+    }
+  ]
+}

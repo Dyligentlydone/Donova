@@ -1,0 +1,20 @@
+{
+  "name": "line-by-line-slide",
+  "type": "component",
+  "description": "Each line enters from the left with staggered slide and exits to the right.",
+  "tags": ["motion-primitive", "typography"],
+  "vars": [
+    {
+      "description": "Type size of the whole stack."
+    },
+    {
+      "description": "Line colour: ink for light frames, paper for dark ones, accent rides the brand token."
+    },
+    {
+      "description": "The gap between lines, from a tight block to an airy stack."
+    },
+    {
+      "description": "Which side the lines slide in from as the timeline drives the offset."
+    }
+  ]
+}

@@ -1,0 +1,7 @@
+{
+  "name": "cinemagraph",
+  "type": "block",
+  "description": "A still photograph with one living region: the frame is frozen while a single feathered window keeps moving - here, steam rising over a cup - drawn from the seek time alone with a period that divides the duration, so the render loops seamlessly. Swap the placeholder scene for a freeze-frame still masked over a looping video to cinemagraph real footage.",
+  "tags": ["effect", "cinemagraph", "photo", "loop", "freeze-frame"],
+  "vars": []
+}

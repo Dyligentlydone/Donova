@@ -1,0 +1,17 @@
+{
+  "name": "store-badge-lockup",
+  "type": "component",
+  "description": "Settles a short headline above equal-size App Store and Google Play badges as a token-driven mobile end-card call to action.",
+  "tags": ["prop", "ui-props", "mobile", "store-badges", "cta", "ask"],
+  "vars": [
+    {
+      "description": "Short action line shown above the store badges."
+    },
+    {
+      "description": "Show or hide the App Store badge."
+    },
+    {
+      "description": "Show or hide the Google Play badge."
+    }
+  ]
+}

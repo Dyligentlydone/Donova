@@ -1,0 +1,20 @@
+{
+  "name": "panel-reveal",
+  "type": "component",
+  "description": "A panel reveal primitive with height expansion and content fade",
+  "tags": ["transition-primitive", "transitions-dev-port", "panel", "reveal"],
+  "vars": [
+    {
+      "description": "The header line that sits above the folded body."
+    },
+    {
+      "description": "How wide the panel sits, 280, 360 or 480 px."
+    },
+    {
+      "description": "Surface family: paper is the white card for light frames, ink inverts it for dark frames."
+    },
+    {
+      "description": "Whether the body fades in with the height. fade is the shipped motion, solid opens the height only."
+    }
+  ]
+}

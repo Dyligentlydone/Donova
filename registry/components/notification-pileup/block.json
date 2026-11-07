@@ -1,0 +1,17 @@
+{
+  "name": "notification-pileup",
+  "type": "component",
+  "description": "Mobile notification cards arrive faster and faster, each new alert pushing the existing stack downward into a dense, anxious tower.",
+  "tags": ["notification", "mobile", "ui-props", "overload", "pileup", "loop", "agitate"],
+  "vars": [
+    {
+      "description": "Number of notification cards in the final pile."
+    },
+    {
+      "description": "Pacing multiplier for the accelerating notification arrivals."
+    },
+    {
+      "description": "Show or hide unread count badges on the notification cards."
+    }
+  ]
+}

@@ -1,0 +1,7 @@
+{
+  "name": "code-morph",
+  "type": "block",
+  "description": "One snippet transforms into another — tokens glide between positions, leavers fade out, enterers fade in. Shiki Magic Move re-driven as a paused GSAP timeline.",
+  "tags": ["code", "code-animation", "morph", "refactor", "developer"],
+  "vars": []
+}

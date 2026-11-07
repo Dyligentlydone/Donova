@@ -1,0 +1,17 @@
+{
+  "name": "number-wheel",
+  "type": "component",
+  "description": "A rolling digit counter primitive for metrics, prices, counts, and scoreboards",
+  "tags": ["video-primitive", "motion-primitive", "number", "counter", "data"],
+  "vars": [
+    {
+      "description": "How many full 0 to 9 revolutions each column adds before it lands, which is how far the reel travels in the same time."
+    },
+    {
+      "description": "Gap between the digit columns."
+    },
+    {
+      "description": "Digit colour: inherit keeps the surrounding text colour, ink suits light frames, paper suits dark ones, accent rides --brand."
+    }
+  ]
+}

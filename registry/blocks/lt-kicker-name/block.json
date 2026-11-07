@@ -1,0 +1,7 @@
+{
+  "name": "lt-kicker-name",
+  "type": "block",
+  "description": "Cardless lower third with an accent eyebrow/kicker tag, heavy name, and a drawn baseline; for footage",
+  "tags": ["lower-third", "overlay", "podcast", "interview", "bold"],
+  "vars": []
+}

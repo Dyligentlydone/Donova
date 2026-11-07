@@ -1,0 +1,17 @@
+{
+  "name": "separator",
+  "type": "component",
+  "description": "A one-pixel structural separator with horizontal and vertical variants plus a seek-safe progress reveal",
+  "tags": ["video-primitive", "separator", "layout"],
+  "vars": [
+    {
+      "description": "Which way the rule runs, and so which way the reveal travels."
+    },
+    {
+      "description": "Size of the rule across its short edge, from a 1px hairline to a 4px bar."
+    },
+    {
+      "description": "Colour of the revealed fill: neutral grey, the theme accent, or the warning hue."
+    }
+  ]
+}

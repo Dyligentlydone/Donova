@@ -1,0 +1,20 @@
+{
+  "name": "success-check",
+  "type": "component",
+  "description": "A success check primitive with ring pop, path draw, and subtle rotate blur",
+  "tags": ["video-primitive", "transition-primitive", "transitions-dev-port", "success", "check"],
+  "vars": [
+    {
+      "description": "Colour pair, a pale halo behind a saturated mark. green and amber are literal state colours; blue and violet ride the composition theme tokens."
+    },
+    {
+      "description": "Diameter of the halo and of the mark inside it."
+    },
+    {
+      "description": "Opacity of the circle the tick sits in."
+    },
+    {
+      "description": "Multiplies the rotation the timeline drives, so the mark swings less or more into place."
+    }
+  ]
+}

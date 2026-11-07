@@ -1,0 +1,7 @@
+{
+  "name": "cosmic-orb",
+  "type": "block",
+  "description": "An iridescent soap-bubble planet: a slowly spinning sphere of nebula bands, dust lanes and twinkling stars wrapped in a refracting glass limb with chromatic aberration at the edge.",
+  "tags": ["webgl", "shader", "background", "showcase", "3d"],
+  "vars": [{}, {}, {}, {}, {}, {}, {}, {}, {}]
+}

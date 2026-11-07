@@ -1,0 +1,20 @@
+{
+  "name": "particle-image-reveal",
+  "type": "component",
+  "description": "A seeded deterministic particle field converges and settles while a slotted image reveals beneath it, the trail thinning until the image holds clean.",
+  "tags": ["motion-primitive", "intros-reveals", "particles", "reveal", "canvas", "deterministic"],
+  "vars": [
+    {
+      "description": "Particle count for the converging field."
+    },
+    {
+      "description": "ltr sweeps the reveal left to right; center opens an iris from the middle outward."
+    },
+    {
+      "description": "Particle and monogram color: green rides --brand, blue rides --accent, violet rides --accent-2."
+    },
+    {
+      "description": "Optional departure. Default none: the revealed image holds until the frame cuts."
+    }
+  ]
+}

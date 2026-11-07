@@ -1,0 +1,7 @@
+{
+  "name": "beat-freeze-cut",
+  "type": "block",
+  "description": "A beat-driven speed ramp, freeze-frame hit, and hard-cut sequence for music-led promos and montages.",
+  "tags": ["transition", "music", "beat-driven", "freeze-frame"],
+  "vars": []
+}

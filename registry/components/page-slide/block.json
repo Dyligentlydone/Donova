@@ -1,0 +1,20 @@
+{
+  "name": "page-slide",
+  "type": "component",
+  "description": "A transitions.dev-inspired page slide primitive with outgoing and incoming panels",
+  "tags": ["video-primitive", "transition-primitive", "transitions-dev-port", "page", "slide"],
+  "vars": [
+    {
+      "description": "Label printed on the page that slides out."
+    },
+    {
+      "description": "Label printed on the page that slides in."
+    },
+    {
+      "description": "Gradient family painted on the incoming page. The outgoing page stays slate."
+    },
+    {
+      "description": "Corner radius of the frame the pages slide inside."
+    }
+  ]
+}

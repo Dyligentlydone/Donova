@@ -1,0 +1,7 @@
+{
+  "name": "flowchart-vertical",
+  "type": "block",
+  "description": "Portrait animated decision tree with SVG connectors, sticky-note nodes, cursor interaction, and typing correction",
+  "tags": ["diagram", "flowchart", "interactive", "portrait"],
+  "vars": []
+}

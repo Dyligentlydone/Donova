@@ -1,0 +1,7 @@
+{
+  "name": "lt-neon-border",
+  "type": "block",
+  "description": "Two arcs of light travel the edge of a rounded panel and snap corner to corner, trailing a soft three-layer bloom. A lower third for a name and role.",
+  "tags": ["lower-third", "glow", "loop", "video-primitive"],
+  "vars": [{}, {}, {}, {}, {}, {}, {}, {}, {}]
+}

@@ -1,0 +1,7 @@
+{
+  "name": "sdf-iris",
+  "type": "block",
+  "description": "Shader transition with signed distance field iris reveal",
+  "tags": ["transition", "shader"],
+  "vars": []
+}

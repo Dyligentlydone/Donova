@@ -1,0 +1,7 @@
+{
+  "name": "yt-circle-pointer",
+  "type": "component",
+  "description": "Draw-on annotation ellipse around a target plus a countdown chip that pulses each tick",
+  "tags": ["annotation", "countdown", "overlay"],
+  "vars": []
+}

@@ -1,0 +1,7 @@
+{
+  "name": "mk-callout-highlight",
+  "type": "block",
+  "description": "A sentence whose word-by-word emphasis is driven by a single scalar — tween it to sync the highlight with a voiceover",
+  "tags": ["typography", "karaoke", "captions", "minimal"],
+  "vars": []
+}

@@ -1,0 +1,7 @@
+{
+  "name": "nebula",
+  "type": "block",
+  "description": "A small world of pink and blue gas swirls inside a sphere on black. A WebGPU shader from the Shaders library (shaders.com, MIT).",
+  "tags": ["webgpu", "webgpu-shader", "object", "space", "nebula", "sphere"],
+  "vars": []
+}

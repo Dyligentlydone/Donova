@@ -1,0 +1,7 @@
+{
+  "name": "arc-motion-path",
+  "type": "component",
+  "description": "A GSAP MotionPath primitive that flies a callout along a curved arc with autorotation.",
+  "tags": ["video-primitive", "motionpath", "gsap-plugin", "hyperframes-native"],
+  "vars": []
+}

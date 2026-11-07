@@ -1,0 +1,21 @@
+{
+  "name": "week-in-merges",
+  "type": "block",
+  "description": "Each author's avatar bounces across their row at a speed set by how many pull requests they merged",
+  "tags": ["data", "chart", "ranking", "leaderboard"],
+  "vars": [
+    {},
+    {},
+    {},
+    {},
+    {},
+    {},
+    {},
+    {
+      "description": "Authors drawn, highest merge count first."
+    },
+    {
+      "description": "Line for everyone past the cap. Empty writes it from the rows left out."
+    }
+  ]
+}

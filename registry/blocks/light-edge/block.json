@@ -1,0 +1,7 @@
+{
+  "name": "light-edge",
+  "type": "block",
+  "description": "Purple and cyan light races around the edge of an orb on black. A WebGPU shader from the Shaders library (shaders.com, MIT).",
+  "tags": ["webgpu", "webgpu-shader", "object", "light", "glow", "neon", "edge"],
+  "vars": []
+}

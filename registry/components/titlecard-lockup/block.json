@@ -1,0 +1,26 @@
+{
+  "name": "titlecard-lockup",
+  "type": "component",
+  "description": "The calm breather titlecard: an optional mono kicker fades up, the wordmark settles dead-center with one restrained move, a hairline rule draws left to right, a mono label fades beneath, and the lockup holds truly still.",
+  "tags": ["motion-primitive", "typography", "title-card", "lockup", "breather", "orient"],
+  "vars": [
+    {
+      "description": "Display wordmark that settles dead-center."
+    },
+    {
+      "description": "Mono caption under the rule. Empty hides it."
+    },
+    {
+      "description": "Small mono label above the wordmark. Empty hides it."
+    },
+    {
+      "description": "Hairline rule drawn left to right under the wordmark."
+    },
+    {
+      "description": "Contract color carried by the hairline rule."
+    },
+    {
+      "description": "Optional departure. Frame roots own transitions, so none is the default."
+    }
+  ]
+}

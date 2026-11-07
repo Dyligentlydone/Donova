@@ -1,0 +1,7 @@
+{
+  "name": "organic-light-leak-overlay",
+  "type": "block",
+  "description": "Finite CSS light-leak overlay for memory beats and motivated transitions",
+  "tags": ["light-leak", "film", "memory", "transition", "overlay", "media-treatment-overlay"],
+  "vars": []
+}

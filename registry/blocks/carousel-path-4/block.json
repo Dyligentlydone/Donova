@@ -1,0 +1,86 @@
+{
+  "name": "carousel-path-4",
+  "type": "block",
+  "description": "Image cards ride an open bezier path (arc, V, diagonal, wave, S-curve) with depth scaling and tangent rotation (Path style 4); 24 image slots.",
+  "tags": ["carousel", "gallery", "images", "showcase", "path"],
+  "vars": [
+    {
+      "description": "Image on card 1 of 24. Any aspect; it is fitted into the card box."
+    },
+    {
+      "description": "Image on card 2 of 24. Any aspect; it is fitted into the card box."
+    },
+    {
+      "description": "Image on card 3 of 24. Any aspect; it is fitted into the card box."
+    },
+    {
+      "description": "Image on card 4 of 24. Any aspect; it is fitted into the card box."
+    },
+    {
+      "description": "Image on card 5 of 24. Any aspect; it is fitted into the card box."
+    },
+    {
+      "description": "Image on card 6 of 24. Any aspect; it is fitted into the card box."
+    },
+    {
+      "description": "Image on card 7 of 24. Any aspect; it is fitted into the card box."
+    },
+    {
+      "description": "Image on card 8 of 24. Any aspect; it is fitted into the card box."
+    },
+    {
+      "description": "Image on card 9 of 24. Any aspect; it is fitted into the card box."
+    },
+    {
+      "description": "Image on card 10 of 24. Any aspect; it is fitted into the card box."
+    },
+    {
+      "description": "Image on card 11 of 24. Any aspect; it is fitted into the card box."
+    },
+    {
+      "description": "Image on card 12 of 24. Any aspect; it is fitted into the card box."
+    },
+    {
+      "description": "Image on card 13 of 24. Any aspect; it is fitted into the card box."
+    },
+    {
+      "description": "Image on card 14 of 24. Any aspect; it is fitted into the card box."
+    },
+    {
+      "description": "Image on card 15 of 24. Any aspect; it is fitted into the card box."
+    },
+    {
+      "description": "Image on card 16 of 24. Any aspect; it is fitted into the card box."
+    },
+    {
+      "description": "Image on card 17 of 24. Any aspect; it is fitted into the card box."
+    },
+    {
+      "description": "Image on card 18 of 24. Any aspect; it is fitted into the card box."
+    },
+    {
+      "description": "Image on card 19 of 24. Any aspect; it is fitted into the card box."
+    },
+    {
+      "description": "Image on card 20 of 24. Any aspect; it is fitted into the card box."
+    },
+    {
+      "description": "Image on card 21 of 24. Any aspect; it is fitted into the card box."
+    },
+    {
+      "description": "Image on card 22 of 24. Any aspect; it is fitted into the card box."
+    },
+    {
+      "description": "Image on card 23 of 24. Any aspect; it is fitted into the card box."
+    },
+    {
+      "description": "Image on card 24 of 24. Any aspect; it is fitted into the card box."
+    },
+    {
+      "description": "Time scale of the carousel motion. 1 = the designed pace."
+    },
+    {
+      "description": "Composition ground."
+    }
+  ]
+}

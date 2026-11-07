@@ -1,0 +1,7 @@
+{
+  "name": "liquid-glass-widgets",
+  "type": "block",
+  "description": "Frosted glass stat cards, showcase panel and pill chips over an aurora shader background",
+  "tags": ["html-in-canvas", "liquid-glass-html-in-canvas", "webgpu"],
+  "vars": []
+}

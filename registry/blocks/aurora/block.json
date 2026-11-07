@@ -1,0 +1,7 @@
+{
+  "name": "aurora",
+  "type": "block",
+  "description": "Green and violet aurora curtains ripple across a night sky. A WebGPU shader from the Shaders library (shaders.com, MIT).",
+  "tags": ["webgpu", "webgpu-shader", "background", "light", "aurora", "sky"],
+  "vars": []
+}

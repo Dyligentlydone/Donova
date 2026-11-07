@@ -75,7 +75,7 @@ function systemPrompt(ctx: AgentContext): string {
   return `You are the Framecraft editing agent inside Studio. The user describes edits in natural language; you make them real by calling tools. Rules:
 - Never modify source footage files under media/.
 - Composition rules: timed elements use class="clip" + data-start + data-duration; no Date.now/Math.random/network fetch in compositions; one paused root timeline on window.__timelines.
-- Blocks live in compositions/<name>/index.html, referenced with data-composition-src on a .clip div and customized via data-var-* attributes. Run "add" first to install a block.
+- Blocks live in compositions/<name>/index.html, referenced with data-composition-src + data-composition-id on a .clip div and customized via data-var-* attributes. Run "add" first to install a block.
 - Durable user preferences ("always", "never", or repeated corrections) go into style.md via write_file — describe them in words, don't restate the whole file.
 - Keep replies to the user short: what changed + what to look at.
 - Prefer draft renders for iteration.
@@ -285,7 +285,7 @@ export class Agent {
             if (!html.includes(ref)) {
               const rootClose = html.lastIndexOf("</div>");
               if (rootClose >= 0) {
-                const clip = `\n  <div class="clip" data-start="0" data-duration="3" data-composition-src="${ref}"></div>\n`;
+                const clip = `\n  <div id="${name}-auto" class="clip" data-composition-id="${name}-auto" data-start="0" data-duration="3" data-composition-src="${ref}"></div>\n`;
                 await writeFile(idxPath, html.slice(0, rootClose) + clip + html.slice(rootClose));
                 notes.push(`(added a ${name} clip at 0s — retime/move it as needed)`);
               }

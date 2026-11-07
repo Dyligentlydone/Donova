@@ -1,0 +1,7 @@
+{
+  "name": "spiral-galaxy",
+  "type": "block",
+  "description": "A spiral galaxy seen from outside, turning with real differential rotation: inner stars orbit faster than outer ones, so the arms wind up over the shot instead of spinning rigidly. 20,000 additive GPU sprites, seeded once and solved directly from time, so any frame can be rendered on its own.",
+  "tags": ["hero", "space", "particles", "webgl", "background"],
+  "vars": [{}, {}, {}, {}, {}, {}, {}]
+}

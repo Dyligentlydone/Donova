@@ -1,0 +1,20 @@
+{
+  "name": "strikethrough-replace",
+  "type": "component",
+  "description": "Draw a strike line across old text, then reveal the replacement.",
+  "tags": ["motion-primitive", "typography"],
+  "vars": [
+    {
+      "description": "Edge the strike grows out of as the timeline runs its scale from 0 to 1."
+    },
+    {
+      "description": "Height of the strike line, from a hairline rule to a heavy bar."
+    },
+    {
+      "description": "Strike colour. Blue and violet ride --accent and --accent-2."
+    },
+    {
+      "description": "Colour of both words: ink for light frames, paper for dark ones."
+    }
+  ]
+}

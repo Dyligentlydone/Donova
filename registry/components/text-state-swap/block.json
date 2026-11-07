@@ -1,0 +1,20 @@
+{
+  "name": "text-state-swap",
+  "type": "component",
+  "description": "A text state swap primitive with outgoing blur and incoming lift",
+  "tags": ["video-primitive", "transition-primitive", "transitions-dev-port", "text", "swap"],
+  "vars": [
+    {
+      "description": "The outgoing label, on screen before the swap."
+    },
+    {
+      "description": "The incoming label, on screen after the swap. It rests hidden until the timeline reveals it."
+    },
+    {
+      "description": "Scales the vertical offset the timeline drives, so each label covers a shorter or longer run in the same time."
+    },
+    {
+      "description": "Label colour: ink for light frames, paper for dark ones, accent rides --brand."
+    }
+  ]
+}

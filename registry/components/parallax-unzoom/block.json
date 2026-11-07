@@ -1,0 +1,7 @@
+{
+  "name": "parallax-unzoom",
+  "type": "component",
+  "description": "Reveal transition — focus card scales down from full frame as siblings parallax in to form a grid (reverse of parallax-zoom)",
+  "tags": ["transition", "reveal", "unzoom", "parallax", "grid", "hero"],
+  "vars": []
+}

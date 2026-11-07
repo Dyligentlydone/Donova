@@ -1,0 +1,20 @@
+{
+  "name": "staggered-fade-up",
+  "type": "component",
+  "description": "Words fade in and slide up one after another with configurable delay.",
+  "tags": ["video-primitive", "motion-primitive", "typography"],
+  "vars": [
+    {
+      "description": "Where the offset the timeline drives points."
+    },
+    {
+      "description": "Scales the travel offset, so the words cover a shorter or longer run in the same time."
+    },
+    {
+      "description": "Word colour: ink for light frames, paper for dark ones, accent rides --brand."
+    },
+    {
+      "description": "The words themselves, split on spaces, one span and one stagger step each."
+    }
+  ]
+}

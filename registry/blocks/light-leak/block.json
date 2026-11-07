@@ -1,0 +1,7 @@
+{
+  "name": "light-leak",
+  "type": "block",
+  "description": "Shader transition with cinematic light leak overlay",
+  "tags": ["transition", "shader"],
+  "vars": []
+}

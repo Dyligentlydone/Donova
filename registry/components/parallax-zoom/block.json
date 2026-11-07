@@ -1,0 +1,7 @@
+{
+  "name": "parallax-zoom",
+  "type": "component",
+  "description": "Center card scales up to fill the frame while siblings parallax outward — inspired by the eBay Playbook hero transition",
+  "tags": ["transition", "zoom", "parallax", "grid", "hero"],
+  "vars": []
+}

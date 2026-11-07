@@ -1,0 +1,17 @@
+{
+  "name": "card-resize",
+  "type": "component",
+  "description": "A transitions.dev-inspired card resize primitive that expands a compact card into a detail panel",
+  "tags": ["video-primitive", "transition-primitive", "transitions-dev-port", "card", "layout"],
+  "vars": [
+    {
+      "description": "Card colour scheme: paper is the original white card, ink is a dark card for dark frames."
+    },
+    {
+      "description": "Treatment of the media thumbnail: a plain plate, a hatched surface, or an image plate with a horizon-and-disc glyph."
+    },
+    {
+      "description": "How far the card lifts off the frame, from a contact shadow to a deep drop."
+    }
+  ]
+}

@@ -1,0 +1,17 @@
+{
+  "name": "shared-axis-y",
+  "type": "component",
+  "description": "Per-word vertical shared-axis transition for sharp editorial swaps.",
+  "tags": ["motion-primitive", "typography"],
+  "vars": [
+    {
+      "description": "Which side of the baseline the words travel in from."
+    },
+    {
+      "description": "Scales the vertical offset, so the words cover a shorter or longer run in the same time."
+    },
+    {
+      "description": "Word colour: ink for light frames, paper for dark ones, accent rides --brand."
+    }
+  ]
+}

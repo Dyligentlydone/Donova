@@ -1,0 +1,7 @@
+{
+  "name": "hw-scribble-transition",
+  "type": "block",
+  "description": "Overlay transition: scribble bands accumulate to cover the frame with a solid backstop, the host cuts beneath, and the scribble clears",
+  "tags": ["handwritten", "transition", "wipe"],
+  "vars": []
+}

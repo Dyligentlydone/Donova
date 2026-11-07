@@ -1,0 +1,26 @@
+{
+  "name": "notification-stack",
+  "type": "component",
+  "description": "1 to 5 token notification cards slide-settle into a vertical stack on cues, newest on top; one card grows slightly and brightens as the focus while the rest dim by position.",
+  "tags": ["motion-primitive", "product-demo", "notification", "stack", "stagger"],
+  "vars": [
+    {
+      "description": "Comma-separated card titles (1 to 5 cards)."
+    },
+    {
+      "description": "Comma-separated body lines matched to titles by index. Blank entries hide that body line."
+    },
+    {
+      "description": "Index of the focus card in the titles list. -1 focuses the newest card (top of the stack)."
+    },
+    {
+      "description": "Comma-separated per-card arrival times in seconds. Blank entries use the default rhythm."
+    },
+    {
+      "description": "Accent token family used by the icon dots."
+    },
+    {
+      "description": "How the stack leaves the frame. Default none: the hold ends the film."
+    }
+  ]
+}

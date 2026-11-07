@@ -1,0 +1,23 @@
+{
+  "name": "echo-trail",
+  "type": "component",
+  "description": "A moving element renders with N ghosted copies of itself at t minus i times delta, opacity stepped down per ghost; one traversal, echoes collapsing into the settled element at rest.",
+  "tags": ["motion-primitive", "demonstrate", "trail", "onion-skin", "ghosts", "deterministic"],
+  "vars": [
+    {
+      "description": "Ghost copy count, clamped 2 to 6."
+    },
+    {
+      "description": "Lag between successive ghosts in seconds, clamped 0.03 to 0.3."
+    },
+    {
+      "description": "Authored traversal preset."
+    },
+    {
+      "description": "Subject accent color: green rides --brand, blue rides --accent, violet rides --accent-2."
+    },
+    {
+      "description": "Optional departure. Default none: the settled element holds until the frame cuts."
+    }
+  ]
+}

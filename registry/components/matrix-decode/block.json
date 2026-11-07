@@ -1,0 +1,20 @@
+{
+  "name": "matrix-decode",
+  "type": "component",
+  "description": "Random scramble resolves left-to-right into the target text.",
+  "tags": ["motion-primitive", "typography"],
+  "vars": [
+    {
+      "description": "Word the scramble resolves into. One scrambling cell per character, up to 32."
+    },
+    {
+      "description": "Colour family of the cells and their glow."
+    },
+    {
+      "description": "Type size of the cells in pixels. Cell width follows it."
+    },
+    {
+      "description": "Strength of the halo behind the cells, from none to a heavy bloom."
+    }
+  ]
+}

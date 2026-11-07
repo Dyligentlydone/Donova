@@ -39,7 +39,7 @@ A composition is a static HTML file rendered frame-by-frame into video.
 - Videos are frame-extracted at render fps — always visible-frame-accurate.
 
 ## Sub-compositions
-`data-composition-src="compositions/file.html"` on a timed element embeds another composition. Its timeline is offset by the clip start; `data-speed` rescales; `data-clip-absolute="true"` pins absolute seconds.
+`data-composition-src="compositions/file.html"` + `data-composition-id` on a timed element embeds another composition. Its timeline is offset by the clip start; `data-speed` rescales; `data-clip-absolute="true"` pins absolute seconds. Imported sub-comps keep their own scripts/styles (scoped to the host); GSAP-timeline blocks register `window.__timelines` and are seeked on their local clock.
 
 ## Determinism rules (enforced by lint)
 - No `Date.now()`, `new Date()`, `Math.random()` (unseeded), runtime `fetch()` to remote URLs, `setInterval`, or wall-clock rAF.

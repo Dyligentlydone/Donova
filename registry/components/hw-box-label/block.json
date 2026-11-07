@@ -1,0 +1,7 @@
+{
+  "name": "hw-box-label",
+  "type": "component",
+  "description": "Wobbled rounded rectangle draws on — across the authored stroke matrix (plain/soft/sharp/spray) — or drops in and lands with a volume-true contact squash and bouncy spring recovery, with a handwritten label above or centered; boils",
+  "tags": ["handwritten", "annotation", "overlay"],
+  "vars": []
+}

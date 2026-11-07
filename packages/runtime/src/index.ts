@@ -13,3 +13,11 @@ export function getRuntimeSource(): string {
 }
 
 export const RUNTIME_FILENAME = "runtime.global.js";
+
+/**
+ * Vendored GSAP build served at /__fc-gsap.js. Sub-composition imports rewrite
+ * CDN gsap script srcs to it so renders stay offline-deterministic.
+ */
+export function getGsapSource(): string {
+  return readFileSync(join(here, "..", "vendor", "gsap.min.js"), "utf8");
+}

@@ -1,0 +1,7 @@
+{
+  "name": "orbit-card",
+  "type": "block",
+  "description": "A single feature card orbits a dot sphere on approved Blender camera motion.",
+  "tags": ["3d-motion", "cards", "feature-reveal", "dots", "orbit", "blender-motion", "sphere"],
+  "vars": []
+}

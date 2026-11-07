@@ -1,0 +1,7 @@
+{
+  "name": "terminal-simulator",
+  "type": "component",
+  "description": "A terminal window types commands and streams log output.",
+  "tags": ["code-animation"],
+  "vars": []
+}

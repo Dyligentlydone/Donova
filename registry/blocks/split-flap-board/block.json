@@ -1,0 +1,7 @@
+{
+  "name": "split-flap-board",
+  "type": "block",
+  "description": "Solari-style departure board: every cell walks its drum forward through the intervening characters of a fixed alphabet until it lands on its target, so the text resolves as a mechanical cascade instead of a fade.",
+  "tags": ["text", "kinetic", "mechanical", "split-flap", "solari", "departure-board", "reveal"],
+  "vars": [{}, {}, {}, {}, {}]
+}

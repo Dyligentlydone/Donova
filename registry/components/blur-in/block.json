@@ -1,0 +1,17 @@
+{
+  "name": "blur-in",
+  "type": "component",
+  "description": "An Operator Black word-level content reveal that resolves its own text from controlled blur",
+  "tags": ["video-primitive", "blur-in", "text-effect"],
+  "vars": [
+    {
+      "description": "Type size of the revealed words in pixels; the gap between words scales with it."
+    },
+    {
+      "description": "Word colour: strong for headlines, muted for supporting lines, accent for the brand green."
+    },
+    {
+      "description": "Horizontal alignment of the words in the frame."
+    }
+  ]
+}

@@ -1,0 +1,38 @@
+{
+  "name": "marker-checklist-card",
+  "type": "component",
+  "description": "A hand-lettered paper card: marker headline with an underline and a drawn ellipse around one word, then three checklist rows whose checks draw themselves on - typewriter labels, marker values. The paper-and-marker sibling of mk-specs-list's clean professional rows",
+  "tags": ["motion-primitive", "handwritten", "checklist", "paper", "marker"],
+  "vars": [
+    {
+      "description": "First marker line."
+    },
+    {
+      "description": "Small connecting word under the underline."
+    },
+    {
+      "description": "The word the marker ellipse draws around."
+    },
+    {
+      "description": "The rest of the bottom line."
+    },
+    {
+      "description": "Typewriter label of row 1."
+    },
+    {
+      "description": "Marker value of row 1."
+    },
+    {
+      "description": "Typewriter label of row 2."
+    },
+    {
+      "description": "Marker value of row 2."
+    },
+    {
+      "description": "Typewriter label of row 3."
+    },
+    {
+      "description": "Marker value of row 3."
+    }
+  ]
+}

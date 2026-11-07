@@ -1,0 +1,17 @@
+{
+  "name": "spring-pop",
+  "type": "component",
+  "description": "A badge pops in from a visible near-rest scale, overshoots full size once, and settles cleanly.",
+  "tags": ["motion-primitive", "effects", "spring", "overshoot", "pop", "reveal"],
+  "vars": [
+    {
+      "description": "Strength passed to the back.out entrance curve."
+    },
+    {
+      "description": "Scale at the start of the entrance."
+    },
+    {
+      "description": "Text displayed inside the badge."
+    }
+  ]
+}

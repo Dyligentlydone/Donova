@@ -1,0 +1,7 @@
+{
+  "name": "vfx-text-cursor",
+  "type": "block",
+  "description": "Dramatic text reveal with cursor glow, chromatic shadow rays, and directional lighting on a black stage. Canvas-based shader post-processing with spectral color edges.",
+  "tags": ["html-in-canvas", "text", "shader", "cursor", "chromatic"],
+  "vars": []
+}

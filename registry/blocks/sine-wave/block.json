@@ -1,0 +1,7 @@
+{
+  "name": "sine-wave",
+  "type": "block",
+  "description": "A glowing white sine wave travels across a black frame. A WebGPU shader from the Shaders library (shaders.com, MIT).",
+  "tags": ["webgpu", "webgpu-shader", "background", "wave", "line", "glow"],
+  "vars": []
+}

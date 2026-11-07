@@ -1,0 +1,14 @@
+{
+  "name": "aurora-drift",
+  "type": "component",
+  "description": "Three soft accent-derived aurora fields drift in an exact ambient loop over a deep base and faint vignette.",
+  "tags": ["motion-primitive", "background", "aurora", "gradient", "ambient", "loopable"],
+  "vars": [
+    {
+      "description": "Accent token family used to derive the aurora hues."
+    },
+    {
+      "description": "Base luminance and aurora field strength."
+    }
+  ]
+}

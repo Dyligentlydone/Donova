@@ -1,0 +1,23 @@
+{
+  "name": "ordered-dither-pass",
+  "type": "component",
+  "description": "Bayer-matrix ordered dithering quantizes a slotted scene (rasterized once at mount): the image emerges from pure 2-tone noise to clean, or dissolves the reverse. Stateless per frame, never error diffusion.",
+  "tags": ["motion-primitive", "experiment", "texture", "dither", "transition", "quantize"],
+  "vars": [
+    {
+      "description": "Bayer matrix size: 2 is the coarsest crosshatch, 8 the smoothest ordered grain."
+    },
+    {
+      "description": "in resolves noise to clean; out dissolves clean to noise and holds it."
+    },
+    {
+      "description": "Quantization levels per color channel during the dithered phase."
+    },
+    {
+      "description": "Light tone of the 2-tone noise phase: green rides --brand, blue rides --accent, violet rides --accent-2."
+    },
+    {
+      "description": "Optional departure. Default none: the final state holds until the frame cuts."
+    }
+  ]
+}

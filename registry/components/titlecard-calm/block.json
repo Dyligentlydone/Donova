@@ -1,0 +1,14 @@
+{
+  "name": "titlecard-calm",
+  "type": "component",
+  "description": "A restrained title card where a mono kicker and generous grotesque headline fade upward, drift almost imperceptibly, and exit cleanly.",
+  "tags": ["motion-primitive", "typography", "title-card", "calm", "orient"],
+  "vars": [
+    {
+      "description": "Primary title displayed in the card."
+    },
+    {
+      "description": "Small uppercase label displayed above the headline."
+    }
+  ]
+}

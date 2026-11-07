@@ -1,0 +1,19 @@
+{
+  "name": "cursor-zoom-follow",
+  "type": "component",
+  "description": "Screen-recording auto-zoom: the camera pushes in toward each upcoming click, trails the cursor on a smooth spring, marks every click with a press and a ring, then eases back out to the full screen as the cursor leaves.",
+  "tags": ["cursor", "camera", "zoom", "screen-recording", "click", "product-demo"],
+  "vars": [
+    {
+      "description": "Your own screen capture. Leave empty for the built-in dashboard."
+    },
+    {},
+    {},
+    {},
+    {},
+    {},
+    {},
+    {},
+    {}
+  ]
+}

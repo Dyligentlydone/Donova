@@ -1,0 +1,7 @@
+{
+  "name": "mk-specs-list",
+  "type": "block",
+  "description": "Left-aligned specs/traits checklist over footage or a board: rows slide in staggered with an accent underline sweep; light and dark schemes",
+  "tags": ["data-viz", "list", "minimal", "professional"],
+  "vars": []
+}

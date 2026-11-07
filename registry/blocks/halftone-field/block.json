@@ -1,0 +1,7 @@
+{
+  "name": "halftone-field",
+  "type": "block",
+  "description": "A full-bleed halftone light field: a grid of dots whose size and colour track a slow flowing simplex-noise field, so broad bands of light sweep across a mostly-black frame like a giant LED wall showing a plasma. Built to run under type.",
+  "tags": ["webgl", "shader", "background", "texture", "halftone"],
+  "vars": [{}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}]
+}

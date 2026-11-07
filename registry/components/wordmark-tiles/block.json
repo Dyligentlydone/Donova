@@ -1,0 +1,17 @@
+{
+  "name": "wordmark-tiles",
+  "type": "component",
+  "description": "A wordmark resolves from deterministic color noise into correctly cropped glyph tiles through a spatially modulated GSAP wave.",
+  "tags": ["typography", "wordmark", "tiles", "raster", "reveal"],
+  "vars": [
+    {
+      "description": "Text resolved by the tile wave."
+    },
+    {
+      "description": "Number of columns in the wordmark tile grid."
+    },
+    {
+      "description": "Delay between tile reveals in spatial wave order."
+    }
+  ]
+}

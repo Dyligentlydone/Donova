@@ -1,0 +1,7 @@
+{
+  "name": "hologram",
+  "type": "block",
+  "description": "A pale blue holographic orb with scan rings and flicker, on black. A WebGPU shader from the Shaders library (shaders.com, MIT).",
+  "tags": ["webgpu", "webgpu-shader", "object", "hologram", "sci-fi", "blue"],
+  "vars": []
+}

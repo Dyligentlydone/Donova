@@ -1,0 +1,7 @@
+{
+  "name": "stripes",
+  "type": "block",
+  "description": "Bold black and white diagonal stripes slide across the frame. A WebGPU shader from the Shaders library (shaders.com, MIT).",
+  "tags": ["webgpu", "webgpu-shader", "background", "pattern", "stripes", "monochrome"],
+  "vars": []
+}

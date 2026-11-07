@@ -1,0 +1,7 @@
+{
+  "name": "news-ticker",
+  "type": "block",
+  "description": "Premium broadcast-style lower-third ticker with live label, headline ribbon, and scrolling news crawl.",
+  "tags": ["lower-third", "overlay", "news", "ticker"],
+  "vars": []
+}

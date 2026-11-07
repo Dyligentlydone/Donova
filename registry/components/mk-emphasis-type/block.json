@@ -1,0 +1,7 @@
+{
+  "name": "mk-emphasis-type",
+  "type": "component",
+  "description": "Oversized low-contrast background word drifting slowly behind the subject — typography as texture",
+  "tags": ["typography", "text-treatment", "minimal"],
+  "vars": []
+}

@@ -1,0 +1,7 @@
+{
+  "name": "caption-neon-accent",
+  "type": "component",
+  "description": "Multi-color neon glow accents with wiggle drift animation",
+  "tags": ["captions", "caption-style", "neon", "glow", "accent"],
+  "vars": []
+}

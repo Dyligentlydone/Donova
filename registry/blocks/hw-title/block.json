@@ -1,0 +1,7 @@
+{
+  "name": "hw-title",
+  "type": "block",
+  "description": "Handwritten display text with a scalar-driven word-by-word highlight sweep and a seeded squiggle underline sized to the text; boils",
+  "tags": ["handwritten", "typography", "title-card", "overlay"],
+  "vars": []
+}

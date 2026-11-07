@@ -1,0 +1,14 @@
+{
+  "name": "drift-hold",
+  "type": "component",
+  "description": "A centered content card stays subtly alive through loop-exact rotation, scale breathing, and a slow light sweep.",
+  "tags": ["motion-primitive", "camera", "ambient", "drift", "hold", "loopable"],
+  "vars": [
+    {
+      "description": "Text displayed in the default centered card."
+    },
+    {
+      "description": "Amplitude of the ambient rotation, breathing, and light sweep."
+    }
+  ]
+}

@@ -1,0 +1,7 @@
+{
+  "name": "us-map",
+  "type": "block",
+  "description": "Animated US choropleth map with staggered state reveals, value labels, and gradient legend — pure inline SVG with GSAP",
+  "tags": ["data", "map", "geography", "usa", "choropleth"],
+  "vars": []
+}

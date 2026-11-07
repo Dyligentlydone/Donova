@@ -1,0 +1,7 @@
+{
+  "name": "lt-mask-reveal",
+  "type": "block",
+  "description": "Cardless lower third: an accent sweep crosses and clip-path-reveals a heavy name, role fades up; for footage",
+  "tags": ["lower-third", "overlay", "podcast", "interview", "bold"],
+  "vars": []
+}

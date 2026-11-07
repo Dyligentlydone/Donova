@@ -1,0 +1,7 @@
+{
+  "name": "cuboid-carousel",
+  "type": "block",
+  "description": "A chain of bevelled cuboids rides a travelling wave as a content carousel.",
+  "tags": ["3d-motion", "carousel", "cards", "travelling-wave", "pbr", "shadows", "room-environment"],
+  "vars": []
+}

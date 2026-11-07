@@ -1,0 +1,23 @@
+{
+  "name": "modal-morph",
+  "type": "component",
+  "description": "A small card expands into a full panel, shared-element style: both layouts measured once at mount, the container morphs by transform only (never width/height tweens) while keyed children counter-scale and re-flow onto their own measured targets as pure functions of time.",
+  "tags": ["motion-primitive", "structure", "flip", "shared-element", "modal", "deterministic", "experiment"],
+  "vars": [
+    {
+      "description": "Multiplies the authored card footprint, clamped 0.5 to 1.5."
+    },
+    {
+      "description": "Seconds after mount when the card grows into the panel."
+    },
+    {
+      "description": "Morph feel. Snappy is faster with a settle capped at 1.02 of the target rect."
+    },
+    {
+      "description": "Accent color: green rides --brand, blue rides --accent, violet rides --accent-2."
+    },
+    {
+      "description": "Optional departure. Default none: the settled panel holds until the frame cuts."
+    }
+  ]
+}

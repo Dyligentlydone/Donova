@@ -1,0 +1,7 @@
+{
+  "name": "transitions-dissolve",
+  "type": "block",
+  "description": "Showcase of dissolve and fade transitions",
+  "tags": ["transition", "showcase", "crossfade"],
+  "vars": []
+}

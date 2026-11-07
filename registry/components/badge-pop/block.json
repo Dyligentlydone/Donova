@@ -1,0 +1,17 @@
+{
+  "name": "badge-pop",
+  "type": "component",
+  "description": "A transitions.dev-inspired notification badge pop with elastic scale and count reveal",
+  "tags": ["video-primitive", "transition-primitive", "transitions-dev-port", "badge", "microinteraction"],
+  "vars": [
+    {
+      "description": "Text shown inside the notification badge, up to four characters."
+    },
+    {
+      "description": "Colour family of the badge."
+    },
+    {
+      "description": "Chrome of the button and the badge ring: light for bright frames, dark for dark ones."
+    }
+  ]
+}

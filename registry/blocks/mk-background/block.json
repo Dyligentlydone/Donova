@@ -1,0 +1,7 @@
+{
+  "name": "mk-background",
+  "type": "block",
+  "description": "Procedural soft-blob gradient backdrop in a minimalist presentation style: two radial blobs drifting over a base color, with an animatable rounded-card bar mask and optional frosted-glass mode",
+  "tags": ["background", "gradient", "minimal", "professional", "presentation"],
+  "vars": []
+}

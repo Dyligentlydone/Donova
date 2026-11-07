@@ -1,0 +1,7 @@
+{
+  "name": "thermal-distortion",
+  "type": "block",
+  "description": "Shader transition with heat haze thermal distortion",
+  "tags": ["transition", "shader"],
+  "vars": []
+}

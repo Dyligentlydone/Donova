@@ -1,0 +1,7 @@
+{
+  "name": "gravitational-lens",
+  "type": "block",
+  "description": "Shader transition with gravitational lensing distortion",
+  "tags": ["transition", "shader"],
+  "vars": []
+}

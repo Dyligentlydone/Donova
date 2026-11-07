@@ -1,0 +1,20 @@
+{
+  "name": "grade-split-reveal",
+  "type": "component",
+  "description": "The same picture twice, one flat and one finished, with a hard edge sweeping between them. It stops in the middle long enough to compare, then commits and the graded look takes the frame. Both looks are real HyperFrames color grading run through the WebGL shader, so the preview and the render match.",
+  "tags": ["color-grading", "media", "compare", "reveal", "motion-primitive", "grade"],
+  "vars": [
+    {
+      "description": "Grade carried by the upper copy, and the label printed over it. All three are real grading blocks handed to the shader, not CSS filters."
+    },
+    {
+      "description": "How far across the plate the edge stops to hold the comparison, before it commits and takes the rest."
+    },
+    {
+      "description": "The divider line riding the wipe. Hidden drops it entirely so the grade arrives with no seam."
+    },
+    {
+      "description": "Show or hide the two captions naming each half of the plate."
+    }
+  ]
+}

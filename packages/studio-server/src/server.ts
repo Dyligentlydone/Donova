@@ -9,7 +9,7 @@ import { parseCompositionHtml } from "@framecraft/contract";
 import { startFileServer } from "@framecraft/engine";
 import { lintHtml } from "@framecraft/lint";
 import { render } from "@framecraft/producer";
-import { getRuntimeSource } from "@framecraft/runtime";
+import { getGsapSource, getRuntimeSource } from "@framecraft/runtime";
 import * as parse5 from "parse5";
 import { Agent } from "./agent.js";
 
@@ -389,6 +389,9 @@ export async function startStudioServer(
       // HTML responses get the runtime injected so the iframe exposes __fc/__playerReady.
       if (p === "/__fc-runtime.js") {
         return send(200, getRuntimeSource(), "text/javascript; charset=utf-8");
+      }
+      if (p === "/__fc-gsap.js" || p === "/project/__fc-gsap.js") {
+        return send(200, getGsapSource(), "text/javascript; charset=utf-8");
       }
       if (p === "/project" || p.startsWith("/project/")) {
         const rel = decodeURIComponent(p.slice("/project".length) || "/index.html");

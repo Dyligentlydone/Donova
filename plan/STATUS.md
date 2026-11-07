@@ -1,6 +1,55 @@
 # STATUS — what exists today (read before building)
 
-Last updated: 2026-11-07 (HyperFrames Studio plugged in — see §-1). Update this file whenever you finish an MV task.
+Last updated: 2026-11-07 (HyperFrames conformance + registry/skills port complete — see §-2). Update this file whenever you finish an MV task.
+
+## -2. HyperFrames conformance + registry/skills port
+
+**Framecraft projects are now valid HyperFrames projects.** `hyperframes lint` reports **0 errors, 0
+warnings** on fresh `init` and `--footage` scaffold output; the migrated fc-e2e project reports 0 errors
+and 1 opinionated warning (`composition_file_too_large` — inlined word captions).
+
+**Format conformance (item 1 of the port plan):**
+- Roots emit `id="root"`, `data-composition-id`, `data-width`/`data-height`, `data-fps`, plus
+  `data-no-timeline` (we animate via `data-fc-motion`, not a registered GSAP timeline — the flag saves
+  their producer a 45s poll).
+- `data-composition-src` hosts carry `data-composition-id` + `id` (see `add` hint, agent auto-wire).
+- Scaffolded `<video>`s are hoisted `.clip` elements with own `id="vid-N"`, `data-start`, `data-duration`,
+  `data-media-start` — matching HF's media model. Their Studio timeline now shows named `Vid 0..N` lanes.
+- All timed elements get stable `id`s (caption clips: `cap-N`; block internals: `<name>-1`) — required for
+  Studio's canvas edit targets.
+- Our 14 own blocks were wrapped in doc shells with root composition attrs.
+
+**Runtime compat (`packages/runtime/src/browser.ts`):**
+- Imported sub-compositions: `<style>`/`<link>` imported + **scoped to the host** (prefixed selectors;
+  html/body width/height stripped), `<script>`s execute, `window.__timelines` registrations are
+  *namespaced per host* and seeked at **local** time (host-relative), not global time.
+- Verified: a real HF block (`lt-dark-card` — standalone HTML + CDN GSAP + `__timelines`) renders and
+  animates under our engine and inside a real `fc render` mp4.
+- `renderSeek` seeks `scopedTimelines` at `t - clipStart`; `__playerReady` is declared only after
+  `renderSeek(0)` completes.
+- Timed-element visibility now restores the *authored* `display` value (flex/grid survive), not `""`.
+- Video frame overlays insert into the video's own DOM slot matching its box (fixes overlays painting
+  over everything after videos were hoisted to root children).
+- `/__fc-gsap.js` serves vendored `gsap.min.js` (runtime + studio-server routes) so authored GSAP in
+  compositions works offline; compositions that use GSAP must register `__timelines["id"]`.
+
+**Registry port (item 2):** 213 blocks + 235 components + 15 SFX = **463 catalog items** in
+`registry/catalog.json`. HyperFrames `registry-item.json` metadata normalized to our `block.json`/
+catalog conventions (`variables` → `vars`). Multi-file blocks keep relative asset/lib paths inside
+`compositions/<name>/`. HeyGen/avatar-branded entries excluded (actual avatar-gen + HeyGen UI only —
+mock-UI avatars in e.g. comment/thread blocks kept). Apache-2.0 attribution in `registry/NOTICE.md` +
+`registry/LICENSE-hyperframes.txt`.
+
+**Skills port:** `captions-overlay`, `cut-the-curve`, `motion-doctrine`, `oversized-cursor`, `seam-craft`
+in `skills/` (HeyGen-Pro-gated `reverse-any-video`/`style-sampling` skipped — no proprietary backend).
+`copyPrompt.ts` + `framecraft-core`/`framecraft-registry` skills document the host/root contract.
+
+**Emitter touchpoints:** `init.ts`, `scaffold.ts` (media), `captions.ts` (ids + root-duration clamp),
+`cli.ts` add hint, `agent.ts` auto-wire.
+
+**Not yet done:** verify *every* one of the 463 items renders (spot-checked `lt-dark-card` + our 14);
+components' install targets vs blocks not exhaustively tested; Studio still shows HeyGen branding
+(§-3 vendoring is next).
 
 ## -1. HyperFrames Studio integration (architecture decision)
 
@@ -18,16 +67,7 @@ sync all work headlessly. Their project contract only requires `index.html`; our
 `HYPERFRAMES_NO_TELEMETRY=1` + `DO_NOT_TRACK=1`). Flags: `--port`, `--stop`, `--no-open`, `--local` (legacy
 studio). Files: `packages/cli/src/studio.ts`, `cli.ts` studioCmd.
 
-**Known deltas (7 lint errors on fc-e2e — non-blocking, Studio tolerates):**
-- `missing_timeline_registry` — we don't register `window.__timelines` (our runtime uses `__fc`)
-- `host_missing_composition_id` — our `data-composition-src` hosts lack `data-composition-id`
-- `media_missing_data_start` — `<video>` inside timed clips lacks own `data-start`/`data-duration`
-- `root_missing_composition_id` — our block files lack root `data-composition-id`/`data-width`/`data-height`
-
-**Next steps for full conformance:** emit `data-composition-id` on roots/hosts in `init`/`scaffold`/`add`;
-decide whether our runtime should also register `window.__timelines` (unlocks `hyperframes check`/their
-render pipeline); evaluate whether videos need own `data-start` (may conflict with our clip-wrapper model —
-their lint suggests hoisting videos to stage children).
+**Format deltas — all resolved in §-2** (`hyperframes lint` now reports 0 errors on our projects).
 
 **Not wired yet (HeyGen-coupled, needs shims/strip later):** their in-Studio agent ("Describe a change"),
 Export button, desktop-app handoff, Capture panel, auth/billing surfaces. Telemetry is env-disabled when

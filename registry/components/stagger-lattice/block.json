@@ -1,0 +1,7 @@
+{
+  "name": "stagger-lattice",
+  "type": "component",
+  "description": "A staggered grid reveal inspired by Anime.js v4 stagger utilities, implemented with GSAP for HyperFrames.",
+  "tags": ["advanced-motion", "anime-inspired", "hyperframes-native"],
+  "vars": []
+}

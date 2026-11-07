@@ -1,0 +1,23 @@
+{
+  "name": "browser-device-stage",
+  "type": "component",
+  "description": "A generic app surface in token-native device chrome (browser, window, or phone). The screen is a slot for caller img/video/HTML with a token-styled skeleton default; one settle entrance, a readable hold, and an optional screen swap.",
+  "tags": ["stage", "product-demo", "device", "browser", "phone", "slot", "chrome"],
+  "vars": [
+    {
+      "description": "Device frame drawn around the screen slot."
+    },
+    {
+      "description": "Address pill text (browser) or title bar text (window)."
+    },
+    {
+      "description": "Seconds from mount start to swap to the second screen. 0 disables the swap."
+    },
+    {
+      "description": "Token the skeleton accent elements ride."
+    },
+    {
+      "description": "Optional departure. None holds the final frame."
+    }
+  ]
+}

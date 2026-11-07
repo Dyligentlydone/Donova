@@ -1,0 +1,7 @@
+{
+  "name": "blob",
+  "type": "block",
+  "description": "A soft coral and pink blob with a warm highlight slowly changes shape on black. A WebGPU shader from the Shaders library (shaders.com, MIT).",
+  "tags": ["webgpu", "webgpu-shader", "background", "abstract", "organic", "gradient"],
+  "vars": []
+}

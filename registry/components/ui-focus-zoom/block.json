@@ -1,0 +1,29 @@
+{
+  "name": "ui-focus-zoom",
+  "type": "component",
+  "description": "A full app surface establishes with one settle, then the camera zooms and pans to an anchored region on its cue and holds the zoomed state, with an optional soft focus halo at the anchor. The surface is a slot with a token-styled skeleton default.",
+  "tags": ["camera", "product-demo", "zoom", "focus", "pan", "slot", "servo"],
+  "vars": [
+    {
+      "description": "Focus anchor, percent from the left edge of the surface."
+    },
+    {
+      "description": "Focus anchor, percent from the top edge of the surface."
+    },
+    {
+      "description": "Camera scale at the focused state."
+    },
+    {
+      "description": "Seconds from mount start when the camera departs for the anchor. Clamped inside the hold."
+    },
+    {
+      "description": "Soft accent bloom at the anchor as the camera arrives."
+    },
+    {
+      "description": "Token the halo and skeleton accent elements ride."
+    },
+    {
+      "description": "Optional departure. None holds the final frame."
+    }
+  ]
+}

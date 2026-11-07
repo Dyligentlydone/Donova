@@ -1,0 +1,7 @@
+{
+  "name": "plasma",
+  "type": "block",
+  "description": "Deep violet plasma folds and churns across the whole frame. A WebGPU shader from the Shaders library (shaders.com, MIT).",
+  "tags": ["webgpu", "webgpu-shader", "background", "texture", "plasma", "purple"],
+  "vars": []
+}

@@ -1,0 +1,17 @@
+{
+  "name": "beat-accent",
+  "type": "component",
+  "description": "A single music-hit sting: impact flash, micro scale-pulse on the subject, immediate decay.",
+  "tags": ["motion-primitive", "effects", "burst", "sting", "emphasize", "impact"],
+  "vars": [
+    {
+      "description": "Word or short label emphasized by the beat hit."
+    },
+    {
+      "description": "Token-backed accent tone used by the radial flash."
+    },
+    {
+      "description": "Strength of the scale pulse, flash, and shake."
+    }
+  ]
+}

@@ -1,0 +1,20 @@
+{
+  "name": "perspective-marquee",
+  "type": "component",
+  "description": "A 3D tilted marquee with depth feel as items roll toward the horizon.",
+  "tags": ["motion-primitive", "typography"],
+  "vars": [
+    {
+      "description": "How far the marquee plane leans back toward the horizon."
+    },
+    {
+      "description": "Scales the offset the timeline drives, so the strip covers a shorter or longer run in the same time."
+    },
+    {
+      "description": "Pill colour: ink for light frames, paper for dark ones, accent rides the brand token."
+    },
+    {
+      "description": "Comma separated pill labels. The list is laid down twice so the strip still reads as a continuous loop."
+    }
+  ]
+}

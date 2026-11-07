@@ -1,0 +1,17 @@
+{
+  "name": "text-shimmer",
+  "type": "component",
+  "description": "A static headline receives one clean specular gradient sweep through its glyphs, then returns to its ordinary text color.",
+  "tags": ["motion-primitive", "text-effects", "shimmer", "specular", "emphasis"],
+  "vars": [
+    {
+      "description": "Text receiving the single shimmer pass."
+    },
+    {
+      "description": "Hue of the specular shimmer band."
+    },
+    {
+      "description": "Requested start time for the shimmer sweep."
+    }
+  ]
+}

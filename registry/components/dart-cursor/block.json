@@ -1,0 +1,7 @@
+{
+  "name": "dart-cursor",
+  "type": "component",
+  "description": "A bold outlined arrowhead that dives in from camera depth, flies nose-first with motion blur along its path, squashes on two clicks, and whips out of frame.",
+  "tags": ["cursor", "motion-primitive", "pointer", "click", "motion-blur", "depth"],
+  "vars": [{}, {}, {}, {}, {}, {}, {}, {}]
+}

@@ -1,0 +1,7 @@
+{
+  "name": "hw-arrow",
+  "type": "component",
+  "description": "Wobbled draw-on arrow with straight, gentle, and swoop curve poses, a four-way stroke texture matrix (plain/soft/sharp/spray), and a travel-aligned head-arrival stretch pulse with spring recovery; boils while on screen",
+  "tags": ["handwritten", "annotation", "arrow", "overlay"],
+  "vars": []
+}

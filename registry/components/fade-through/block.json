@@ -1,0 +1,17 @@
+{
+  "name": "fade-through",
+  "type": "component",
+  "description": "A calm transition primitive that fades one layer out, passes through a wash, and reveals the next layer",
+  "tags": ["motion-primitive", "transition", "fade", "crossfade", "scene"],
+  "vars": [
+    {
+      "description": "Colour of the mid-transition frame. Paper resolves through --hf-fade-through-wash, accent rides --accent."
+    },
+    {
+      "description": "How far the wash covers at its peak. 1 is a full flash, 0.3 a light veil."
+    },
+    {
+      "description": "Flat fills the frame evenly, bloom concentrates the wash in the centre."
+    }
+  ]
+}

@@ -1,0 +1,23 @@
+{
+  "name": "telemetry-hud",
+  "type": "component",
+  "description": "Quiet mono debug-HUD readouts frame a slotted subject: corner brackets draw on, label:value lines tick their values on cues, one readout emphasized in accent. The subject never moves; the HUD breathes zero.",
+  "tags": ["motion-primitive", "product-demo", "hud", "telemetry", "deterministic"],
+  "vars": [
+    {
+      "description": "Comma-separated label:value pairs, up to 8. The first colon splits label from value."
+    },
+    {
+      "description": "Index of the readout rendered in the accent color. -1 disables."
+    },
+    {
+      "description": "Comma-separated seconds relative to mount start; cue N starts readout N value tick. Empty uses the authored rhythm."
+    },
+    {
+      "description": "Color of the emphasized readout."
+    },
+    {
+      "description": "Outgoing transition. Frame roots own transitions; none holds the end frame."
+    }
+  ]
+}

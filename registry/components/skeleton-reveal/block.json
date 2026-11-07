@@ -1,0 +1,17 @@
+{
+  "name": "skeleton-reveal",
+  "type": "component",
+  "description": "A skeleton loader transition that pulses, then cross-fades into content",
+  "tags": ["video-primitive", "transition-primitive", "transitions-dev-port", "skeleton", "reveal"],
+  "vars": [
+    {
+      "description": "Primary line revealed once the skeleton fades out."
+    },
+    {
+      "description": "Secondary line under the name, such as an email or a role."
+    },
+    {
+      "description": "Card palette. Light is the paper card, dark is a near-black card with the matching skeleton bars and text."
+    }
+  ]
+}

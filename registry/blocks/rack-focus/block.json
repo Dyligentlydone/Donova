@@ -1,0 +1,7 @@
+{
+  "name": "rack-focus",
+  "type": "block",
+  "description": "A focus pull with real aperture bokeh: the focal plane travels from a near subject to a far one, so one resolves as the other blows into hard-edged polygon discs that clip to a cat's eye toward the corners. A focus pull only reads against content at two clearly separated depths, so this block carries its own depth-layered night exterior and puts both subject depths on variables.",
+  "tags": ["webgl", "shader", "camera", "depth", "cinematic", "showcase"],
+  "vars": [{}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}]
+}

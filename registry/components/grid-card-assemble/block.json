@@ -1,0 +1,26 @@
+{
+  "name": "grid-card-assemble",
+  "type": "component",
+  "description": "N capability cards (thin-line icon that draws on, mono label, optional muted body) stagger-assemble into a grid or vertical list with a fade plus short slide into slot, then hold perfectly still.",
+  "tags": ["motion-primitive", "layout", "grid", "list", "stagger", "assemble", "feature-tour"],
+  "vars": [
+    {
+      "description": "Comma-separated cards (3 to 12). \"Label: body\" adds a one-line muted body under the label."
+    },
+    {
+      "description": "Grid wraps by columns; list stacks vertically."
+    },
+    {
+      "description": "Grid column count (grid layout only). 0 picks automatically: one row up to 3 items, then ceil(sqrt(N))."
+    },
+    {
+      "description": "Comma-separated per-item entrance times in seconds. Blank entries use the default cascade."
+    },
+    {
+      "description": "Accent token family used by the card icons."
+    },
+    {
+      "description": "How the assembled layout leaves the frame. Default none: the hold ends the film."
+    }
+  ]
+}

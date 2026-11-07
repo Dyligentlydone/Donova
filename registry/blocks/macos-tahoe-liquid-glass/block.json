@@ -1,0 +1,7 @@
+{
+  "name": "macos-tahoe-liquid-glass",
+  "type": "block",
+  "description": "3D MacBook with a macOS Tahoe-style desktop, glass menu bar, Finder window, dock, and cinematic device camera move.",
+  "tags": ["html-in-canvas", "3d", "macos", "tahoe", "gltf"],
+  "vars": []
+}

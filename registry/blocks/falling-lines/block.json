@@ -1,0 +1,7 @@
+{
+  "name": "falling-lines",
+  "type": "block",
+  "description": "White lines fall down the frame at varied speeds, each fading into a trail. A WebGPU shader from the Shaders library (shaders.com, MIT).",
+  "tags": ["webgpu", "webgpu-shader", "background", "texture", "lines", "rain", "monochrome"],
+  "vars": []
+}

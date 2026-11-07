@@ -1,0 +1,20 @@
+{
+  "name": "variable-axis-type",
+  "type": "component",
+  "description": "A locked one-line headline whose weight or width axis morphs into a decisive emphasis beat.",
+  "tags": ["typography", "variable-font", "kinetic-type", "axis", "emphasize"],
+  "vars": [
+    {
+      "description": "Word or short headline to emphasize."
+    },
+    {
+      "description": "Variable-font axis used for the emphasis morph."
+    },
+    {
+      "description": "Starting coordinate on the selected font axis."
+    },
+    {
+      "description": "Ending coordinate on the selected font axis."
+    }
+  ]
+}

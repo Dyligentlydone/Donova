@@ -1,0 +1,7 @@
+{
+  "name": "transitions-grid",
+  "type": "block",
+  "description": "Showcase of grid-based tile transitions",
+  "tags": ["transition", "showcase"],
+  "vars": []
+}

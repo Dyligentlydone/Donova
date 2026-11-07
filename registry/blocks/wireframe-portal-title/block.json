@@ -1,0 +1,16 @@
+{
+  "name": "wireframe-portal-title",
+  "type": "block",
+  "description": "A wireframe portal bursts open, the title comes through, then its letters swap into a second phrase.",
+  "tags": [
+    "3d-motion",
+    "title-card",
+    "wireframe",
+    "portal",
+    "burst",
+    "typography",
+    "post-processing",
+    "phrase-swap"
+  ],
+  "vars": []
+}

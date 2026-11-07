@@ -1,0 +1,7 @@
+{
+  "name": "yt-screen-warp",
+  "type": "component",
+  "description": "Grid, scanline, vignette, and sheen overlay plus a 3D-warp wrapper class that makes footage read as if playing on a physical display",
+  "tags": ["effect", "overlay", "texture"],
+  "vars": []
+}

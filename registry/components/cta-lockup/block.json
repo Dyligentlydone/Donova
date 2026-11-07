@@ -1,0 +1,20 @@
+{
+  "name": "cta-lockup",
+  "type": "component",
+  "description": "A canonical closing lockup that reveals an action line, pops in an accent CTA capsule, settles supporting microcopy, and holds with confidence.",
+  "tags": ["motion-primitive", "ui-props", "cta", "end-card", "lockup", "ask"],
+  "vars": [
+    {
+      "description": "Primary action statement shown above the CTA."
+    },
+    {
+      "description": "Text displayed inside the CTA capsule."
+    },
+    {
+      "description": "Supporting detail shown below the CTA capsule."
+    },
+    {
+      "description": "Fill color used by the CTA capsule."
+    }
+  ]
+}

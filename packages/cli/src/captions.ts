@@ -75,15 +75,22 @@ export async function captionsCmd(opts: {
     flush();
   }
 
+  // Root duration caps caption end so clips never overrun the composition.
+  const indexPath = join(dir, "index.html");
+  const html = await readFile(indexPath, "utf8").catch(() => {
+    throw new CliError(ERR.FILE_NOT_FOUND, `no index.html in ${dir}`);
+  });
+  const rootDur = Number(/data-duration="([\d.]+)"/.exec(html)?.[1] ?? Number.POSITIVE_INFINITY);
+
   // Build caption elements; skip words that fell in a cut.
   const els: string[] = [];
-  for (const u of units) {
+  for (const [i, u] of units.entries()) {
     const start = toComp(u.srcStart);
-    if (start == null) continue;
-    const dur = Math.max(0.12, u.srcEnd - u.srcStart);
+    if (start == null || start >= rootDur) continue;
+    const dur = Math.min(Math.max(0.12, u.srcEnd - u.srcStart), rootDur - start);
     const cls = mode === "word" ? (u.em ? "fc-cap fc-cap-em" : "fc-cap") : "fc-pcap";
     els.push(
-      `  <div class="clip" data-start="${start.toFixed(3)}" data-duration="${dur.toFixed(3)}">\n    <span class="${cls}" data-fc-motion='${POP}'>${ESC(u.text)}</span>\n  </div>`,
+      `  <div id="cap-${i}" class="clip" data-start="${start.toFixed(3)}" data-duration="${dur.toFixed(3)}">\n    <span class="${cls}" data-fc-motion='${POP}'>${ESC(u.text)}</span>\n  </div>`,
     );
   }
   if (!els.length) {
@@ -92,10 +99,6 @@ export async function captionsCmd(opts: {
 
   // Insert before the closing </div> of the root composition (last </div>).
   // Regeneration is idempotent: strip any previously generated block first.
-  const indexPath = join(dir, "index.html");
-  const html = await readFile(indexPath, "utf8").catch(() => {
-    throw new CliError(ERR.FILE_NOT_FOUND, `no index.html in ${dir}`);
-  });
   const BEGIN = "<!-- generated captions";
   const END = "<!-- /generated captions -->";
   const bIdx = html.indexOf(BEGIN);

@@ -1,0 +1,7 @@
+{
+  "name": "mk-clone-wall-transition",
+  "type": "block",
+  "description": "Overlay transition: a tiled word wall covers the frame, inverts via difference blending, and clears — hard-cut the content beneath while covered",
+  "tags": ["transition", "typography", "wipe"],
+  "vars": []
+}

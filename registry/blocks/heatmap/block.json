@@ -1,0 +1,7 @@
+{
+  "name": "heatmap",
+  "type": "block",
+  "description": "Thermal colours flow through a glowing orb, on black. A WebGPU shader from the Shaders library (shaders.com, MIT).",
+  "tags": ["webgpu", "webgpu-shader", "object", "heat", "thermal", "glow"],
+  "vars": []
+}

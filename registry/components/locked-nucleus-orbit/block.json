@@ -1,0 +1,17 @@
+{
+  "name": "locked-nucleus-orbit",
+  "type": "component",
+  "description": "A fixed center nucleus anchors deterministic satellite orbits that settle into a composed lockup.",
+  "tags": ["motion-primitive", "intro", "reveal", "orbit", "lockup", "deterministic"],
+  "vars": [
+    {
+      "description": "Text displayed inside the fixed center nucleus."
+    },
+    {
+      "description": "Color used by the nucleus, rings, and satellite markers."
+    },
+    {
+      "description": "Number of orbiting copy chips."
+    }
+  ]
+}

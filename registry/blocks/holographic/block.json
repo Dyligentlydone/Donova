@@ -1,0 +1,7 @@
+{
+  "name": "holographic",
+  "type": "block",
+  "description": "An iridescent foil orb with a shifting rainbow sheen, centred on black. A WebGPU shader from the Shaders library (shaders.com, MIT).",
+  "tags": ["webgpu", "webgpu-shader", "holographic", "iridescent", "rainbow", "orb"],
+  "vars": []
+}

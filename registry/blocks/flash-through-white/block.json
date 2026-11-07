@@ -1,0 +1,7 @@
+{
+  "name": "flash-through-white",
+  "type": "block",
+  "description": "Shader transition with white flash crossfade",
+  "tags": ["transition", "shader"],
+  "vars": []
+}

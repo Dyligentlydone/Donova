@@ -1,0 +1,7 @@
+{
+  "name": "vfx-iphone-device",
+  "type": "block",
+  "description": "Real GLTF iPhone 15 Pro Max and MacBook Pro models with live HTML-in-Canvas screen content, morphing glass lens, product review camera choreography, and 360° turntable.",
+  "tags": ["html-in-canvas", "3d", "device", "iphone", "macbook", "gltf"],
+  "vars": []
+}

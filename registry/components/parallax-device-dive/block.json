@@ -1,0 +1,14 @@
+{
+  "name": "parallax-device-dive",
+  "type": "component",
+  "description": "A canonical phone rises into view before the camera pushes through its screen and layered app UI expands to fill the frame.",
+  "tags": ["motion-primitive", "camera", "device", "phone", "parallax", "transition"],
+  "vars": [
+    {
+      "description": "Highlight color used throughout the app UI."
+    },
+    {
+      "description": "Title displayed in the app header."
+    }
+  ]
+}

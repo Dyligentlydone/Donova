@@ -1,0 +1,7 @@
+{
+  "name": "swirl",
+  "type": "block",
+  "description": "Orange and blue color fields swirl and flow into each other across the whole frame. A WebGPU shader from the Shaders library (shaders.com, MIT).",
+  "tags": ["webgpu", "webgpu-shader", "background", "gradient", "flow", "abstract"],
+  "vars": []
+}

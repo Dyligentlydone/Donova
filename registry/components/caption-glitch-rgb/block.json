@@ -1,0 +1,7 @@
+{
+  "name": "caption-glitch-rgb",
+  "type": "component",
+  "description": "RGB chromatic aberration with CRT scanline overlay",
+  "tags": ["captions", "caption-style", "glitch", "cyber", "tech"],
+  "vars": []
+}

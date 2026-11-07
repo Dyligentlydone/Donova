@@ -1,0 +1,20 @@
+{
+  "name": "text-stagger",
+  "type": "component",
+  "description": "A transitions.dev-inspired text stagger primitive with enter, shimmer, and exit-ready words",
+  "tags": ["video-primitive", "transition-primitive", "transitions-dev-port", "text", "stagger"],
+  "vars": [
+    {
+      "description": "Headline copy. Every whitespace-separated word becomes one staggered span."
+    },
+    {
+      "description": "Type size of every word in pixels, clamped to 24-160. Line height stays proportional."
+    },
+    {
+      "description": "Base word colour: ink for light frames, paper for dark ones."
+    },
+    {
+      "description": "Colour of the shimmer the second timeline step sweeps across the words."
+    }
+  ]
+}

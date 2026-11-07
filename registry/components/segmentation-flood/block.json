@@ -1,0 +1,23 @@
+{
+  "name": "segmentation-flood",
+  "type": "component",
+  "description": "Machine-vision read of a slotted subject: translucent accent segmentation masks flood on in quantized scanline steps, each region gets a thin bracket and mono label chip, a deterministic 2-frame HUD flicker rides the pass, then the labeled read settles clean.",
+  "tags": ["motion-primitive", "product-demo", "ai", "hud", "canvas", "deterministic", "experiment"],
+  "vars": [
+    {
+      "description": "Comma-separated region labels; 2 to 4 are used, one translucent mask + bracket + mono chip each."
+    },
+    {
+      "description": "Seconds from mount start when the segmentation pass begins. Clamped so the pass and any exit stay inside the clip."
+    },
+    {
+      "description": "Deterministic 2-frame HUD luminance toggle riding the flood pass."
+    },
+    {
+      "description": "Mask, bracket, and chip color: green rides --brand, blue rides --accent, violet rides --accent-2."
+    },
+    {
+      "description": "Optional departure. Default none: the labeled read holds until the frame cuts."
+    }
+  ]
+}

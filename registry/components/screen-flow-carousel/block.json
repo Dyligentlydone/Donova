@@ -1,0 +1,23 @@
+{
+  "name": "screen-flow-carousel",
+  "type": "component",
+  "description": "Two to five app screens ride a horizontal rail: one primary at center, neighbors receded, advancing on cues with a velocity-matched throw and a smooth long-tail catch while a mono caption swaps with each advance. Screens are slots with token skeleton defaults.",
+  "tags": ["product-demo", "feature-tour", "carousel", "rail", "slot", "screens"],
+  "vars": [
+    {
+      "description": "How many screens ride the rail."
+    },
+    {
+      "description": "Comma-separated caption per screen. Blank entries use the authored defaults."
+    },
+    {
+      "description": "Comma-separated advance times in seconds from mount start. Blank entries use the authored even rhythm."
+    },
+    {
+      "description": "Token the active ring, caption dot, and skeleton accents ride."
+    },
+    {
+      "description": "Optional departure. Default none: the final screen holds until the cut."
+    }
+  ]
+}

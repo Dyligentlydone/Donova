@@ -1,0 +1,20 @@
+{
+  "name": "testimonial-card",
+  "type": "component",
+  "description": "Reveals a customer quote at reading pace, then settles its avatar, author name, and handle beneath as a clean proof beat.",
+  "tags": ["prop", "ui-props", "testimonial", "social-proof", "quote", "prove"],
+  "vars": [
+    {
+      "description": "Customer testimonial copy revealed at reading pace."
+    },
+    {
+      "description": "Name attributed to the testimonial."
+    },
+    {
+      "description": "Role or social handle shown beneath the author name."
+    },
+    {
+      "description": "Visible customer rating from zero to five stars."
+    }
+  ]
+}

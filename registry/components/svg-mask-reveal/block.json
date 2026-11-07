@@ -1,0 +1,17 @@
+{
+  "name": "svg-mask-reveal",
+  "type": "component",
+  "description": "A soft token-colored sweep reveals media only through an editable SVG wordmark mask.",
+  "tags": ["effect", "svg", "mask", "wordmark", "reveal", "exhibit"],
+  "vars": [
+    {
+      "description": "Text used as the SVG mask window."
+    },
+    {
+      "description": "Final revealed width of the wordmark."
+    },
+    {
+      "description": "Softness of the traveling reveal edge."
+    }
+  ]
+}

@@ -1,0 +1,7 @@
+{
+  "name": "oscilloscope-trace",
+  "type": "block",
+  "description": "CRT oscilloscope beam sweeping a waveform across a 10x8 graticule, with closed-form phosphor persistence: the tail decays as exp(-age/tau) and brightens where the beam slows",
+  "tags": ["instrument", "data", "showcase", "retro"],
+  "vars": [{}, {}, {}, {}, {}, {}, {}]
+}

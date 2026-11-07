@@ -1,0 +1,17 @@
+{
+  "name": "torn-paper-rip",
+  "type": "component",
+  "description": "A fibrous paper tear runs across the frame: the torn sheet shows its white paper core along the edge and lifts away on a soft shadow, leaving the next scene standing.",
+  "tags": ["torn paper", "paper rip", "paper tear", "transition", "texture", "motion-primitive"],
+  "vars": [
+    {
+      "description": "Which way the tear travels across the frame."
+    },
+    {
+      "description": "Color of the exposed paper cross-section riding the tear."
+    },
+    {
+      "description": "How jagged and fibrous the tear edge is. Low is a clean deckle edge, high is roughly torn."
+    }
+  ]
+}

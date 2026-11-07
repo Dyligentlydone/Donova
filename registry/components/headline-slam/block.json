@@ -1,0 +1,20 @@
+{
+  "name": "headline-slam",
+  "type": "component",
+  "description": "A heavyweight headline scales down into frame, lands with a deterministic three-frame shake, holds with subtle drift, and whips upward on exit.",
+  "tags": ["motion-primitive", "typography", "headline", "slam", "impact", "exit"],
+  "vars": [
+    {
+      "description": "Text displayed as the headline."
+    },
+    {
+      "description": "Zero-based word index to color. Out of range leaves the headline unaccented."
+    },
+    {
+      "description": "Color applied to the selected word."
+    },
+    {
+      "description": "Drop shadow cast under the headline. On by default; set false for a flat matte look."
+    }
+  ]
+}

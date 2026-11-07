@@ -1,0 +1,7 @@
+{
+  "name": "code-highlight",
+  "type": "block",
+  "description": "A highlight band sweeps across a target line while the surrounding context dims — draws the eye to one line.",
+  "tags": ["code", "code-animation", "highlight", "developer"],
+  "vars": []
+}

@@ -1,0 +1,17 @@
+{
+  "name": "beat-pulse-background",
+  "type": "component",
+  "description": "An accent-derived backdrop pulses its glow intensity and saturation on a deterministic, supplied beat grid.",
+  "tags": ["motion-primitive", "background", "beat", "pulse", "rhythmic", "reactive"],
+  "vars": [
+    {
+      "description": "Comma-separated beat times in seconds. Invalid entries are ignored and numeric values are clamped to the composition duration."
+    },
+    {
+      "description": "Accent token family used by the pulsing glow."
+    },
+    {
+      "description": "Strength of the glow and saturation pulse."
+    }
+  ]
+}

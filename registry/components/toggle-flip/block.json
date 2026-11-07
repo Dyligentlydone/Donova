@@ -1,0 +1,17 @@
+{
+  "name": "toggle-flip",
+  "type": "component",
+  "description": "An oversized UI toggle switch that flips with real physicality: thumb overshoot, track color crossfade, and a soft press-compress before release. The reference prop of the ui-props family.",
+  "tags": ["prop", "ui-props", "toggle", "interaction", "reference-prop", "demonstrate"],
+  "vars": [
+    {
+      "description": "Target end state the flip lands on."
+    },
+    {
+      "description": "Optional caption under the toggle. Blank hides the line."
+    },
+    {
+      "description": "Toggle width as a percent of the host box width."
+    }
+  ]
+}

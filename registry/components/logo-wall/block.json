@@ -1,0 +1,17 @@
+{
+  "name": "logo-wall",
+  "type": "component",
+  "description": "A trusted-by wall of placeholder lettermark logos that fades and scales into place with a deterministic per-cell stagger.",
+  "tags": ["data", "logos", "social-proof", "stagger", "prove"],
+  "vars": [
+    {
+      "description": "Number of logo rows in the wall."
+    },
+    {
+      "description": "Number of logo columns in the wall."
+    },
+    {
+      "description": "Delay between consecutive logo cell entrances."
+    }
+  ]
+}

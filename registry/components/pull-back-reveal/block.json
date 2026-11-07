@@ -1,0 +1,17 @@
+{
+  "name": "pull-back-reveal",
+  "type": "component",
+  "description": "A tight stat detail holds, then one decelerating camera pull-back reveals the headline and supporting cards that recontextualize it.",
+  "tags": ["motion-primitive", "camera", "pull-back", "reveal", "recontextualize"],
+  "vars": [
+    {
+      "description": "Stat shown in the detail chip at the center of the reveal."
+    },
+    {
+      "description": "Headline revealed around the focused detail."
+    },
+    {
+      "description": "Highlight color used across the composed scene."
+    }
+  ]
+}

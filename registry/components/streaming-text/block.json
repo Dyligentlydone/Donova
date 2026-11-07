@@ -1,0 +1,14 @@
+{
+  "name": "streaming-text",
+  "type": "component",
+  "description": "Words arrive the way an AI answer streams - in uneven bursts on a measured token rhythm, each word landing grey and inking to full colour - rather than the even tick of a typewriter",
+  "tags": ["video-primitive", "text-effect", "ai", "chat"],
+  "vars": [
+    {
+      "description": "Type size of the streamed words."
+    },
+    {
+      "description": "Ink pair: dark words on a light ground, or light words on a dark ground."
+    }
+  ]
+}

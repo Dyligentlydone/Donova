@@ -1,0 +1,17 @@
+{
+  "name": "sheet-spring-up",
+  "type": "component",
+  "description": "A bottom sheet rushes up from below the frame on a real spring sampled frame by frame from reference footage, overshooting its resting place and settling back without an approximated ease",
+  "tags": ["video-primitive", "sheet", "spring", "mock-ui", "overlay"],
+  "vars": [
+    {
+      "description": "Sheet width in pixels."
+    },
+    {
+      "description": "Sheet corner radius."
+    },
+    {
+      "description": "Light is the reference near-white sheet; dark is the raised surface token."
+    }
+  ]
+}

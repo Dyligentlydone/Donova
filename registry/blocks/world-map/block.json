@@ -1,0 +1,7 @@
+{
+  "name": "world-map",
+  "type": "block",
+  "description": "Animated world choropleth with country-by-country reveal, tooltip labels, and rotating globe inset — D3 Natural Earth projection",
+  "tags": ["data", "map", "geography", "world", "choropleth"],
+  "vars": []
+}

@@ -1,0 +1,17 @@
+{
+  "name": "soft-blur-in",
+  "type": "component",
+  "description": "A soft opacity, blur, and lift reveal for headlines, captions, and product UI callouts",
+  "tags": ["motion-primitive", "text", "reveal", "blur"],
+  "vars": [
+    {
+      "description": "How far the element is offset before it slides home: 14px, 28px or 52px."
+    },
+    {
+      "description": "up starts the element below its resting place so it rises in, down starts it above so it drops in."
+    },
+    {
+      "description": "Starting blur radius, from a light haze to a full smear."
+    }
+  ]
+}

@@ -1,0 +1,20 @@
+{
+  "name": "spring-stack-shuffle",
+  "type": "component",
+  "description": "A stack of 3 to 5 slotted cards reshuffles on cues: the back card throws over the top and lands at the front with real mass, the rest compress and resettle; cues that land mid-flight redirect the moving cards with velocity preserved.",
+  "tags": ["motion-primitive", "product-demo", "physics", "stack", "interruptible-spring"],
+  "vars": [
+    {
+      "description": "Number of cards in the stack, 3 to 5."
+    },
+    {
+      "description": "Comma-separated seconds from mount start; each cue throws the back card to the front. Cues inside a running throw redirect it mid-flight, velocity preserved. Empty keeps the default rhythm."
+    },
+    {
+      "description": "Active-card ring color from the contract token map."
+    },
+    {
+      "description": "Optional departure. Default none: the settled stack holds until the frame cuts."
+    }
+  ]
+}

@@ -1,0 +1,7 @@
+{
+  "name": "data-chart",
+  "type": "block",
+  "description": "Animated bar + line chart with staggered reveal, NYT-style typography, and value labels",
+  "tags": ["data", "chart", "statistics"],
+  "vars": []
+}

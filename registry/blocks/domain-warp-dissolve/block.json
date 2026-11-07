@@ -1,0 +1,7 @@
+{
+  "name": "domain-warp-dissolve",
+  "type": "block",
+  "description": "Shader transition with fractal noise domain warping",
+  "tags": ["transition", "shader"],
+  "vars": []
+}

@@ -1,0 +1,17 @@
+{
+  "name": "curtain-reveal",
+  "type": "component",
+  "description": "Two pleated stage curtains gather outward from center, the way real velvet bunches at the tieback, revealing the stage underneath. A static pelmet frames the top; a soft spotlight can bloom in as they part.",
+  "tags": ["curtain", "stage reveal", "transition", "motion-primitive"],
+  "vars": [
+    {
+      "description": "Curtain color."
+    },
+    {
+      "description": "Static valance framing the top of the stage."
+    },
+    {
+      "description": "Soft glow blooming over the stage as the curtains part."
+    }
+  ]
+}

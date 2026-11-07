@@ -1,0 +1,7 @@
+{
+  "name": "code-shader-dissolve",
+  "type": "block",
+  "description": "The code compiles into existence: a GPU fragment shader resolves it out of seeded noise with a chromatic dissolve front and edge glow, then holds crisp.",
+  "tags": ["code", "code-animation", "shader", "webgl", "developer"],
+  "vars": []
+}

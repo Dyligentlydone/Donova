@@ -1,0 +1,20 @@
+{
+  "name": "blur-out-up",
+  "type": "component",
+  "description": "Words arrive clean and depart upward with increasing blur for airy exits.",
+  "tags": ["motion-primitive", "typography"],
+  "vars": [
+    {
+      "description": "Where the offset the timeline drives points."
+    },
+    {
+      "description": "Scales the travel offset, so the words cover a shorter or longer run in the same time."
+    },
+    {
+      "description": "Scales the blur radius the timeline drives, from a light haze to a full smear."
+    },
+    {
+      "description": "Word colour: ink for light frames, paper for dark ones, accent rides --brand."
+    }
+  ]
+}

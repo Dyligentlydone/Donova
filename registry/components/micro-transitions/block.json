@@ -1,0 +1,27 @@
+{
+  "name": "micro-transitions",
+  "type": "component",
+  "description": "A transitions.dev-inspired pack of badge, dropdown, modal, tabs, tooltip, and success-check micro transitions",
+  "tags": [
+    "transition-primitive",
+    "motion-primitive",
+    "transitions-dev-port",
+    "ui",
+    "transition",
+    "microinteraction"
+  ],
+  "vars": [
+    {
+      "description": "Count inside the notification badge on the bell."
+    },
+    {
+      "description": "Wording inside the small dark tooltip."
+    },
+    {
+      "description": "Colour of the notification badge chip."
+    },
+    {
+      "description": "Scales how far every panel starts from its resting place before it settles."
+    }
+  ]
+}

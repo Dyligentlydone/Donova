@@ -1,0 +1,7 @@
+{
+  "name": "code-slice-hero",
+  "type": "block",
+  "description": "A tiled headline surface flips cell by cell under a sweeping depth field to reveal the rear headline.",
+  "tags": ["3d-motion", "transition", "typography", "tiles", "flip", "webgl2", "shadows", "two-headlines"],
+  "vars": []
+}

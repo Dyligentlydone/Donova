@@ -1,0 +1,17 @@
+{
+  "name": "typewriter",
+  "type": "component",
+  "description": "Character-by-character text reveal with a deterministic blinking cursor.",
+  "tags": ["video-primitive", "motion-primitive", "typography"],
+  "vars": [
+    {
+      "description": "Line that types itself out character by character."
+    },
+    {
+      "description": "Colour of the text and the caret: ink for light frames, paper for dark ones, accent rides --brand."
+    },
+    {
+      "description": "Caret shape: a thin rule, a terminal-style block, or no caret at all."
+    }
+  ]
+}

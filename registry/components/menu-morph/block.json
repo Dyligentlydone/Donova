@@ -1,0 +1,17 @@
+{
+  "name": "menu-morph",
+  "type": "component",
+  "description": "A transitions.dev-inspired hamburger and plus-menu morph primitive for compact action menus",
+  "tags": ["video-primitive", "transition-primitive", "transitions-dev-port", "menu", "morph"],
+  "vars": [
+    {
+      "description": "Comma separated labels for the pills that fan out under the button. Up to six."
+    },
+    {
+      "description": "Colour of the round button behind the white bars."
+    },
+    {
+      "description": "Diameter of the round button in pixels. The bars scale with it."
+    }
+  ]
+}

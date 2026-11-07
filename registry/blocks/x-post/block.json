@@ -1,0 +1,7 @@
+{
+  "name": "x-post",
+  "type": "block",
+  "description": "Animated X/Twitter post card overlay with engagement metrics",
+  "tags": ["social", "overlay", "twitter"],
+  "vars": []
+}

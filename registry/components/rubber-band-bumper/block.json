@@ -1,0 +1,14 @@
+{
+  "name": "rubber-band-bumper",
+  "type": "component",
+  "description": "An outgoing panel pulls against increasing resistance, holds at tension, then snaps past an edge with overshoot as the incoming panel settles behind it.",
+  "tags": ["motion-primitive", "transition", "rubber-band", "resistance", "overshoot"],
+  "vars": [
+    {
+      "description": "Edge the outgoing panel releases through."
+    },
+    {
+      "description": "Color applied to the tension bands and incoming panel."
+    }
+  ]
+}

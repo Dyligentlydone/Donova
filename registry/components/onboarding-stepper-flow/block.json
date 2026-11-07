@@ -1,0 +1,7 @@
+{
+  "name": "onboarding-stepper-flow",
+  "type": "component",
+  "description": "A composed onboarding flow with milestone rail, active step card, and next-action button",
+  "tags": ["ui-flow", "onboarding", "stepper"],
+  "vars": []
+}

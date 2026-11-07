@@ -1,0 +1,20 @@
+{
+  "name": "pendulum-swing",
+  "type": "component",
+  "description": "Content hangs from a fixed pivot and swings into rest with gravity-damped oscillation, like a hanging sign settling on its hook.",
+  "tags": ["motion-primitive", "physics", "swing", "settle", "reveal"],
+  "vars": [
+    {
+      "description": "Where the content hangs from. The swing rotates about this point, so the top edge stays pinned."
+    },
+    {
+      "description": "How far the first swing reaches before it settles. Every later swing scales with it, so the pendulum still comes to rest upright."
+    },
+    {
+      "description": "Which side the pendulum swings in from: right lifts the first swing clockwise, left mirrors it."
+    },
+    {
+      "description": "Content colour: ink for light frames, paper for dark ones, accent rides --brand."
+    }
+  ]
+}

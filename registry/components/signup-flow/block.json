@@ -1,0 +1,7 @@
+{
+  "name": "signup-flow",
+  "type": "component",
+  "description": "A composed signup flow with social action, email field, password field, and submit button",
+  "tags": ["ui-flow", "signup", "form"],
+  "vars": []
+}

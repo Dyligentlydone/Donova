@@ -1,0 +1,7 @@
+{
+  "name": "glitch",
+  "type": "block",
+  "description": "Shader transition with digital glitch artifacts",
+  "tags": ["transition", "shader"],
+  "vars": []
+}

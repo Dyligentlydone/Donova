@@ -1,0 +1,17 @@
+{
+  "name": "stagger-cascade",
+  "type": "component",
+  "description": "A responsive grid of tile cards that fades and travels into place with an evenly spaced per-item GSAP stagger. The ordered cascade is the only visual mechanic.",
+  "tags": ["effects", "grid", "stagger", "entrance", "exhibit"],
+  "vars": [
+    {
+      "description": "Number of tiles in the responsive grid."
+    },
+    {
+      "description": "Delay between consecutive tile entrances."
+    },
+    {
+      "description": "Direction each tile travels into its resting position."
+    }
+  ]
+}

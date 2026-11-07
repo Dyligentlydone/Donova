@@ -1,0 +1,17 @@
+{
+  "name": "outline-draw",
+  "type": "component",
+  "description": "A rounded outline that proves a callout by drawing clockwise as a hollow conic-gradient border with a clean closure.",
+  "tags": ["motion-primitive", "effects", "outline", "border", "mask", "proof"],
+  "vars": [
+    {
+      "description": "Final percentage of the outline that is drawn."
+    },
+    {
+      "description": "Outline stroke in tenths of the host width."
+    },
+    {
+      "description": "Corner radius in tenths of the host smaller dimension."
+    }
+  ]
+}

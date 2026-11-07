@@ -1,0 +1,7 @@
+{
+  "name": "nyc-paris-flight",
+  "type": "block",
+  "description": "Apple-style realistic map animation with a plane flying from New York to Paris, marker circle, landing pop, and sound effects.",
+  "tags": ["showcase", "travel", "map", "youtube", "sfx"],
+  "vars": []
+}

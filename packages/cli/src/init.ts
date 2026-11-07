@@ -86,20 +86,19 @@ export async function initProject(
 <html>
 <head>
 <meta charset="utf-8" />
+<script>window.__timelines = window.__timelines || {};</script>
 <style>
   html, body { margin: 0; padding: 0; background: #0b0e14; overflow: hidden; }
   #root { position: relative; width: ${w}px; height: ${h}px; }
   .clip { position: absolute; inset: 0; }
-  .title { position: absolute; left: 8%; top: 40%; font: 800 ${Math.round(h / 9)}px/1.1 system-ui; color: #fff; }
+  .title { left: 8%; top: 40%; right: auto; bottom: auto; font: 800 ${Math.round(h / 9)}px/1.1 system-ui; color: #fff; }
 </style>
 </head>
 <body>
-<div id="root" data-composition-id="main" data-width="${w}" data-height="${h}" data-duration="${d}" data-fps="${fps}">
-  <div class="clip" data-start="0" data-duration="${d}">
-    <div class="title"
-      data-fc-motion='{"v":1,"split":"words","stagger":0.08,"anims":[{"t":0,"dur":0.8,"ease":"power3.out","props":{"opacity":[0,1],"translateY":["0.6em","0em"]}}]}'>
-      Hello Framecraft
-    </div>
+<div id="root" data-composition-id="main" data-width="${w}" data-height="${h}" data-duration="${d}" data-fps="${fps}" data-no-timeline>
+  <div id="title-1" class="clip title" data-start="0" data-duration="${d}"
+    data-fc-motion='{"v":1,"split":"words","stagger":0.08,"anims":[{"t":0,"dur":0.8,"ease":"power3.out","props":{"opacity":[0,1],"translateY":["0.6em","0em"]}}]}'>
+    Hello Framecraft
   </div>
 </div>
 </body>

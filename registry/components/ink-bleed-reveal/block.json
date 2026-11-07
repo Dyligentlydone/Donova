@@ -1,0 +1,17 @@
+{
+  "name": "ink-bleed-reveal",
+  "type": "component",
+  "description": "Liquid ink blooms through paper under a gooey blur-plus-threshold filter, merges, then contracts as a crisp slotted mark resolves beneath it, with static seeded paper grain riding the result.",
+  "tags": ["motion-primitive", "texture", "reveal", "gooey", "svg-filter", "deterministic", "experiment"],
+  "vars": [
+    {
+      "description": "How many ink blobs bleed and merge (4 to 6)."
+    },
+    {
+      "description": "Ink tint: green rides --brand, blue rides --accent, violet rides --accent-2."
+    },
+    {
+      "description": "Optional departure. Default none: the revealed mark holds until the frame cuts."
+    }
+  ]
+}

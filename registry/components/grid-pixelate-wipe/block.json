@@ -1,0 +1,7 @@
+{
+  "name": "grid-pixelate-wipe",
+  "type": "component",
+  "description": "Transition effect where the screen dissolves into a grid of squares that fade out with staggered timing — use between scenes",
+  "tags": ["transition", "wipe", "grid", "pixelate"],
+  "vars": []
+}

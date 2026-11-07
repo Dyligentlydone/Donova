@@ -1,0 +1,7 @@
+{
+  "name": "sun-burst",
+  "type": "block",
+  "description": "Cream and black rays fan out from the centre and slowly turn. A WebGPU shader from the Shaders library (shaders.com, MIT).",
+  "tags": ["webgpu", "webgpu-shader", "background", "light", "rays", "radial"],
+  "vars": []
+}

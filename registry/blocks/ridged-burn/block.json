@@ -1,0 +1,7 @@
+{
+  "name": "ridged-burn",
+  "type": "block",
+  "description": "Shader transition with ridged turbulence burn effect",
+  "tags": ["transition", "shader"],
+  "vars": []
+}

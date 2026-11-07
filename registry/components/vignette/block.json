@@ -1,0 +1,7 @@
+{
+  "name": "vignette",
+  "type": "component",
+  "description": "Cinematic radial vignette overlay using a pure-CSS gradient — darkens the edges to pull focus toward the center",
+  "tags": ["vignette", "overlay", "cinematic", "effect"],
+  "vars": []
+}

@@ -1,0 +1,7 @@
+{
+  "name": "hw-path-text",
+  "type": "block",
+  "description": "Handwriting flowing along any SVG path with a per-character reveal; the path is the only geometry input",
+  "tags": ["handwritten", "typography", "path", "overlay"],
+  "vars": []
+}

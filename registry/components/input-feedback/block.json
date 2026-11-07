@@ -1,0 +1,17 @@
+{
+  "name": "input-feedback",
+  "type": "component",
+  "description": "A transitions.dev-inspired input feedback primitive with shake, clear affordance, and success state",
+  "tags": ["transition-primitive", "transitions-dev-port", "input", "feedback"],
+  "vars": [
+    {
+      "description": "Whether the field reads as accepted or rejected, colouring the border, chip and hint."
+    },
+    {
+      "description": "Text held by the field."
+    },
+    {
+      "description": "Helper line under the field."
+    }
+  ]
+}

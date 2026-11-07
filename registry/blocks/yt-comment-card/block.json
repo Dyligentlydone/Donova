@@ -1,0 +1,7 @@
+{
+  "name": "yt-comment-card",
+  "type": "block",
+  "description": "Social comments typing on over footage: avatar pop, username and time, per-character typewriter, likes row; image avatars or initials chips",
+  "tags": ["social", "comments", "creator", "overlay"],
+  "vars": []
+}

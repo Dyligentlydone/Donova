@@ -1,0 +1,7 @@
+{
+  "name": "glass-hero",
+  "type": "block",
+  "description": "A solid glass object rises in front of a giant headline and keeps turning, so the type bends and splits into colour through it.",
+  "tags": ["3d-object", "three-js", "webgl", "glass", "refraction", "hero", "title-card"],
+  "vars": []
+}

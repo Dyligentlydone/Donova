@@ -1,0 +1,36 @@
+{
+  "name": "before-after-wipe",
+  "type": "component",
+  "description": "Two full-bleed content slots compare before and after states as a persistent divider wipes the after layer over the before layer and rests at a configurable split. Callers fill the named before/after slot panels; token-styled defaults render when a slot is left empty.",
+  "tags": [
+    "prop",
+    "ui-props",
+    "compare",
+    "comparison",
+    "split-screen",
+    "holdable",
+    "before-after",
+    "wipe",
+    "slots"
+  ],
+  "vars": [
+    {
+      "description": "Chip shown on the base before panel. Blank hides the chip."
+    },
+    {
+      "description": "Chip shown on the revealed after panel. Blank hides the chip."
+    },
+    {
+      "description": "Divider resting position after the wipe lands."
+    },
+    {
+      "description": "Seconds after mount start when the wipe begins."
+    },
+    {
+      "description": "Divider handle and after chip color."
+    },
+    {
+      "description": "Outgoing transition. None holds the final comparison frame."
+    }
+  ]
+}

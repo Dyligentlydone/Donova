@@ -1,0 +1,7 @@
+{
+  "name": "whip-pan",
+  "type": "block",
+  "description": "Shader transition simulating a fast camera whip pan",
+  "tags": ["transition", "shader"],
+  "vars": []
+}

@@ -1,0 +1,7 @@
+{
+  "name": "marble",
+  "type": "block",
+  "description": "Ink-dark veins wind through white in a marbled pattern that slowly shifts. A WebGPU shader from the Shaders library (shaders.com, MIT).",
+  "tags": ["webgpu", "webgpu-shader", "background", "marble", "texture"],
+  "vars": []
+}

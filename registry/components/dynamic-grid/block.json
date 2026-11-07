@@ -1,0 +1,17 @@
+{
+  "name": "dynamic-grid",
+  "type": "component",
+  "description": "A responsive animated grid background driven by CSS variables for SaaS, code, and data scenes",
+  "tags": ["video-primitive", "motion-primitive", "background", "grid", "ui"],
+  "vars": [
+    {
+      "description": "Cell size of the grid: fine reads as graph paper, coarse as a few large panels."
+    },
+    {
+      "description": "Thickness of the grid lines, from a hairline rule to a bold structural grid."
+    },
+    {
+      "description": "Line colour: neutral is the translucent white the original ships with, and the accents ride --brand, --accent and --accent-2."
+    }
+  ]
+}

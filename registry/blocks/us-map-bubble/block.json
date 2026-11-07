@@ -1,0 +1,7 @@
+{
+  "name": "us-map-bubble",
+  "type": "block",
+  "description": "Animated US bubble map with proportional city markers, value callouts, and connection lines — composable with us-map",
+  "tags": ["data", "map", "geography", "usa", "bubble", "cities"],
+  "vars": []
+}

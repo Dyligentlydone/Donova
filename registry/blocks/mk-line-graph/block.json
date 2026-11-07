@@ -1,0 +1,7 @@
+{
+  "name": "mk-line-graph",
+  "type": "block",
+  "description": "One or two SVG series draw on with dots popping and value labels riding the draw front; dim baseline axis, x-labels, color-dot legend",
+  "tags": ["data-viz", "chart", "graph", "minimal"],
+  "vars": []
+}

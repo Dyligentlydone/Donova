@@ -1,0 +1,7 @@
+{
+  "name": "code-diff",
+  "type": "block",
+  "description": "An edit shown as a colored diff — removed lines collapse in red, added lines expand in green.",
+  "tags": ["code", "code-animation", "diff", "developer"],
+  "vars": []
+}

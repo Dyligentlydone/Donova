@@ -1,0 +1,7 @@
+{
+  "name": "code-typing",
+  "type": "block",
+  "description": "Token-streamed typing reveal with a caret that tracks the frontier — deterministic, no CSS animation.",
+  "tags": ["code", "code-animation", "typing", "developer"],
+  "vars": []
+}

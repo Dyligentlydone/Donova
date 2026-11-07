@@ -1,0 +1,7 @@
+{
+  "name": "lt-clean-bar",
+  "type": "block",
+  "description": "Minimal white-card lower third for podcasts/interviews: accent tab, name + role, clip-wipe entrance",
+  "tags": ["lower-third", "overlay", "podcast", "interview"],
+  "vars": []
+}

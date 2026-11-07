@@ -1,0 +1,17 @@
+{
+  "name": "overwhelm-surround",
+  "type": "component",
+  "description": "Tasks, tabs, pings, and notification bubbles accelerate inward around a calm central subject, turning overload into visible spatial pressure.",
+  "tags": ["effects", "agitate", "overwhelm", "pressure", "notifications"],
+  "vars": [
+    {
+      "description": "Number of tasks and notifications crowding the center."
+    },
+    {
+      "description": "Text inside the calm central subject. Blank hides the text."
+    },
+    {
+      "description": "How tightly and quickly the chips crowd the center."
+    }
+  ]
+}

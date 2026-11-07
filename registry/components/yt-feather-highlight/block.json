@@ -1,0 +1,7 @@
+{
+  "name": "yt-feather-highlight",
+  "type": "component",
+  "description": "Dims the frame except a feathered ellipse; the hole's position and size are CSS variables, so helpers glide the spotlight between targets",
+  "tags": ["highlight", "spotlight", "effect", "overlay"],
+  "vars": []
+}

@@ -1,0 +1,14 @@
+{
+  "name": "grain-field",
+  "type": "component",
+  "description": "A clearly visible accent-tinted dot field drifts over a subtle luminance gradient in an exact ambient loop.",
+  "tags": ["motion-primitive", "background", "grain", "dots", "texture", "ambient", "loopable"],
+  "vars": [
+    {
+      "description": "Dot size and spacing across the grain field."
+    },
+    {
+      "description": "Accent token family used to color the dots and luminance wash."
+    }
+  ]
+}

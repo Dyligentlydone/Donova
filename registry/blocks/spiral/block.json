@@ -1,0 +1,7 @@
+{
+  "name": "spiral",
+  "type": "block",
+  "description": "A bold black and white spiral turns in the frame. A WebGPU shader from the Shaders library (shaders.com, MIT).",
+  "tags": ["webgpu", "webgpu-shader", "background", "pattern", "spiral", "monochrome"],
+  "vars": []
+}

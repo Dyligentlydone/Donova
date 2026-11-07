@@ -1,0 +1,14 @@
+{
+  "name": "type-match-cut",
+  "type": "component",
+  "description": "A headline splits vertically around an incoming panel, which grows from the negative space and takes the frame as the words exit through opposite edges.",
+  "tags": ["motion-primitive", "transition", "typography", "match-cut", "continuity"],
+  "vars": [
+    {
+      "description": "Text split around the incoming panel."
+    },
+    {
+      "description": "Accent color used by the incoming editor scene."
+    }
+  ]
+}

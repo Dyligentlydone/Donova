@@ -1,0 +1,7 @@
+{
+  "name": "lt-color-block",
+  "type": "block",
+  "description": "High-energy lower third: bold accent-color block slides in with overshoot, condensed name + mono role",
+  "tags": ["lower-third", "overlay", "podcast", "interview", "bold"],
+  "vars": []
+}

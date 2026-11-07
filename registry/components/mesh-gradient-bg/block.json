@@ -1,0 +1,7 @@
+{
+  "name": "mesh-gradient-bg",
+  "type": "component",
+  "description": "A render-safe mesh gradient using animated radial layers.",
+  "tags": ["effect"],
+  "vars": []
+}

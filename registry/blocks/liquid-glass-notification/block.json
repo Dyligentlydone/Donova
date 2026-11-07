@@ -1,0 +1,7 @@
+{
+  "name": "liquid-glass-notification",
+  "type": "block",
+  "description": "Frosted glass notification cards floating over an aurora shader background",
+  "tags": ["html-in-canvas", "liquid-glass-html-in-canvas", "webgpu"],
+  "vars": []
+}

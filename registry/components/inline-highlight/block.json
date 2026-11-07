@@ -1,0 +1,17 @@
+{
+  "name": "inline-highlight",
+  "type": "component",
+  "description": "A clean marker-style inline highlight that animates behind text using a CSS scale variable",
+  "tags": ["motion-primitive", "text", "highlight", "caption"],
+  "vars": [
+    {
+      "description": "Marker colour. Green, blue and violet ride --brand, --accent and --accent-2."
+    },
+    {
+      "description": "Height of the marker band behind the text, as a share of the font size."
+    },
+    {
+      "description": "Edge the marker grows out of as the scale variable runs from 0 to 1."
+    }
+  ]
+}

@@ -1,0 +1,7 @@
+{
+  "name": "voronoi",
+  "type": "block",
+  "description": "Magenta cells with glowing blue centres shift and reshape across the frame. A WebGPU shader from the Shaders library (shaders.com, MIT).",
+  "tags": ["webgpu", "webgpu-shader", "background", "pattern", "cells", "voronoi"],
+  "vars": []
+}

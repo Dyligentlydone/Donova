@@ -1,0 +1,14 @@
+{
+  "name": "magnetic-cursor",
+  "type": "component",
+  "description": "A soft dot pointer glides across an editor toolbar, is pulled into each button and morphs into its rounded hover plate while the icon leans toward it, presses one, and leaves as a dot.",
+  "tags": ["cursor", "motion-primitive", "pointer", "hover", "morph", "toolbar"],
+  "vars": [
+    {},
+    {},
+    {
+      "description": "Comma-separated indexes 0-5: bold, italic, underline, link, list, image."
+    },
+    {}
+  ]
+}

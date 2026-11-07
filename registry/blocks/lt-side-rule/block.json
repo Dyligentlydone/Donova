@@ -1,0 +1,7 @@
+{
+  "name": "lt-side-rule",
+  "type": "block",
+  "description": "Cardless lower third with a vertical accent bar; condensed display name + mono role, text-shadowed for footage",
+  "tags": ["lower-third", "overlay", "podcast", "interview", "minimal"],
+  "vars": []
+}

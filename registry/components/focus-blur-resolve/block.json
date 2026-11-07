@@ -1,0 +1,17 @@
+{
+  "name": "focus-blur-resolve",
+  "type": "component",
+  "description": "A premium focus pull from heavy blur to crisp text, then a soft blur-out exit.",
+  "tags": ["motion-primitive", "typography"],
+  "vars": [
+    {
+      "description": "Word colour: ink for light frames, paper for dark ones, accent rides --brand."
+    },
+    {
+      "description": "Type size of the words, from a caption-scale line to a full display card."
+    },
+    {
+      "description": "Scales the blur radius the timeline drives, so the focus pull starts as a light haze or a full smear."
+    }
+  ]
+}

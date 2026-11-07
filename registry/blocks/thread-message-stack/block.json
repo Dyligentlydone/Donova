@@ -1,0 +1,7 @@
+{
+  "name": "thread-message-stack",
+  "type": "block",
+  "description": "A source-owned editable conversation stack with arbitrary incoming and outgoing messages",
+  "tags": ["social", "conversation", "messages"],
+  "vars": []
+}

@@ -1,0 +1,7 @@
+{
+  "name": "lt-soft-pill",
+  "type": "block",
+  "description": "Rounded white pill lower third for podcasts/interviews: status dot, name + role, scale-pop entrance",
+  "tags": ["lower-third", "overlay", "podcast", "interview", "minimal"],
+  "vars": []
+}

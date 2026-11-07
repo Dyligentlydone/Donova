@@ -1,0 +1,17 @@
+{
+  "name": "offset-path-traveler",
+  "type": "component",
+  "description": "A slotted traveler follows an authored path with tangent rotation, curved entry, and curved exit.",
+  "tags": ["motion-primitive", "product-demo", "path", "traveler", "auto-rotate"],
+  "vars": [
+    {
+      "description": "SVG path data authored in a 1000 by 500 route viewBox."
+    },
+    {
+      "description": "Text displayed inside the default traveler chip."
+    },
+    {
+      "description": "Color used by the traveler and route."
+    }
+  ]
+}

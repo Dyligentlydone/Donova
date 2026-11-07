@@ -1,0 +1,7 @@
+{
+  "name": "keyframe-scrub-stack",
+  "type": "component",
+  "description": "A keyframe-sequenced stack of cards with offset timing and easing presets.",
+  "tags": ["advanced-motion", "anime-inspired", "hyperframes-native"],
+  "vars": []
+}

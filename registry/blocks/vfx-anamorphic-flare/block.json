@@ -1,0 +1,7 @@
+{
+  "name": "vfx-anamorphic-flare",
+  "type": "block",
+  "description": "A drifting field of bright points, each one throwing the long horizontal blue-violet streak a real anamorphic cinema lens produces. Built from the measured filter constants: a 0.3 high-pass, 80 horizontal taps at quarter resolution, a samples/3 gain and a 0x7a8aff tint.",
+  "tags": ["vfx", "background", "showcase", "optical", "canvas"],
+  "vars": [{}, {}, {}, {}, {}, {}, {}, {}]
+}

@@ -1,0 +1,7 @@
+{
+  "name": "vfx-magnetic",
+  "type": "block",
+  "description": "VFX composition block",
+  "tags": ["html-in-canvas", "webgl"],
+  "vars": []
+}

@@ -1,0 +1,23 @@
+{
+  "name": "halftone-dissolve",
+  "type": "component",
+  "description": "Scene A dissolves into scene B through a growing halftone dot field: accent ink dots pop onto a fixed grid smallest-first, each opens into a window onto B, until the windows merge and B fully replaces A.",
+  "tags": ["motion-primitive", "transition", "texture", "halftone", "dissolve"],
+  "vars": [
+    {
+      "description": "Grid pitch for the halftone field."
+    },
+    {
+      "description": "Threshold ordering: ltr sweeps left to right, center grows from the middle, noise scatters."
+    },
+    {
+      "description": "Seconds from mount start when the dissolve begins."
+    },
+    {
+      "description": "Ink dot color: green rides --brand, blue rides --accent, violet rides --accent-2."
+    },
+    {
+      "description": "Optional departure. Default none: scene B holds until the frame cuts."
+    }
+  ]
+}

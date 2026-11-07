@@ -1,0 +1,7 @@
+{
+  "name": "mesh-gradient",
+  "type": "block",
+  "description": "Soft coral, orange and violet fields blend and drift in a mesh gradient. A WebGPU shader from the Shaders library (shaders.com, MIT).",
+  "tags": ["webgpu", "webgpu-shader", "background", "gradient", "color"],
+  "vars": []
+}

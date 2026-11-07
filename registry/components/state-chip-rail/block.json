@@ -1,0 +1,26 @@
+{
+  "name": "state-chip-rail",
+  "type": "component",
+  "description": "A rail of mono status chips advances a seek-safe data-state snap machine on a cue schedule: active chip ink on surface, done chips dim, pending chips hollow, optional badges pop beside one state.",
+  "tags": ["motion-primitive", "product-demo", "state-machine", "status", "chips", "rail"],
+  "vars": [
+    {
+      "description": "Comma-separated chip labels in machine order (2 to 8 states)."
+    },
+    {
+      "description": "Comma-separated activation times in seconds, one per advance (state 1 onward). Blank entries use the default even rhythm."
+    },
+    {
+      "description": "Index of the state the badges pop beside."
+    },
+    {
+      "description": "Comma-separated badge labels shown beside the badge state. Empty disables."
+    },
+    {
+      "description": "Accent token family used by the active chip."
+    },
+    {
+      "description": "How the rail leaves the frame. Default none: the hold ends the film."
+    }
+  ]
+}

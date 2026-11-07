@@ -1,0 +1,14 @@
+{
+  "name": "tracing-beam",
+  "type": "component",
+  "description": "A glowing dash follows one SVG path through three UI elements, lifting and brightening each element in sequence.",
+  "tags": ["motion-primitive", "product-demo", "attention", "beam", "path", "spotlight"],
+  "vars": [
+    {
+      "description": "Three comma-separated labels shown in path order."
+    },
+    {
+      "description": "Beam and active-element color."
+    }
+  ]
+}

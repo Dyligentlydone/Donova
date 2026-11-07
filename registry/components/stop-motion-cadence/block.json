@@ -1,0 +1,20 @@
+{
+  "name": "stop-motion-cadence",
+  "type": "component",
+  "description": "The stepped-time law as a demo primitive: one driver quantizes timeline time to floor(t * fps) / fps and feeds ALL motion; four token paper-cut shapes throw-and-land with squash on hits, 2-frame boil jitter seeded per step, and sparkle accents living exactly 2 to 3 frames.",
+  "tags": ["motion-primitive", "time-law", "stop-motion", "stepped", "boil", "deterministic", "experiment"],
+  "vars": [
+    {
+      "description": "Stepped-time cadence in frames per second."
+    },
+    {
+      "description": "2-frame edge jitter, seeded per step. Off holds dead still."
+    },
+    {
+      "description": "Lead shape color: green rides --brand, blue rides --accent, violet rides --accent-2."
+    },
+    {
+      "description": "Optional departure. Default none: the settled collage holds until the frame cuts."
+    }
+  ]
+}

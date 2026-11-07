@@ -1,0 +1,17 @@
+{
+  "name": "conic-progress-ring",
+  "type": "component",
+  "description": "A token-driven conic progress ring whose angular fill and center count settle together from one registered percentage.",
+  "tags": ["data", "progress", "ring", "conic-gradient", "prove", "demonstrate"],
+  "vars": [
+    {
+      "description": "Target angular fill from 0 to 100."
+    },
+    {
+      "description": "Ring stroke thickness as a percent of the ring radius."
+    },
+    {
+      "description": "Numeric target shown in the center and counted in sync with the fill."
+    }
+  ]
+}

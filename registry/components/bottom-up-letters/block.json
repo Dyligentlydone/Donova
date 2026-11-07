@@ -1,0 +1,17 @@
+{
+  "name": "bottom-up-letters",
+  "type": "component",
+  "description": "Splits text into letters and reveals each glyph from below with deterministic staggered timing",
+  "tags": ["motion-primitive", "text", "letters", "reveal"],
+  "vars": [
+    {
+      "description": "What each animated span holds. Letter staggers glyph by glyph, word keeps whole words intact."
+    },
+    {
+      "description": "Where each span starts. Up starts below the baseline and rises, down starts above and drops."
+    },
+    {
+      "description": "How far each span starts from its resting position, from 0.45em to 1.5em."
+    }
+  ]
+}

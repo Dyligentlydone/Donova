@@ -1,0 +1,7 @@
+{
+  "name": "chrome-orb",
+  "type": "block",
+  "description": "A mirror-chrome orb reflects a bright studio light, on black. A WebGPU shader from the Shaders library (shaders.com, MIT).",
+  "tags": ["webgpu", "webgpu-shader", "object", "chrome", "metal", "material"],
+  "vars": []
+}

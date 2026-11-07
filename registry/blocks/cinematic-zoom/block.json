@@ -1,0 +1,7 @@
+{
+  "name": "cinematic-zoom",
+  "type": "block",
+  "description": "Shader transition with dramatic zoom blur",
+  "tags": ["transition", "shader"],
+  "vars": []
+}

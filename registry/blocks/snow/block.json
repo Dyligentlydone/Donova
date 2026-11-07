@@ -1,0 +1,24 @@
+{
+  "name": "snow",
+  "type": "block",
+  "description": "Seek-safe falling-snow overlay: sparse or dense flakes drift down with size, speed and opacity correlated per flake for depth, radial-masked so the frame center stays clear",
+  "tags": [
+    "snow",
+    "snowfall",
+    "winter",
+    "weather",
+    "overlay",
+    "ambient",
+    "particles",
+    "media-treatment-overlay",
+    "loopable"
+  ],
+  "vars": [
+    {
+      "description": "Flake count across the frame."
+    },
+    {
+      "description": "How fast flakes fall and sway."
+    }
+  ]
+}

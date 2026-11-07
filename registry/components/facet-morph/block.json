@@ -1,0 +1,20 @@
+{
+  "name": "facet-morph",
+  "type": "component",
+  "description": "A faceted low-poly mass of 36 triangles continuously reshapes between three authored silhouettes (blob, mark, badge) with per-facet flat shading that recomputes as the vertices move. Light reads from the upper left; lit facets lift toward a pale accent-tinted tone while turned-away facets fall toward near-black. One calm continuous morph, then a settled hold.",
+  "tags": ["motion-primitive", "intro", "morph", "low-poly", "svg", "deterministic"],
+  "vars": [
+    {
+      "description": "Comma-separated silhouette sequence from blob, mark, badge."
+    },
+    {
+      "description": "True settles dead still on the final silhouette; false keeps the mass slowly breathing through the hold."
+    },
+    {
+      "description": "Tint of the lit facets."
+    },
+    {
+      "description": "Outgoing transition. None holds the settled mass."
+    }
+  ]
+}

@@ -1,0 +1,7 @@
+{
+  "name": "cursor-marquee-select",
+  "type": "component",
+  "description": "A cursor drags a selection rectangle across a photo grid; each tile rings and pops a check the frame the rectangle touches it, while a pill counts the selection up.",
+  "tags": ["cursor", "motion-primitive", "select", "marquee", "grid", "product-demo"],
+  "vars": [{}, {}, {}, {}, {}, {}]
+}

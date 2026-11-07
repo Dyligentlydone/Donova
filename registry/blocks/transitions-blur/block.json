@@ -1,0 +1,7 @@
+{
+  "name": "transitions-blur",
+  "type": "block",
+  "description": "Showcase of blur-based transitions between scenes",
+  "tags": ["transition", "showcase"],
+  "vars": []
+}

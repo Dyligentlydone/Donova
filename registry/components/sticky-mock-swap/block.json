@@ -1,0 +1,14 @@
+{
+  "name": "sticky-mock-swap",
+  "type": "component",
+  "description": "A pinned product mock cross-fades through accent-tinted feature states while matching captions rise, hold, and exit beside it.",
+  "tags": ["motion-primitive", "product-demo", "sticky", "mock", "crossfade", "feature-tour"],
+  "vars": [
+    {
+      "description": "Comma-separated feature captions shown beside the pinned mock."
+    },
+    {
+      "description": "Accent tint used across the mock states."
+    }
+  ]
+}

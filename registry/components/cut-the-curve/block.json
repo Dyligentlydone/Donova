@@ -1,0 +1,23 @@
+{
+  "name": "cut-the-curve",
+  "type": "component",
+  "description": "A velocity-matched directional hard cut: the outgoing subject accelerates with power4.in, swaps at peak velocity, and the incoming subject continues in the same direction with power4.out.",
+  "tags": ["transition", "directional-cut", "velocity-match", "whip", "bridge", "demonstrate"],
+  "vars": [
+    {
+      "description": "Visual payload used on both sides of the cut."
+    },
+    {
+      "description": "Shared screen direction for outgoing and incoming travel."
+    },
+    {
+      "description": "Normalized point where the hard cut swaps subjects."
+    },
+    {
+      "description": "Blur in pixels shared by both subjects at the cut seam."
+    },
+    {
+      "description": "Optional departure of the incoming subject. Default none: it rests until the frame cuts."
+    }
+  ]
+}

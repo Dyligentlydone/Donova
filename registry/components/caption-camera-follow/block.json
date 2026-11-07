@@ -1,0 +1,17 @@
+{
+  "name": "caption-camera-follow",
+  "type": "component",
+  "description": "One sentence written across a world far larger than the frame. Each word is sized against everything already written, so the block grows geometrically and the camera pulls back at a steady rate to keep landing the new word at the same size. Old words stay lit and simply become small.",
+  "tags": ["captions", "caption-style", "camera", "typography", "motion-primitive", "portrait"],
+  "vars": [
+    {
+      "description": "Colour of the highlighted words. gold is the original."
+    },
+    {
+      "description": "Air the camera leaves around the written block, so the words land larger or smaller in frame."
+    },
+    {
+      "description": "Scales the radial motion blur each camera move carries, from none to a heavy streak."
+    }
+  ]
+}

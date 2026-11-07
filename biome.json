@@ -11,7 +11,10 @@
       "_analysis/**",
       "packages/runtime/src/generated/**",
       "apps/render-worker/**",
-      "plan/**"
+      "plan/**",
+      "registry/**",
+      "skills/*/scripts/**",
+      "**/vendor/**"
     ]
   },
   "organizeImports": { "enabled": true },

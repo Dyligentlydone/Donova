@@ -1,0 +1,7 @@
+{
+  "name": "caption-particle-burst",
+  "type": "component",
+  "description": "Keyword words trigger colored particle explosions",
+  "tags": ["captions", "caption-style", "particles", "burst", "effects"],
+  "vars": []
+}

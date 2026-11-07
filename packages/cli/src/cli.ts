@@ -255,8 +255,8 @@ const addCmd = defineCommand({
         console.log(`files: ${r.files.join(", ")}`);
         console.log(
           r.files[0]?.startsWith("media/")
-            ? `use:  <audio class="clip" data-start="…" data-duration="…" src="${r.files[0]}"></audio>`
-            : `use:  <div class="clip" data-start="…" data-duration="…" data-composition-src="compositions/${args.name}/index.html"></div>`,
+            ? `use:  <audio id="${args.name}-1" class="clip" data-start="…" data-duration="…" src="${r.files[0]}"></audio>`
+            : `use:  <div id="${args.name}-1" class="clip" data-composition-id="${args.name}-1" data-start="…" data-duration="…" data-composition-src="compositions/${args.name}/index.html"></div>`,
         );
       }
     });

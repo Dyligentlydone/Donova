@@ -1,0 +1,7 @@
+{
+  "name": "caption-kinetic-slam",
+  "type": "component",
+  "description": "Full-screen single-word display with alternating entrance directions",
+  "tags": ["captions", "caption-style", "kinetic", "typography", "slam"],
+  "vars": []
+}

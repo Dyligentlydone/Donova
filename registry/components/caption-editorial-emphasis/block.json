@@ -1,0 +1,7 @@
+{
+  "name": "caption-editorial-emphasis",
+  "type": "component",
+  "description": "Dual-font system with dramatic size contrast for emphasis words",
+  "tags": ["captions", "caption-style", "editorial", "typography", "emphasis"],
+  "vars": []
+}

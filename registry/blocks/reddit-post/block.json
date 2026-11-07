@@ -1,0 +1,7 @@
+{
+  "name": "reddit-post",
+  "type": "block",
+  "description": "Animated Reddit post card overlay with upvotes and comments",
+  "tags": ["social", "overlay", "reddit"],
+  "vars": []
+}

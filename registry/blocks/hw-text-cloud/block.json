@@ -1,0 +1,7 @@
+{
+  "name": "hw-text-cloud",
+  "type": "block",
+  "description": "Hand-drawn speech bubble with a positionable tail: outline draws on, paper fill fades in, handwritten text types per character; boils",
+  "tags": ["handwritten", "speech-bubble", "overlay"],
+  "vars": []
+}

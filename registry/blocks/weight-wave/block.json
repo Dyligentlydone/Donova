@@ -1,0 +1,7 @@
+{
+  "name": "weight-wave",
+  "type": "block",
+  "description": "A crest of thickness travels along a headline: each character swells from light to black and leans forward as the wave passes, driven by the wght and slnt variable-font axes rather than by transforms.",
+  "tags": ["typography", "kinetic-type", "title", "variable-font", "text"],
+  "vars": [{}, {}, {}, {}, {}, {}, {}, {}, {}]
+}

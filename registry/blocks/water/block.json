@@ -1,0 +1,7 @@
+{
+  "name": "water",
+  "type": "block",
+  "description": "A sphere of wind-rippled water reflecting a blue sky, on black. A WebGPU shader from the Shaders library (shaders.com, MIT).",
+  "tags": ["webgpu", "webgpu-shader", "orb", "water", "material", "blue"],
+  "vars": []
+}

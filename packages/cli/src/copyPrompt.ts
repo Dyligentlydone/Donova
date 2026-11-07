@@ -29,6 +29,6 @@ Workflow (vibe edit):
 5. \`framecraft check ${opts.dir} --json\` — MUST pass before render. \`framecraft snapshot ${opts.dir} --times <t1,t2,...>\` to look at frames.
 6. Iterate with natural-language feedback; persist durable preferences to ${opts.dir}/style.md (see \`framecraft style\`).
 
-Rules: never modify source footage; no Date.now/Math.random/network in compositions; timed elements use class="clip" + data-start + data-duration; sub-composition blocks live in compositions/ and are referenced via data-composition-src with data-var-* customization; only class="clip" elements cut the render segments.
+Rules: never modify source footage; no Date.now/Math.random/network in compositions; timed elements use class="clip" + data-start + data-duration; media clips carry their own data-start/data-duration/data-media-start + a unique id (e.g. <video id="vid-1" class="clip">); sub-composition blocks live in compositions/ and are referenced via data-composition-src + data-composition-id on the host, with data-var-* customization; only class="clip" elements cut the render segments.
 ${skillsHint ? `\n--- installed framecraft skill ---\n${skillsHint}` : ""}`;
 }

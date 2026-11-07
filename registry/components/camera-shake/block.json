@@ -1,0 +1,7 @@
+{
+  "name": "camera-shake",
+  "type": "component",
+  "description": "Procedural handheld, telephoto and rig camera shake for any wrapper: nine measured profiles with per-lens projection, closed-form and seek-safe",
+  "tags": ["camera", "shake", "handheld", "effect", "cinematic"],
+  "vars": [{}, {}, {}, {}]
+}

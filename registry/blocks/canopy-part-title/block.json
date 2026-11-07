@@ -1,0 +1,7 @@
+{
+  "name": "canopy-part-title",
+  "type": "block",
+  "description": "Leaves sweep through the frame and part to reveal the headline.",
+  "tags": ["3d-motion", "title-card", "leaves", "organic", "depth-of-field", "two-headlines", "sweep"],
+  "vars": []
+}

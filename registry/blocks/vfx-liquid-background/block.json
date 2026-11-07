@@ -1,0 +1,7 @@
+{
+  "name": "vfx-liquid-background",
+  "type": "block",
+  "description": "Organic liquid simulation with vertex displacement on a subdivided plane. HTML content floats above rippling fluid surface with real-time wave dynamics.",
+  "tags": ["html-in-canvas", "liquid", "webgl", "displacement", "background"],
+  "vars": []
+}

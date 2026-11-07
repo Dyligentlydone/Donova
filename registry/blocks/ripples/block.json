@@ -1,0 +1,7 @@
+{
+  "name": "ripples",
+  "type": "block",
+  "description": "Concentric rings ripple outward from the centre, white on black. A WebGPU shader from the Shaders library (shaders.com, MIT).",
+  "tags": ["webgpu", "webgpu-shader", "background", "texture", "rings", "waves", "monochrome"],
+  "vars": []
+}

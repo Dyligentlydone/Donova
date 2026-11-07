@@ -1,0 +1,7 @@
+{
+  "name": "macos-notification",
+  "type": "block",
+  "description": "Animated macOS-style notification banner with app icon and message",
+  "tags": ["social", "overlay", "notification"],
+  "vars": []
+}

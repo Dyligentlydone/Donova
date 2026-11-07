@@ -1,0 +1,26 @@
+{
+  "name": "radial-surround",
+  "type": "component",
+  "description": "Labeled hairline chips assemble around a centered subject on an elliptical ring, then optionally converge inward with a subtle edge dim. The center never moves: surrounded, not zoomed.",
+  "tags": ["motion-primitive", "problem-setup", "radial", "ring", "surround", "converge"],
+  "vars": [
+    {
+      "description": "Label on the default center token card."
+    },
+    {
+      "description": "Comma-separated chip labels that surround the center (up to 12)."
+    },
+    {
+      "description": "Converge the ring inward with a subtle edge dim after assembly. The center never moves."
+    },
+    {
+      "description": "Comma-separated per-chip entrance times in seconds. Blank entries use the default cascade."
+    },
+    {
+      "description": "Accent token family used by the center card tint."
+    },
+    {
+      "description": "How the surrounded stage leaves the frame. Default none: the crowded hold ends the film."
+    }
+  ]
+}

@@ -1,0 +1,20 @@
+{
+  "name": "icon-swap",
+  "type": "component",
+  "description": "A scale-and-blur icon swap primitive for toolbar and action state changes",
+  "tags": ["video-primitive", "transition-primitive", "transitions-dev-port", "icon", "swap"],
+  "vars": [
+    {
+      "description": "Button fill and glyph colour. Accent rides --brand."
+    },
+    {
+      "description": "Button box and glyph size, from a toolbar chip to a hero action."
+    },
+    {
+      "description": "Corner treatment of the button box."
+    },
+    {
+      "description": "Scales the blur radius the timeline drives through the swap, from a light haze to a full smear."
+    }
+  ]
+}

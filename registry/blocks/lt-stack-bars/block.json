@@ -1,0 +1,7 @@
+{
+  "name": "lt-stack-bars",
+  "type": "block",
+  "description": "Two stacked bars: a dark name bar wipes from the left, an accent role bar wipes from the right",
+  "tags": ["lower-third", "overlay", "podcast", "interview", "bold"],
+  "vars": []
+}

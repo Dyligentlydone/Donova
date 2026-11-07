@@ -1,0 +1,17 @@
+{
+  "name": "beat-timeline",
+  "type": "component",
+  "description": "A paused master-timeline orchestration spine that pins titled beat rows to evenly spaced named labels. Each row enters on its label, holds with the sequence, then exits with the group.",
+  "tags": ["orchestration", "transitions", "sequencing", "bridge", "timeline"],
+  "vars": [
+    {
+      "description": "Number of beat rows in the sequence."
+    },
+    {
+      "description": "Base time between consecutive beat markers."
+    },
+    {
+      "description": "Comma-separated beat titles, one per beat. Extra entries are ignored and missing entries fall back to Beat N."
+    }
+  ]
+}

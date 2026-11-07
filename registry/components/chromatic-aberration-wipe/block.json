@@ -1,0 +1,17 @@
+{
+  "name": "chromatic-aberration-wipe",
+  "type": "component",
+  "description": "A fast slide wipe with RGB channel split on peak frames.",
+  "tags": ["video-primitive", "transition-primitive"],
+  "vars": [
+    {
+      "description": "The direction the reveal travels; both scenes slide the same way and the wipe edge follows."
+    },
+    {
+      "description": "Colour family of the incoming scene's gradient."
+    },
+    {
+      "description": "Multiplies the red/cyan channel split: 0 removes it, 1 is the stock strength, 2 doubles the offset and saturates the flash."
+    }
+  ]
+}

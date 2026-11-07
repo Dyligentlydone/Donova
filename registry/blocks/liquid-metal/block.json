@@ -1,0 +1,7 @@
+{
+  "name": "liquid-metal",
+  "type": "block",
+  "description": "A chrome sphere ripples and flows like molten metal on black. A WebGPU shader from the Shaders library (shaders.com, MIT).",
+  "tags": ["webgpu", "webgpu-shader", "object", "metal", "chrome", "liquid", "sphere"],
+  "vars": []
+}

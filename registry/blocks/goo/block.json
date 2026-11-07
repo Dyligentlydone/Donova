@@ -1,0 +1,7 @@
+{
+  "name": "goo",
+  "type": "block",
+  "description": "A glossy green liquid ball whose surface bulges and ripples like wet goo, centred on black. A WebGPU shader from the Shaders library (shaders.com, MIT).",
+  "tags": ["webgpu", "webgpu-shader", "liquid", "3d", "organic", "orb"],
+  "vars": []
+}

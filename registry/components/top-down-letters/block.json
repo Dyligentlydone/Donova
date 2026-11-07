@@ -1,0 +1,17 @@
+{
+  "name": "top-down-letters",
+  "type": "component",
+  "description": "Letters descend from above in a pronounced staircase with zero blur.",
+  "tags": ["video-primitive", "motion-primitive", "typography"],
+  "vars": [
+    {
+      "description": "Word that cascades in. Every character becomes one letter span, in source order."
+    },
+    {
+      "description": "Multiplies the drop the timeline drives, so the letters cover a shorter or longer run in the same time."
+    },
+    {
+      "description": "Letter colour: ink for light frames, paper for dark ones, accent rides --brand."
+    }
+  ]
+}

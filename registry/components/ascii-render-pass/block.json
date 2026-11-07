@@ -1,0 +1,23 @@
+{
+  "name": "ascii-render-pass",
+  "type": "component",
+  "description": "A slotted scene renders as live ASCII: a canvas samples the source's luminance grid (rasterized once at mount) and draws glyphs from a density ramp charset; resolution steps coarse to fine as the piece resolves, then holds legible-fine.",
+  "tags": ["motion-primitive", "experiment", "texture", "ascii", "quantize"],
+  "vars": [
+    {
+      "description": "Density ramp, dark to light. A leading space keeps dark cells empty."
+    },
+    {
+      "description": "Final cell pitch the resolve lands on."
+    },
+    {
+      "description": "Seconds from mount start when the coarse-to-fine resolve begins."
+    },
+    {
+      "description": "Glyph ink: green rides --brand, blue rides --accent, violet rides --accent-2."
+    },
+    {
+      "description": "Optional departure. Default none: the fine render holds until the frame cuts."
+    }
+  ]
+}

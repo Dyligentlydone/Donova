@@ -1,0 +1,17 @@
+{
+  "name": "char-slam-explode",
+  "type": "component",
+  "description": "Headline glyphs hold in a deterministic scatter, then reassemble with an overshooting slam and a three-frame landing shake.",
+  "tags": ["motion-primitive", "typography", "text-treatment", "scatter", "slam", "impact"],
+  "vars": [
+    {
+      "description": "Text split into glyphs for the scatter and slam."
+    },
+    {
+      "description": "Headline and glow color."
+    },
+    {
+      "description": "Distance and rotation of the scattered glyphs."
+    }
+  ]
+}

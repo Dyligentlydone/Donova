@@ -1,0 +1,7 @@
+{
+  "name": "yt-prism-title",
+  "type": "block",
+  "description": "Display title on a transparent root: blur-focus entrance, red/blue fringe that settles then breathes, perspective bow, slow scale drift",
+  "tags": ["typography", "title-card", "creator"],
+  "vars": []
+}

@@ -1,0 +1,17 @@
+{
+  "name": "focus-swap",
+  "type": "component",
+  "description": "Moves attention between two side-by-side cards as one recedes with scale, blur, and dimming while the other advances to full focus.",
+  "tags": ["effect", "ui-props", "focus", "blur", "attention", "demonstrate"],
+  "vars": [
+    {
+      "description": "Card that ends sharp, full-size, and fully opaque."
+    },
+    {
+      "description": "Blur applied to the card outside the viewer focus."
+    },
+    {
+      "description": "Opacity of the card outside the viewer focus."
+    }
+  ]
+}

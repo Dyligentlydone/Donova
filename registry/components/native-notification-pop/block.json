@@ -1,0 +1,29 @@
+{
+  "name": "native-notification-pop",
+  "type": "component",
+  "description": "One system-faithful notification banner (iOS or macOS) drops in over any scene on an accurate interruptible spring: fast arrival, soft overshoot, settled mass, backdrop blur, app dot, title, one body line. Holds; tucks away only via exit.",
+  "tags": ["motion-primitive", "product-demo", "overlay", "notification", "spring"],
+  "vars": [
+    {
+      "description": "The notification title line."
+    },
+    {
+      "description": "One body line. Long lines truncate with an ellipsis."
+    },
+    {
+      "description": "Small-caps app name row beside the app dot."
+    },
+    {
+      "description": "Banner geometry and placement: wide centered iOS or compact top-right macOS."
+    },
+    {
+      "description": "Seconds after mount start when the banner drops in."
+    },
+    {
+      "description": "App dot color."
+    },
+    {
+      "description": "None holds the banner; up tucks it back off the top; fade fades it in place."
+    }
+  ]
+}

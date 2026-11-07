@@ -1,0 +1,26 @@
+{
+  "name": "split-tilt-cards",
+  "type": "component",
+  "description": "Two equal-weight cards arrive from opposite wings with mirrored rotateY book-open tilts under one shared perspective, pill badges spring-pop at each inner edge, and the pair holds with a barely-there phase-opposed idle float. Card bodies are content slots with token skeleton defaults.",
+  "tags": ["motion-primitive", "layout", "compare", "holdable", "book-open", "tilt", "slots"],
+  "vars": [
+    {
+      "description": "Mono header on the left card. Blank hides it."
+    },
+    {
+      "description": "Mono header on the right card. Blank hides it."
+    },
+    {
+      "description": "Pill badge that spring-pops at the left card inner edge. Blank disables it."
+    },
+    {
+      "description": "Pill badge that spring-pops at the right card inner edge. Blank disables it."
+    },
+    {
+      "description": "Right-card tint, right badge, and right ambient glow color."
+    },
+    {
+      "description": "Outgoing transition. None holds the final spread."
+    }
+  ]
+}

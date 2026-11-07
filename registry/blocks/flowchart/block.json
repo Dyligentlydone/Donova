@@ -1,0 +1,7 @@
+{
+  "name": "flowchart",
+  "type": "block",
+  "description": "Animated decision tree with SVG connectors, sticky-note nodes, cursor interaction, and typing correction",
+  "tags": ["diagram", "flowchart", "interactive"],
+  "vars": []
+}

@@ -1,0 +1,7 @@
+{
+  "name": "cursor-annotate",
+  "type": "component",
+  "description": "A marker pen glides onto the frame and hand-draws a loose loop, an underline, or an arrow around a region, the ink laid exactly under its nib, then lifts and leaves.",
+  "tags": ["cursor", "motion-primitive", "pen", "annotation", "draw-on", "highlight"],
+  "vars": [{}, {}, {}, {}, {}, {}]
+}

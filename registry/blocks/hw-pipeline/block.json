@@ -1,0 +1,7 @@
+{
+  "name": "hw-pipeline",
+  "type": "block",
+  "description": "Wobbled boxes with handwritten labels joined by curved connectors, drawing on in sequence from a node list",
+  "tags": ["handwritten", "diagram", "data-viz", "overlay"],
+  "vars": []
+}

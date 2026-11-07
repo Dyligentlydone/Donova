@@ -1,0 +1,17 @@
+{
+  "name": "match-cut",
+  "type": "component",
+  "description": "A circle accelerates into a hard single-frame scene swap, matches the incoming circle exactly, and continues into a smaller resting pose.",
+  "tags": ["motion-primitive", "transition", "match-cut", "hard-cut", "continuity"],
+  "vars": [
+    {
+      "description": "Color shared by the matched circles."
+    },
+    {
+      "description": "Text inside the outgoing button."
+    },
+    {
+      "description": "Result text revealed after the cut."
+    }
+  ]
+}

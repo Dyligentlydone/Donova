@@ -1,0 +1,7 @@
+{
+  "name": "cross-warp-morph",
+  "type": "block",
+  "description": "Shader transition with cross-warped morphing",
+  "tags": ["transition", "shader"],
+  "vars": []
+}

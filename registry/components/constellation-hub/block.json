@@ -1,0 +1,23 @@
+{
+  "name": "constellation-hub",
+  "type": "component",
+  "description": "Feature nodes brighten in narration order as real-length SVG connectors draw outward from a fixed central hub, then settle into one lockup.",
+  "tags": ["motion-primitive", "feature-tour", "hub", "nodes", "connector", "reveal"],
+  "vars": [
+    {
+      "description": "Text displayed inside the fixed central hub."
+    },
+    {
+      "description": "Comma-separated feature labels introduced in narration order."
+    },
+    {
+      "description": "Comma-separated seconds (from mount start) for each node reveal. Empty keeps the authored even spread."
+    },
+    {
+      "description": "Highlight color used by the hub, connectors, and active nodes."
+    },
+    {
+      "description": "Optional departure. Default none: the lockup holds until the frame cuts."
+    }
+  ]
+}

@@ -1,0 +1,17 @@
+{
+  "name": "tracking-in",
+  "type": "component",
+  "description": "A precise letter-spacing reveal for premium headings and interface labels",
+  "tags": ["motion-primitive", "text", "reveal", "typography"],
+  "vars": [
+    {
+      "description": "Multiplies the letter-spacing the timeline drives, so the reveal starts and settles proportionally wider or tighter."
+    },
+    {
+      "description": "Vertical offset the text starts from, which the timeline reads as the start of its travel and eases to zero."
+    },
+    {
+      "description": "Text colour: inherit keeps the surrounding page colour, ink suits light frames, paper dark ones, accent rides --brand."
+    }
+  ]
+}

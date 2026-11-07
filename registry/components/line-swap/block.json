@@ -1,0 +1,26 @@
+{
+  "name": "line-swap",
+  "type": "component",
+  "description": "A masked full-line beat replacement: line A holds center then exits up through an overflow-hidden mask as line B enters bottom-up on the same beat, with an optional accent underline drawing beneath one word of line B.",
+  "tags": ["motion-primitive", "text-effects", "swap", "beat", "deterministic"],
+  "vars": [
+    {
+      "description": "First line; holds center inside the mask, then exits up on the swap beat."
+    },
+    {
+      "description": "Replacement line; enters bottom-up on the swap beat and holds."
+    },
+    {
+      "description": "Second (from mount start) of the beat replacement. Clamped so the swap and underline complete before any exit."
+    },
+    {
+      "description": "First case-insensitive substring match in line B gets the accent underline after landing. Empty disables it."
+    },
+    {
+      "description": "Underline color from the contract token map."
+    },
+    {
+      "description": "Optional departure. Default none: the landed line holds until the frame cuts."
+    }
+  ]
+}

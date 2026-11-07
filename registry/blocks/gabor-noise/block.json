@@ -1,0 +1,7 @@
+{
+  "name": "gabor-noise",
+  "type": "block",
+  "description": "Grey streaky noise drifts across the frame like a moving fingerprint. A WebGPU shader from the Shaders library (shaders.com, MIT).",
+  "tags": ["webgpu", "webgpu-shader", "background", "texture", "noise", "monochrome"],
+  "vars": []
+}

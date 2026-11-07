@@ -1,0 +1,7 @@
+{
+  "name": "caption-texture",
+  "type": "component",
+  "description": "Flowing texture mask over large uppercase text — ships with 6 textures (lava, marble, metal, wood, concrete, rock), configurable via the texture variable",
+  "tags": ["captions", "caption-style", "texture", "mask"],
+  "vars": [{}]
+}

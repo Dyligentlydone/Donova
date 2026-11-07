@@ -1,0 +1,17 @@
+{
+  "name": "ascii-trail-reveal",
+  "type": "component",
+  "description": "An authored S-curve sweeps through a deterministic ASCII grid, flipping cells away to reveal a labeled panel.",
+  "tags": ["motion-primitive", "intro", "reveal", "ascii", "trail", "grid"],
+  "vars": [
+    {
+      "description": "Text shown on the revealed panel."
+    },
+    {
+      "description": "Color used by the trail and revealed panel."
+    },
+    {
+      "description": "Width of the cell reveal tail around the authored path."
+    }
+  ]
+}

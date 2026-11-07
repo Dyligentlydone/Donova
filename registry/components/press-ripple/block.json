@@ -1,0 +1,32 @@
+{
+  "name": "press-ripple",
+  "type": "component",
+  "description": "A cursor decel-arrives from off-stage, lands slightly off-center on a caller-positioned target, compresses with it in lockstep, releases with two small click rings while the label swaps to a check, then exits off-stage while the confirmed state holds.",
+  "tags": ["cursor", "motion-primitive", "product-demo", "press", "ripple", "payoff"],
+  "vars": [
+    {
+      "description": "Text inside the default pill target."
+    },
+    {
+      "description": "Text beside the check once the default pill is pressed."
+    },
+    {
+      "description": "Zone center, percent of host width."
+    },
+    {
+      "description": "Zone center, percent of host height."
+    },
+    {
+      "description": "Seconds from mount start when the press begins."
+    },
+    {
+      "description": "Pointer tone."
+    },
+    {
+      "description": "Contract color for the click rings and the confirmation check."
+    },
+    {
+      "description": "How the frame leaves. None holds the pressed state."
+    }
+  ]
+}

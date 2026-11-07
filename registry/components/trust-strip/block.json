@@ -1,0 +1,23 @@
+{
+  "name": "trust-strip",
+  "type": "component",
+  "description": "A monochrome trust row of wide-tracked mono wordmarks that fade in with an opacity-only left-to-right stagger, then hold dead still.",
+  "tags": ["motion-primitive", "proof", "trust", "logo-strip", "wordmarks"],
+  "vars": [
+    {
+      "description": "Comma-separated wordmark texts (3 to 7 recommended)."
+    },
+    {
+      "description": "Mark color: quiet muted or full-contrast ink."
+    },
+    {
+      "description": "Comma-separated reveal starts in seconds from mount start. Empty uses the authored 0.15s stagger."
+    },
+    {
+      "description": "Faint palette tint mixed into the mark color."
+    },
+    {
+      "description": "End-of-clip behavior. None holds to the last frame."
+    }
+  ]
+}

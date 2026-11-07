@@ -1,0 +1,7 @@
+{
+  "name": "color-wheel",
+  "type": "block",
+  "description": "A wide gradient slides slowly through the colours of the rainbow. A WebGPU shader from the Shaders library (shaders.com, MIT).",
+  "tags": ["webgpu", "webgpu-shader", "background", "gradient", "rainbow", "color"],
+  "vars": []
+}

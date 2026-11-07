@@ -1,0 +1,14 @@
+{
+  "name": "pull-to-refresh",
+  "type": "component",
+  "description": "A mobile list pulls through nonlinear rubber-band resistance, arms at a threshold, commits to a bounded loading indicator, then snaps exactly back to rest.",
+  "tags": ["pointer", "pointers", "mobile", "gesture", "interaction", "refresh", "demonstrate"],
+  "vars": [
+    {
+      "description": "Raw pull distance before nonlinear rubber-band resistance."
+    },
+    {
+      "description": "Refresh indicator geometry and loading motion."
+    }
+  ]
+}

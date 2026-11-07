@@ -1,0 +1,7 @@
+{
+  "name": "caption-emoji-pop",
+  "type": "component",
+  "description": "Emoji integration with stroked text and horizontal squeeze entrance",
+  "tags": ["captions", "caption-style", "emoji", "social"],
+  "vars": []
+}

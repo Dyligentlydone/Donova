@@ -6,7 +6,8 @@ description: Framecraft registry — ready-made blocks (sub-compositions), compo
 # Registry
 
 Blocks are self-contained HTML sub-compositions installed into the project's
-`compositions/<name>/` and referenced via `data-composition-src` (or inlined).
+`compositions/<name>/` and referenced via `data-composition-src` +
+`data-composition-id` on the host element (or inlined).
 They ship neutral defaults — every color, font, and size is a `data-var-*`
 variable so the user's style.md drives the look, not the block.
 
@@ -51,7 +52,7 @@ Blocks read `data-var-*` from the host element or `:root` CSS custom
 properties. Example wiring:
 
 ```html
-<div class="clip" data-start="0" data-duration="3"
+<div class="clip" data-composition-id="alert-1" data-start="0" data-duration="3"
      data-composition-src="compositions/alert-card/index.html"
      data-var-title="RED FLAG" data-var-accent="#e5484d"></div>
 ```

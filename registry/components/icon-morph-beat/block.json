@@ -1,0 +1,14 @@
+{
+  "name": "icon-morph-beat",
+  "type": "component",
+  "description": "An icon morphs between authored state silhouettes, shifts to an accent color, and marks completion with one restrained pulse.",
+  "tags": ["motion-primitive", "product-demo", "icon", "morph", "state-change", "completion"],
+  "vars": [
+    {
+      "description": "Before and after icon states used by the morph."
+    },
+    {
+      "description": "Color applied as the morph completes."
+    }
+  ]
+}

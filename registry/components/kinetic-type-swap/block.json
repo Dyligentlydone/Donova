@@ -1,0 +1,26 @@
+{
+  "name": "kinetic-type-swap",
+  "type": "component",
+  "description": "A held sentence keeps its fixed text in place while one widest-word masked slot rolls through alternatives and settles on the final option.",
+  "tags": ["motion-primitive", "text-effects", "kinetic-type", "word-swap", "reveal"],
+  "vars": [
+    {
+      "description": "Fixed sentence text before the rolling word slot."
+    },
+    {
+      "description": "Comma-separated words shown in the rolling slot."
+    },
+    {
+      "description": "Fixed sentence text after the rolling word slot."
+    },
+    {
+      "description": "Comma-separated seconds (from mount start) for each word swap. Empty keeps the authored even spread."
+    },
+    {
+      "description": "Color used by the rolling word slot."
+    },
+    {
+      "description": "Optional departure. Default none: the sentence holds until the frame cuts."
+    }
+  ]
+}

@@ -1,0 +1,20 @@
+{
+  "name": "comparison-split",
+  "type": "component",
+  "description": "Two full-bleed panels compare before and after states as a persistent divider wipes the vivid after layer over the muted before layer and rests at a configurable split.",
+  "tags": ["prop", "ui-props", "compare", "holdable", "before-after", "wipe"],
+  "vars": [
+    {
+      "description": "Target resting position of the comparison divider."
+    },
+    {
+      "description": "Axis and direction used by the comparison wipe."
+    },
+    {
+      "description": "Caption shown on the base before panel."
+    },
+    {
+      "description": "Caption shown on the revealed after panel."
+    }
+  ]
+}

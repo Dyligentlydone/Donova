@@ -1,0 +1,20 @@
+{
+  "name": "whip-pan-cut",
+  "type": "component",
+  "description": "A full-frame whip pan: scene A whips off laterally with capped directional motion blur while scene B enters in the same direction at matched velocity, on a speed-ramp profile with a decelerating catch. Both scenes ride one strip, so seam velocity is exact by construction. Callers fill the named before/after slot panels; token-styled defaults render when a slot is left empty.",
+  "tags": ["transition", "whip-pan", "motion-blur", "velocity-match", "speed-ramp", "bridge", "slots"],
+  "vars": [
+    {
+      "description": "Shared travel direction for the outgoing and incoming scenes."
+    },
+    {
+      "description": "Seconds after mount start when the whip begins."
+    },
+    {
+      "description": "Seam hairline and default after art tint."
+    },
+    {
+      "description": "Optional departure of the landed scene. Default none: it rests until the frame cuts."
+    }
+  ]
+}

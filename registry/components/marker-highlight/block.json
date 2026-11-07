@@ -1,0 +1,26 @@
+{
+  "name": "marker-highlight",
+  "type": "component",
+  "description": "Display text settles in, then one hand-drawn marker stroke (highlight, circle, underline, or scribble) draws over the emphasized word on cue.",
+  "tags": ["motion-primitive", "typography", "emphasis", "marker", "deterministic"],
+  "vars": [
+    {
+      "description": "Full line of display text."
+    },
+    {
+      "description": "First case-insensitive substring match in text receives the marker. Empty or unmatched draws no marker."
+    },
+    {
+      "description": "Shape of the hand-drawn marker stroke."
+    },
+    {
+      "description": "Second (from mount start) the marker starts drawing. Clamped so the stroke completes before any exit."
+    },
+    {
+      "description": "Marker ink color from the contract token map."
+    },
+    {
+      "description": "Optional departure. Default none: the lockup holds until the frame cuts."
+    }
+  ]
+}

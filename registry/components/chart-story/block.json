@@ -1,0 +1,39 @@
+{
+  "name": "chart-story",
+  "type": "component",
+  "description": "One chart builds from data in reading order and lands the exact supplied values: staggered bars, a left-to-right line with area fill, a sweeping donut, or filling progress bars, with an accented value callout on the emphasized datum.",
+  "tags": [
+    "motion-primitive",
+    "proof",
+    "stats",
+    "chart",
+    "bars",
+    "line",
+    "donut",
+    "progress",
+    "deterministic"
+  ],
+  "vars": [
+    {
+      "description": "Chart form the data builds into."
+    },
+    {
+      "description": "Comma-separated numbers; the chart lands exactly on these values."
+    },
+    {
+      "description": "Comma-separated labels, one per datum."
+    },
+    {
+      "description": "Index of the datum that takes the accent and the value callout. Clamped to the data range."
+    },
+    {
+      "description": "Suffix appended to every displayed value."
+    },
+    {
+      "description": "Contract color used by the emphasized datum and its callout."
+    },
+    {
+      "description": "Optional departure. Proof stats end on the still hold, so the default is none."
+    }
+  ]
+}

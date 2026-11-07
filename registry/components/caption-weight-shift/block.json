@@ -1,0 +1,7 @@
+{
+  "name": "caption-weight-shift",
+  "type": "component",
+  "description": "Elegant font-weight transition between caption lines",
+  "tags": ["captions", "caption-style", "minimal", "typography"],
+  "vars": []
+}

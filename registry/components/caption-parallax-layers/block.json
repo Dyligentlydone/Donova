@@ -1,0 +1,7 @@
+{
+  "name": "caption-parallax-layers",
+  "type": "component",
+  "description": "Behind-subject 3D text layering with vertical stretch effect",
+  "tags": ["captions", "caption-style", "parallax", "3d", "depth"],
+  "vars": []
+}

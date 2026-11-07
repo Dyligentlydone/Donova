@@ -1,0 +1,14 @@
+{
+  "name": "directional-wipe",
+  "type": "component",
+  "description": "A directional scene push that slides one panel over another.",
+  "tags": ["transition-primitive"],
+  "vars": [
+    {
+      "description": "Theme token for the ring marking the incoming panel. Slate rides --accent, teal --brand, ember --accent-2; each falls back to a neutral hairline."
+    },
+    {
+      "description": "Corner radius of the transition card."
+    }
+  ]
+}

@@ -1,0 +1,17 @@
+{
+  "name": "ticker-takeover",
+  "type": "component",
+  "description": "A mono ticker rolls through options, locks on a final word with an accent flash, and promotes it into a full-frame headline.",
+  "tags": ["motion-primitive", "typography", "ticker", "slot-machine", "headline", "reveal"],
+  "vars": [
+    {
+      "description": "Comma-separated words shown by the ticker."
+    },
+    {
+      "description": "Word the ticker locks on and promotes."
+    },
+    {
+      "description": "Color used for the lock flash and promoted word."
+    }
+  ]
+}

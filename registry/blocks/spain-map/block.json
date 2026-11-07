@@ -1,0 +1,7 @@
+{
+  "name": "spain-map",
+  "type": "block",
+  "description": "Animated Spain choropleth by autonomous community with staggered reveals and gradient legend — D3 conic conformal projection",
+  "tags": ["data", "map", "geography", "spain", "europe", "choropleth"],
+  "vars": []
+}

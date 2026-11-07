@@ -1,0 +1,7 @@
+{
+  "name": "cursor-context-menu",
+  "type": "component",
+  "description": "A cursor right-clicks a file, a context menu blooms from its tip, the hover highlight tracks the item under it, and the chosen action plays out: duplicate, rename, move to trash, or a confirmation toast.",
+  "tags": ["cursor", "motion-primitive", "menu", "right-click", "desktop", "files"],
+  "vars": [{}, {}, {}]
+}

@@ -1,0 +1,7 @@
+{
+  "name": "transitions-destruction",
+  "type": "block",
+  "description": "Showcase of destructive break-apart transitions",
+  "tags": ["transition", "showcase"],
+  "vars": []
+}

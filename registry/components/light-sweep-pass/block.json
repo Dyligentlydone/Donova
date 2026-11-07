@@ -1,0 +1,23 @@
+{
+  "name": "light-sweep-pass",
+  "type": "component",
+  "description": "A traveling key light re-shades a slotted scene: a soft diagonal gradient band crosses the frame once while every per-element highlight and shadow shifts in lockstep (all driven by one --light-x property), then the light settles into a resting key. Quiet, expensive-feeling; the scene itself never moves. Callers fill the named scene slot; a token hero-and-cards default renders when it is left empty.",
+  "tags": ["motion-primitive", "overlay", "light", "sweep", "slots", "deterministic"],
+  "vars": [
+    {
+      "description": "Band and highlight gradient angle in degrees."
+    },
+    {
+      "description": "Seconds after mount start when the band starts crossing."
+    },
+    {
+      "description": "Band opacity and highlight bloom multiplier."
+    },
+    {
+      "description": "Tint inside the band and the highlight blooms."
+    },
+    {
+      "description": "Outgoing transition. None holds the settled key."
+    }
+  ]
+}

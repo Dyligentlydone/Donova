@@ -1,0 +1,20 @@
+{
+  "name": "scroll-feed",
+  "type": "component",
+  "description": "A loop-friendly column of varied skeleton post cards scrolls upward with subtle motion trails and an agitated pace.",
+  "tags": ["motion-primitive", "effects", "scroll", "feed", "loop", "agitation"],
+  "vars": [
+    {
+      "description": "Pace of the upward feed movement."
+    },
+    {
+      "description": "Number of skeleton posts in one repeated feed cycle."
+    },
+    {
+      "description": "Comma-separated seconds (from mount start); each cue advances the feed by one card. Empty synthesizes evenly spaced flicks, one per card."
+    },
+    {
+      "description": "Optional departure. Default none: the feed scrolls until the frame cuts."
+    }
+  ]
+}

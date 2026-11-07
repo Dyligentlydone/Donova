@@ -1,0 +1,16 @@
+{
+  "name": "exploded-stack",
+  "type": "block",
+  "description": "Isometric layer plates explode apart with a label beside each layer, hold, then collapse back into one stack. Built for architecture and system diagrams.",
+  "tags": [
+    "3d-object",
+    "three-js",
+    "webgl",
+    "isometric",
+    "exploded-view",
+    "layers",
+    "diagram",
+    "architecture"
+  ],
+  "vars": []
+}

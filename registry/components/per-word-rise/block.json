@@ -1,0 +1,23 @@
+{
+  "name": "per-word-rise",
+  "type": "component",
+  "description": "Words or characters rise into place in a controlled blur-to-sharp cascade, settle softly on landing, and hold still until the cut (optional fade or up exit).",
+  "tags": ["motion-primitive", "text-effects", "typography", "stagger", "reveal"],
+  "vars": [
+    {
+      "description": "Text whose words or characters rise into place."
+    },
+    {
+      "description": "Animate the text as words or individual characters."
+    },
+    {
+      "description": "Comma-separated seconds (from mount start) for each unit landing. Empty keeps the authored cascade rhythm."
+    },
+    {
+      "description": "Contract accent token used for the text color."
+    },
+    {
+      "description": "Optional departure. Default none: the line holds until the frame cuts."
+    }
+  ]
+}

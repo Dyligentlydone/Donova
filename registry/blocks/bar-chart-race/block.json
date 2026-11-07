@@ -1,0 +1,7 @@
+{
+  "name": "bar-chart-race",
+  "type": "block",
+  "description": "Ranked bars grow and overtake each other as a time series advances, with the axis rescaling as values climb and the accent handing over to whoever leads",
+  "tags": ["data", "chart", "statistics", "ranking"],
+  "vars": [{}, {}, {}, {}, {}, {}, {}, {}, {}, {}]
+}

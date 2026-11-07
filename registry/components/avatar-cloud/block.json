@@ -1,0 +1,17 @@
+{
+  "name": "avatar-cloud",
+  "type": "component",
+  "description": "Lettermark avatars populate a loose elliptical cloud while fine SVG links draw between the community and its central proof label.",
+  "tags": ["effects", "avatars", "community", "network", "social-proof", "prove"],
+  "vars": [
+    {
+      "description": "Number of lettermark avatars in the network cloud."
+    },
+    {
+      "description": "Show or hide the connecting network lines."
+    },
+    {
+      "description": "Community proof copy shown in the center hub."
+    }
+  ]
+}

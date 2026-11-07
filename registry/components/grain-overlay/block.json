@@ -1,0 +1,7 @@
+{
+  "name": "grain-overlay",
+  "type": "component",
+  "description": "Animated film grain texture overlay using CSS keyframes — adds warmth and analog character to any composition",
+  "tags": ["texture", "grain", "overlay", "film"],
+  "vars": []
+}

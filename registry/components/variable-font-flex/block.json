@@ -1,0 +1,23 @@
+{
+  "name": "variable-font-flex",
+  "type": "component",
+  "description": "A word lands while its variable-font weight and width axes flex from hairline-condensed to black-wide with per-character stagger; font-size eases inversely so the letterforms gain mass while the box holds.",
+  "tags": ["motion-primitive", "experiment", "type", "variable-font", "deterministic"],
+  "vars": [
+    {
+      "description": "The word whose variable-font axes flex."
+    },
+    {
+      "description": "Which variable-font axes animate: weight, width, or both."
+    },
+    {
+      "description": "Seconds between per-character flex starts, clamped 0 to 0.25."
+    },
+    {
+      "description": "Word color: green rides --brand, blue rides --accent, violet rides --accent-2."
+    },
+    {
+      "description": "Optional departure. Default none: the carved word holds until the frame cuts."
+    }
+  ]
+}

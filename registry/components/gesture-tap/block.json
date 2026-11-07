@@ -1,0 +1,17 @@
+{
+  "name": "gesture-tap",
+  "type": "component",
+  "description": "A contact circle taps a mobile pill button, releases it into a new labeled accent state, and lifts away.",
+  "tags": ["motion-primitive", "gesture", "tap", "interaction", "ui-props"],
+  "vars": [
+    {
+      "description": "Button label shown before the tap response."
+    },
+    {
+      "description": "Button label shown when the tap releases."
+    },
+    {
+      "description": "Color used for the completed button state and response pulse."
+    }
+  ]
+}

@@ -1,0 +1,7 @@
+{
+  "name": "shimmer-sweep",
+  "type": "component",
+  "description": "Animated light sweep across text or elements using a CSS gradient mask — ideal for AI accents and premium reveals",
+  "tags": ["text", "shimmer", "highlight", "effect"],
+  "vars": []
+}

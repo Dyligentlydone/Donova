@@ -1,0 +1,7 @@
+{
+  "name": "caption-blend-difference",
+  "type": "component",
+  "description": "Auto-inverting text using mix-blend-mode: difference — flips between white and black per-pixel against the background",
+  "tags": ["text", "text-effect", "effect", "blend-mode", "contrast", "inversion"],
+  "vars": []
+}

@@ -1,0 +1,7 @@
+{
+  "name": "confetti",
+  "type": "component",
+  "description": "A deterministic celebration burst with seeded particles and gravity.",
+  "tags": ["effect"],
+  "vars": []
+}

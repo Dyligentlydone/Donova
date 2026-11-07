@@ -1,0 +1,20 @@
+{
+  "name": "morph-swap",
+  "type": "component",
+  "description": "Two slotted siblings stacked at one shared center: A holds, then condenses or reshapes into B on a shared 50% 50% transform origin. Condense shrink-fades A exactly as B scales up; reshape morphs the silhouette on scaleX/scaleY, never width or height tweens. Token card defaults render when a slot is left empty.",
+  "tags": ["transition", "morph", "swap", "condense", "reshape", "holdable", "slots"],
+  "vars": [
+    {
+      "description": "Seconds after mount start when the morph begins."
+    },
+    {
+      "description": "Morph mechanic: condense shrink-fades A into B at center; reshape morphs the silhouette on scaleX/scaleY."
+    },
+    {
+      "description": "Incoming card accent color."
+    },
+    {
+      "description": "Outgoing transition. None holds the final frame."
+    }
+  ]
+}

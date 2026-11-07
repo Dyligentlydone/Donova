@@ -1,0 +1,7 @@
+{
+  "name": "thin-film",
+  "type": "block",
+  "description": "An orb's rim shimmers with soap-bubble iridescence on black. A WebGPU shader from the Shaders library (shaders.com, MIT).",
+  "tags": ["webgpu", "webgpu-shader", "object", "iridescent", "bubble", "rainbow"],
+  "vars": []
+}

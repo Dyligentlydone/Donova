@@ -1,0 +1,7 @@
+{
+  "name": "frost",
+  "type": "block",
+  "description": "A frozen blue orb with frost creeping in from its edge, on black. A WebGPU shader from the Shaders library (shaders.com, MIT).",
+  "tags": ["webgpu", "webgpu-shader", "orb", "ice", "frost", "material"],
+  "vars": []
+}

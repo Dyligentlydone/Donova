@@ -1,0 +1,29 @@
+{
+  "name": "starfield",
+  "type": "block",
+  "description": "Seek-safe night-sky overlay: sparse or dense stars in three size tiers that twinkle and drift in two parallax layers, radial-masked to keep the frame center clear",
+  "tags": [
+    "starfield",
+    "night-sky",
+    "stars",
+    "twinkle",
+    "sky",
+    "weather",
+    "overlay",
+    "ambient",
+    "particles",
+    "media-treatment-overlay",
+    "loopable"
+  ],
+  "vars": [
+    {
+      "description": "Star count across the frame."
+    },
+    {
+      "description": "Star color mix."
+    },
+    {
+      "description": "How fast stars pulse."
+    }
+  ]
+}

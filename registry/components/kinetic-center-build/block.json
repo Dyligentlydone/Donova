@@ -1,0 +1,23 @@
+{
+  "name": "kinetic-center-build",
+  "type": "component",
+  "description": "Words enter from the right and push the growing phrase left until the final line locks centered.",
+  "tags": ["motion-primitive", "text-effects", "kinetic-type", "reveal", "remocn-port"],
+  "vars": [
+    {
+      "description": "Short phrase that builds one word at a time."
+    },
+    {
+      "description": "Maximum text size in pixels. Longer phrases shrink to stay inside the frame."
+    },
+    {
+      "description": "Horizontal distance each new word travels before it lands."
+    },
+    {
+      "description": "Text color for the full phrase."
+    },
+    {
+      "description": "Weight used by every word in the phrase."
+    }
+  ]
+}

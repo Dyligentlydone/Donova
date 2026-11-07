@@ -1,0 +1,7 @@
+{
+  "name": "caption-clip-wipe",
+  "type": "component",
+  "description": "Left-to-right clip-path wipe reveal per word",
+  "tags": ["captions", "caption-style", "wipe", "clip-path", "reveal"],
+  "vars": []
+}

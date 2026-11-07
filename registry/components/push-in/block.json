@@ -1,0 +1,14 @@
+{
+  "name": "push-in",
+  "type": "component",
+  "description": "A centered headline gains focus through one slow, continuous camera push and a gentle fade out.",
+  "tags": ["motion-primitive", "camera", "push-in", "focus", "emphasize", "holdable"],
+  "vars": [
+    {
+      "description": "Text centered in the camera frame."
+    },
+    {
+      "description": "Final camera scale reached by the push."
+    }
+  ]
+}

@@ -1,0 +1,20 @@
+{
+  "name": "tilt-card",
+  "type": "component",
+  "description": "A transitions.dev-inspired tilt card primitive with depth layers and hover-style parallax",
+  "tags": ["video-primitive", "transition-primitive", "transitions-dev-port", "card", "tilt"],
+  "vars": [
+    {
+      "description": "Small uppercase kicker above the headline."
+    },
+    {
+      "description": "Large card headline."
+    },
+    {
+      "description": "How far the corner glow reaches past the card edges, which sets both its spread at rest and how far the timeline drift carries it."
+    },
+    {
+      "description": "Colour family of the card gradient, corner glow, eyebrow and drop shadow."
+    }
+  ]
+}

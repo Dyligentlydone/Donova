@@ -1,0 +1,7 @@
+{
+  "name": "lens-flare",
+  "type": "block",
+  "description": "A camera lens flare: a bright star burst and a faint rainbow halo that slowly shimmer on black. A WebGPU shader from the Shaders library (shaders.com, MIT).",
+  "tags": ["webgpu", "webgpu-shader", "background", "light", "flare", "glow"],
+  "vars": []
+}

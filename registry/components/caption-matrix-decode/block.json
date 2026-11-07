@@ -1,0 +1,7 @@
+{
+  "name": "caption-matrix-decode",
+  "type": "component",
+  "description": "Character scramble animation before text reveal",
+  "tags": ["captions", "caption-style", "matrix", "scramble", "decode"],
+  "vars": []
+}

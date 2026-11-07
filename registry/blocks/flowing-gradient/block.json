@@ -1,0 +1,7 @@
+{
+  "name": "flowing-gradient",
+  "type": "block",
+  "description": "Bands of orange and violet flow across the frame in a smooth gradient. A WebGPU shader from the Shaders library (shaders.com, MIT).",
+  "tags": ["webgpu", "webgpu-shader", "background", "gradient", "color", "flow"],
+  "vars": []
+}

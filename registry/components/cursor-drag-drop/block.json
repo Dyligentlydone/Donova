@@ -1,0 +1,7 @@
+{
+  "name": "cursor-drag-drop",
+  "type": "component",
+  "description": "A cursor grabs a task card, lifts and tilts it into its motion, carries it in lockstep to an empty column, drops it with a small settle, and the list closes the gap behind it.",
+  "tags": ["cursor", "motion-primitive", "drag", "drop", "kanban", "product-demo"],
+  "vars": [{}, {}, {}]
+}
