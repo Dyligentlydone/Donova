@@ -32,6 +32,25 @@ export function deterministicFlags(): string[] {
   ];
 }
 
+/**
+ * Flags only meaningful when the compositor is driven by beginFrame. In
+ * screenshot mode they must be stripped: `--enable-begin-frame-control` makes
+ * the compositor wait for frames nobody sends, which stalls rAF and hangs
+ * every seek (mirrors HyperFrames browserManager BEGINFRAME_ONLY_FLAGS).
+ */
+const BEGINFRAME_ONLY_FLAGS = new Set([
+  "--deterministic-mode",
+  "--enable-begin-frame-control",
+  "--run-all-compositor-stages-before-draw",
+  "--disable-threaded-animation",
+  "--disable-threaded-scrolling",
+  "--disable-checker-imaging",
+]);
+
+export function screenshotModeFlags(): string[] {
+  return deterministicFlags().filter((f) => !BEGINFRAME_ONLY_FLAGS.has(f));
+}
+
 export interface ChromeInfo {
   executablePath: string;
   version: string;

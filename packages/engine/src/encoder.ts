@@ -54,6 +54,9 @@ export class StreamingEncoder {
         else reject(new Error(`ffmpeg exited ${code}:\n${this.stderrTail}`));
       });
     });
+    // Observed by finish(); this guard keeps an intentional kill() (no
+    // finish() call) from surfacing as an unhandled rejection.
+    this.done.catch(() => {});
     this.proc.stdin?.on("error", (e) => {
       // EPIPE when ffmpeg dies first.
       this.err = this.err ?? new Error(`stdin pipe error: ${String(e)}`);

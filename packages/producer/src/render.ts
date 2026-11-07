@@ -86,9 +86,10 @@ export async function render(opts: RenderOpts): Promise<RenderResult> {
         ffmpeg,
         out: videoOnly,
         encoder: { crf: QUALITY_CRF[quality], codec, alpha: opts.alpha },
+        // JPEG q80 is HyperFrames' default capture; PNG only when alpha is needed.
         capture: {
-          format: quality === "draft" ? "jpeg" : "png",
-          jpegQuality: 70,
+          format: opts.alpha ? "png" : "jpeg",
+          jpegQuality: quality === "draft" ? 70 : quality === "high" ? 92 : 85,
         },
         onProgress: opts.onProgress,
       });

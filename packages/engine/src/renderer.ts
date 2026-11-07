@@ -6,7 +6,7 @@ import { CACHE_DIR } from "@framecraft/contract";
 import { getRuntimeSource } from "@framecraft/runtime";
 import puppeteer, { type Browser, type Page } from "puppeteer-core";
 import { CaptureSession } from "./capture.js";
-import { deterministicFlags, ensureChrome, profileDirFor } from "./chrome.js";
+import { deterministicFlags, ensureChrome, profileDirFor, screenshotModeFlags } from "./chrome.js";
 import { StreamingEncoder, ensureOutDir } from "./encoder.js";
 
 export interface RenderToFramesOpts {
@@ -91,21 +91,23 @@ export async function openFrameSource(opts: RenderToFramesOpts): Promise<FrameSo
   // chrome-headless-shell supports HeadlessExperimental.beginFrame; regular
   // Chrome runs "new" headless and capture falls back to screenshots.
   const headlessMode = opts.headed ? false : chrome.headless === "shell" ? ("shell" as never) : true;
-  const browser: Browser = await puppeteer.launch({
-    executablePath: chrome.executablePath,
-    headless: headlessMode,
-    args: [...deterministicFlags(), ...(opts.extraChromeFlags ?? [])],
-    userDataDir: profileDirFor(opts.url),
-    defaultViewport: { width: opts.width, height: opts.height, deviceScaleFactor: 1 },
-  });
   // Probe beginFrame inside a sacrificial browser process — on some systems a
   // failed beginFrame crashes the whole browser, so it must be isolated from
   // the real capture browser (03 §6). The verdict is cached per executable.
+  // It must run BEFORE launch: the capture browser's flags depend on it.
   const beginFrameOk = await probeBeginFrameSupport(
     chrome.executablePath,
     opts,
     opts.capture?.disableBeginFrame,
   );
+  const browser: Browser = await puppeteer.launch({
+    executablePath: chrome.executablePath,
+    headless: headlessMode,
+    args: [...(beginFrameOk ? deterministicFlags() : screenshotModeFlags()), ...(opts.extraChromeFlags ?? [])],
+    userDataDir: profileDirFor(`${opts.url}#${opts.startFrame ?? 0}`),
+    defaultViewport: { width: opts.width, height: opts.height, deviceScaleFactor: 1 },
+    protocolTimeout: 120_000,
+  });
 
   const page: Page = await browser.newPage();
   page.setDefaultTimeout(30_000);
@@ -118,7 +120,7 @@ export async function openFrameSource(opts: RenderToFramesOpts): Promise<FrameSo
     width: opts.width,
     height: opts.height,
     fps: opts.fps,
-    format: opts.capture?.format ?? "png",
+    format: opts.capture?.format ?? "jpeg",
     jpegQuality: opts.capture?.jpegQuality,
     disableBeginFrame: opts.capture?.disableBeginFrame,
   });

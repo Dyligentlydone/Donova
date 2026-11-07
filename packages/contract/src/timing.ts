@@ -1,3 +1,4 @@
+import { CLIP_CLASS } from "./names.js";
 import type { ClipSpec, CompositionSpec, RenderPlan, ResolvedTimeline } from "./types.js";
 
 /**
@@ -46,8 +47,18 @@ export function resolveTimeline(
         media: clip.media,
       };
       out.clips.push(resolved);
-      cuts.add(localStart);
-      cuts.add(localEnd);
+      // Shard boundaries only at scene-level cuts — a full-frame clip or a
+      // media element. Inline timed elements (caption words, pills) must not
+      // fragment the render plan into browser-per-word segments.
+      const isScene =
+        clip.classes.includes(CLIP_CLASS) ||
+        clip.media.kind === "video" ||
+        clip.media.kind === "image" ||
+        clip.media.kind === "iframe";
+      if (isScene) {
+        cuts.add(localStart);
+        cuts.add(localEnd);
+      }
 
       // Recurse into sub-composition clips.
       const subSrc = clip.attrs["data-composition-src"];

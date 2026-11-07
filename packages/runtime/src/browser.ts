@@ -392,6 +392,7 @@ function seekMedia(t: number, timeoutMs = 4000): Promise<void> {
 interface VideoMapEntry {
   selector: string;
   index?: number;
+  ext?: string;
   dir: string;
   fps: number;
   start: number;
@@ -454,7 +455,7 @@ function frameUrl(e: VideoMapEntry, t: number): string {
   const local = Math.max(0, (t - e.start) * e.speed);
   let idx = Math.floor(local * e.fps);
   idx = Math.min(Math.max(idx, 0), e.frameCount - 1);
-  return `${e.dir}/f${String(idx).padStart(6, "0")}.png`;
+  return `${e.dir}/f${String(idx).padStart(6, "0")}.${e.ext ?? "png"}`;
 }
 
 function updateVideoFrames(t: number): Promise<void> {

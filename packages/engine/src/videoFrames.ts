@@ -19,6 +19,8 @@ export interface VideoMapEntry {
   selector: string;
   /** Index among all <video> elements in document order (authoritative). */
   index?: number;
+  /** Frame file extension. */
+  ext?: string;
   /** Directory of extracted frames, relative to project root (URL path). */
   dir: string;
   fps: number;
@@ -39,6 +41,9 @@ export interface VideoMap {
 }
 
 const CACHE_DIRNAME = ".framecraft";
+/** Opaque footage → JPG (fast decode/encode, ~10x smaller than PNG), as in
+ *  HyperFrames videoFrameExtractor's `auto` format. */
+const FRAME_EXT = "jpg";
 
 export async function prepareVideoFrames(
   ffmpeg: string,
@@ -107,16 +112,19 @@ export async function prepareVideoFrames(
       join(projectDir, src),
       "-vf",
       `fps=${fps}`,
+      "-q:v",
+      "2",
       "-start_number",
       "0",
       "-f",
       "image2",
-      join(absDir, "f%06d.png"),
+      join(absDir, `f%06d.${FRAME_EXT}`),
     ]);
 
     entries.push({
       selector: `video[src="${src}"]`,
       index: job.mediaIndex,
+      ext: FRAME_EXT,
       dir,
       fps,
       start: job.window.start,
