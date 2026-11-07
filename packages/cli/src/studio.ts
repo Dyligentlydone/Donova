@@ -20,6 +20,8 @@ export async function launchHyperframesStudio(
   projectDir: string,
   opts: StudioLaunchOptions = {},
 ): Promise<void> {
+  const { rebrandStudioUi } = await import("./rebrand.js");
+  rebrandStudioUi();
   const hfArgs = ["preview", projectDir];
   if (opts.stop) {
     hfArgs.push("--stop");

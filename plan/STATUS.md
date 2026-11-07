@@ -1,6 +1,19 @@
 # STATUS — what exists today (read before building)
 
-Last updated: 2026-11-07 (HF feature-parity pass — see §-4). Update this file whenever you finish an MV task.
+Last updated: 2026-11-07 (Studio rebranded to "donova" — see §-5). Update this file whenever you finish an MV task.
+
+## -5. Studio rebrand — first pass (donova)
+
+`packages/cli/src/rebrand.ts` patches the installed hyperframes Studio bundle on every `fc studio`
+launch (idempotent `donova-rebrand` marker): injects a script into `dist/studio/index.html` that
+replaces the SVG wordmark (`svg[aria-label="Hyperframes"]` — compiled JSX paths, not text) with a
+styled lowercase **donova** span, retitles the page to "Donova Studio", and overwrites `favicon.svg`
+with a "d" mark. Verified headlessly at localhost:3005 — top bar reads "donova | fc-e2e".
+
+Why a DOM patcher instead of bundle surgery: the wordmark is minified React JSX, not a string; the
+injected script survives any bundle shape and self-heals after package reinstall. **This is the item-3
+stepping stone** — proper vendoring/rebrand (strip HeyGen auth/export/desktop surfaces, wire our agent)
+still supersedes it.
 
 ## -4. Feature-parity pass (everything non-gated plugged in)
 
