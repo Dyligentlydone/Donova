@@ -6,7 +6,14 @@ import { join } from "node:path";
 import { promisify } from "node:util";
 import { CACHE_DIR, ENV_PREFIX } from "@framecraft/contract";
 import { locateFfmpeg } from "@framecraft/engine";
-import { WHISPER_MODELS, findWhisperCli, whisperModelDir } from "@framecraft/media";
+import {
+  WHISPER_MODELS,
+  findWhisperCli,
+  parakeetModelInstalled,
+  sherpaRuntimeLoadError,
+  sherpaUnsupportedReason,
+  whisperModelDir,
+} from "@framecraft/media";
 
 const execFileAsync = promisify(execFile);
 
@@ -150,6 +157,29 @@ export async function doctor(opts?: { projectDir?: string }): Promise<DoctorResu
     ok: presentModels.length > 0,
     value: presentModels.length ? presentModels.join(", ") : "none downloaded",
     hint: presentModels.length ? undefined : "Downloaded automatically on first `framecraft transcribe`.",
+    required: false,
+  });
+  const parakeetReason = sherpaUnsupportedReason();
+  const parakeetRuntime = parakeetReason
+    ? "unsupported"
+    : (await sherpaRuntimeLoadError(10_000)) === null
+      ? "ok"
+      : "not-loadable";
+  const parakeetModel = parakeetReason ? false : await parakeetModelInstalled();
+  checks.push({
+    name: "parakeet",
+    ok: parakeetRuntime === "ok" && parakeetModel,
+    value:
+      parakeetReason ??
+      (parakeetRuntime === "ok"
+        ? parakeetModel
+          ? "ready"
+          : "runtime ok, model not downloaded"
+        : `runtime ${parakeetRuntime}`),
+    hint:
+      parakeetRuntime === "ok" && !parakeetModel
+        ? "framecraft models install parakeet (downloads ~670MB, or auto-downloads on first transcribe)"
+        : undefined,
     required: false,
   });
 

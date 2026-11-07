@@ -5,3 +5,6 @@ export * from "./transcribe.js";
 export * from "./scaffold.js";
 export * from "./tts.js";
 export * from "./bgRemoval.js";
+export * from "./parakeet.js";
+export { readWav } from "./wav.js";
+export type { Wave } from "./wav.js";

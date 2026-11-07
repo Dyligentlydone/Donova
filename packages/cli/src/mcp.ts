@@ -75,6 +75,8 @@ const TOOLS: Tool[] = [
         out: { type: "string" },
         model: { type: "string" },
         prompt: { type: "string" },
+        engine: { type: "string" },
+        language: { type: "string" },
       },
       ["media"],
     ),
@@ -84,6 +86,8 @@ const TOOLS: Tool[] = [
         out: (a.out as string) ?? "transcript.json",
         model: (a.model as string) ?? "large-v3-turbo",
         prompt: a.prompt as string | undefined,
+        engine: (a.engine as "auto" | "parakeet" | "whisper" | undefined) ?? "auto",
+        language: a.language as string | undefined,
       }),
   },
   {

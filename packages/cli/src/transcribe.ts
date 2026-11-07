@@ -12,12 +12,16 @@ export async function transcribeCmd(opts: {
   out?: string;
   json?: boolean;
   prompt?: string;
+  engine?: "auto" | "parakeet" | "whisper";
+  language?: string;
   onBytes?: (n: number) => void;
 }): Promise<{ path: string; words: number; duration: number; model: string }> {
   const mediaPath = resolve(opts.media);
   const t = await runTranscribe(mediaPath, {
     model: opts.model ?? DEFAULT_WHISPER_MODEL,
     prompt: opts.prompt,
+    engine: opts.engine,
+    language: opts.language,
     onBytes: opts.json ? undefined : opts.onBytes,
   }).catch((e: Error) => {
     const msg = e.message ?? String(e);

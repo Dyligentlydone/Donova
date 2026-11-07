@@ -266,6 +266,19 @@ Lessons (each was a real bug — do not regress):
     fragment-spelled terms ("F iver r" → "Fiverr", ≤4 words, <0.5s gaps) and
     `joinContractions` rejoins `'t`-style suffixes. Verified on IMG_4063:
     Fiverr×2 + Zoom casing + all contractions fixed.
+16. **Parakeet engine (`--engine auto|parakeet|whisper`, default auto):**
+    NVIDIA parakeet-tdt-0.6b-v3 via `sherpa-onnx-node@1.13.8` — better WER than
+    large-v3, ~5-10× faster, 26 languages. Model (int8 ONNX, ~670MB) downloads
+    to `~/.cache/framecraft/parakeet/` with size+sha256 pins at a fixed HF
+    revision. Decode runs in `sherpaWorker.ts` child process (onnxruntime can
+    abort uncatchably); audio is silence-cut into ~30s windows, gaps with
+    residual energy get re-decoded + spliced (`parakeet.ts`). Whisper remains
+    the fallback for unsupported platforms/languages (`--language` swaps `.en`
+    models for multilingual twins). `framecraft models [install parakeet]`
+    lists/prefetches. Verified on IMG_4063: Fiverr correct ×2 with no prompt,
+    proper punctuation/casing, zero fragments. Parakeet is CC-BY-4.0 —
+    attribution lives in README Notices. Whisper.cpp binary auto-build is NOT
+    implemented (HF builds from source; we still require brew install).
 
 Performance reference: 42 s 1080×1920 reel, 1265 frames, screenshot mode, 4 workers
 on this Mac → **11 min 18 s**. Basic fixture (640×360, 2 s) → 4.7 s.

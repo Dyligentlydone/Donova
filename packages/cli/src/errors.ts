@@ -24,6 +24,8 @@ export const ERR = {
   BLOCK_NOT_FOUND: "E_BLOCK_NOT_FOUND",
   /** User/declined confirmation in unattended mode. */
   NEEDS_CONFIRMATION: "E_NEEDS_CONFIRMATION",
+  /** Bad flag/argument value or combination. */
+  INVALID_ARGS: "E_INVALID_ARGS",
 } as const;
 
 export type ErrCode = (typeof ERR)[keyof typeof ERR];

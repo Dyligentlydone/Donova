@@ -11,7 +11,7 @@ import { compareVideos } from "./compare.js";
 import { copyPrompt } from "./copyPrompt.js";
 import { cutsCmd } from "./cuts.js";
 import { doctor, reportDoctor } from "./doctor.js";
-import { ERR, guardJson, jsonErr, jsonOut } from "./errors.js";
+import { CliError, ERR, guardJson, jsonErr, jsonOut } from "./errors.js";
 import { evalProject } from "./evals.js";
 import { initProject } from "./init.js";
 import { probeCmd, timelineCmd } from "./inspect.js";
@@ -273,6 +273,78 @@ const catalogCmd = defineCommand({
   },
 });
 
+const modelsCmd = defineCommand({
+  meta: { name: "models", description: "List or install transcription models" },
+  args: {
+    action: { type: "positional", required: false, description: "install" },
+    name: { type: "positional", required: false, description: "parakeet | <whisper model>" },
+    ...JSON_ARG,
+  },
+  async run({ args }) {
+    await guardJson(args.json, async () => {
+      const {
+        WHISPER_MODELS,
+        ensureParakeetModel,
+        ensureWhisperModel,
+        parakeetModelInstalled,
+        sherpaRuntimeLoadError,
+        sherpaUnsupportedReason,
+        whisperModelDir,
+      } = await import("@framecraft/media");
+      const { existsSync } = await import("node:fs");
+      const { join } = await import("node:path");
+      if (args.action === "install") {
+        if (args.name === "parakeet") {
+          const downloaded = await ensureParakeetModel((done) =>
+            process.stderr.write(`\rmodel download: ${(done / 1e6).toFixed(0)} MB`),
+          );
+          process.stderr.write("\n");
+          const err = await sherpaRuntimeLoadError();
+          const res = { engine: "parakeet", downloaded, runtime: err ? `error: ${err}` : "ok" };
+          if (args.json) jsonOut(res);
+          else console.log(res.runtime === "ok" ? "parakeet ready" : `parakeet ${res.runtime}`);
+          if (err) throw new CliError(ERR.PROVIDER_ERROR, `sherpa runtime: ${err}`);
+          return;
+        }
+        if (args.name && WHISPER_MODELS[args.name]) {
+          const path = await ensureWhisperModel(args.name, (n) =>
+            process.stderr.write(`\rmodel download: ${(n / 1e6).toFixed(0)} MB`),
+          );
+          if (args.json) jsonOut({ model: args.name, path });
+          else console.log(`${args.name} → ${path}`);
+          return;
+        }
+        throw new CliError(
+          ERR.INVALID_ARGS,
+          `framecraft models install <parakeet|${Object.keys(WHISPER_MODELS).join("|")}>`,
+        );
+      }
+      const modelDir = whisperModelDir();
+      const res = {
+        whisper: Object.entries(WHISPER_MODELS).map(([name, m]) => ({
+          name,
+          sizeMB: m.sizeMB,
+          installed: existsSync(join(modelDir, m.file)),
+        })),
+        parakeet: {
+          supported: !sherpaUnsupportedReason(),
+          reason: sherpaUnsupportedReason(),
+          runtime: (await sherpaRuntimeLoadError()) === null ? "ok" : "not-loadable",
+          model: await parakeetModelInstalled(),
+        },
+      };
+      if (args.json) jsonOut(res);
+      else {
+        for (const w of res.whisper)
+          console.log(`${w.installed ? "✓" : " "} whisper ${w.name} (${w.sizeMB} MB)`);
+        console.log(
+          `${res.parakeet.model && res.parakeet.runtime === "ok" ? "✓" : " "} parakeet-tdt-0.6b-v3 ${res.parakeet.model ? "(model installed)" : "(not installed — framecraft models install parakeet)"} ${res.parakeet.runtime !== "ok" ? `[runtime ${res.parakeet.runtime}]` : ""}`,
+        );
+      }
+    });
+  },
+});
+
 const doctorCmd = defineCommand({
   meta: { name: "doctor", description: "Check environment health" },
   args: {
@@ -295,7 +367,13 @@ const transcribeCliCmd = defineCommand({
   args: {
     media: { type: "positional", required: true },
     model: { type: "string", description: "whisper model", default: "large-v3-turbo" },
-    prompt: { type: "string", description: "vocabulary hint for whisper (names, jargon)" },
+    engine: {
+      type: "string",
+      description: "transcription engine: auto|parakeet|whisper",
+      default: "auto",
+    },
+    language: { type: "string", description: "ISO language code (default en)" },
+    prompt: { type: "string", description: "vocabulary hint (names, jargon)" },
     out: { type: "string", description: "output transcript path" },
     ...JSON_ARG,
   },
@@ -305,6 +383,8 @@ const transcribeCliCmd = defineCommand({
         media: String(args.media),
         model: String(args.model),
         prompt: args.prompt,
+        engine: args.engine as "auto" | "parakeet" | "whisper",
+        language: args.language,
         out: args.out,
         json: args.json,
         onBytes: (n) => process.stderr.write(`\rmodel download: ${(n / 1e6).toFixed(0)} MB`),
@@ -577,6 +657,7 @@ const main = defineCommand({
     compare: compareCmd,
     add: addCmd,
     catalog: catalogCmd,
+    models: modelsCmd,
     doctor: doctorCmd,
     transcribe: transcribeCliCmd,
     cuts: cutsCliCmd,

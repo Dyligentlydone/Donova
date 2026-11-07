@@ -1,12 +1,19 @@
 import { execFile } from "node:child_process";
 import { createHash } from "node:crypto";
-import { createWriteStream } from "node:fs";
-import { mkdir, readFile, rename, stat } from "node:fs/promises";
-import { get as httpsGet } from "node:https";
+import { mkdir, readFile, stat } from "node:fs/promises";
 import { homedir } from "node:os";
 import { join } from "node:path";
 import { promisify } from "node:util";
 import { locateFfmpeg, probe, runFfmpeg } from "@framecraft/engine";
+import { download, sha256File } from "./download.js";
+import {
+  PARAKEET_LANGUAGES,
+  PARAKEET_MODEL_LABEL,
+  ensureParakeetModel,
+  parakeetSpeaks,
+  sherpaUnsupportedReason,
+  transcribeWithParakeet,
+} from "./parakeet.js";
 import type { Transcript, TranscriptWord } from "./types.js";
 
 const execFileAsync = promisify(execFile);
@@ -23,14 +30,19 @@ const execFileAsync = promisify(execFile);
  */
 
 export const WHISPER_MODELS: Record<string, { file: string; sha256?: string; sizeMB: number }> = {
+  tiny: { file: "ggml-tiny.bin", sizeMB: 75 },
   "tiny.en": { file: "ggml-tiny.en.bin", sizeMB: 75 },
+  base: { file: "ggml-base.bin", sizeMB: 142 },
   "base.en": { file: "ggml-base.en.bin", sizeMB: 142 },
+  small: { file: "ggml-small.bin", sizeMB: 466 },
   "small.en": {
     file: "ggml-small.en.bin",
     sha256: "c6138d6d58ecc8322097e0f987c32f1be8bb0a18532a3f88f734d1bbf9c41e5d",
     sizeMB: 466,
   },
+  medium: { file: "ggml-medium.bin", sizeMB: 1500 },
   "medium.en": { file: "ggml-medium.en.bin", sizeMB: 1500 },
+  "large-v3": { file: "ggml-large-v3.bin", sizeMB: 2900 },
   // Near-large-v3 accuracy at ~8x its speed — the default.
   "large-v3-turbo": {
     file: "ggml-large-v3-turbo.bin",
@@ -40,6 +52,18 @@ export const WHISPER_MODELS: Record<string, { file: string; sha256?: string; siz
 };
 
 export const DEFAULT_WHISPER_MODEL = "large-v3-turbo";
+
+export type TranscribeEngine = "auto" | "parakeet" | "whisper";
+
+/** Non-English `--language` swaps an English-only `.en` model for its multilingual twin. */
+export function initialModelForLanguage(model: string, language?: string): string {
+  const base = language?.trim().toLowerCase().split(/[-_]/, 1)[0];
+  if (base && base !== "en" && model.endsWith(".en")) {
+    const twin = model.slice(0, -3);
+    if (WHISPER_MODELS[twin]) return twin;
+  }
+  return model;
+}
 
 const HF_BASE = "https://huggingface.co/ggerganov/whisper.cpp/resolve/main";
 
@@ -57,43 +81,6 @@ export async function findWhisperCli(): Promise<string | null> {
     }
   }
   return null;
-}
-
-async function sha256File(path: string): Promise<string> {
-  return createHash("sha256")
-    .update(await readFile(path))
-    .digest("hex");
-}
-
-async function download(url: string, dest: string, onBytes?: (n: number) => void): Promise<void> {
-  await mkdir(join(dest, ".."), { recursive: true });
-  const tmp = `${dest}.part`;
-  await new Promise<void>((resolvePromise, reject) => {
-    const req = httpsGet(url, (res) => {
-      if (res.statusCode && res.statusCode >= 300 && res.statusCode < 400 && res.headers.location) {
-        res.resume();
-        req.destroy();
-        download(res.headers.location, dest, onBytes).then(resolvePromise, reject);
-        return;
-      }
-      if (res.statusCode !== 200) {
-        res.resume();
-        reject(new Error(`download failed: HTTP ${res.statusCode}`));
-        return;
-      }
-      const out = createWriteStream(tmp);
-      let n = 0;
-      res.on("data", (c: Buffer) => {
-        n += c.length;
-        onBytes?.(n);
-      });
-      res.pipe(out);
-      out.on("finish", () => out.close(() => resolvePromise()));
-      out.on("error", reject);
-    });
-    req.on("error", reject);
-  });
-  await rename(tmp, dest);
 }
 
 /** Ensure the named model exists locally; download + verify if absent. */
@@ -202,16 +189,16 @@ export async function transcribe(
     whisperBin?: string;
     /** Vocabulary hint passed to whisper (--prompt) — names, jargon, prior context. */
     prompt?: string;
+    /** "auto" (default): Parakeet when it runs and covers the language, else whisper. */
+    engine?: TranscribeEngine;
+    /** ISO language code — non-en swaps .en whisper models for multilingual twins. */
+    language?: string;
   },
 ): Promise<Transcript> {
-  const bin = opts?.whisperBin ?? (await findWhisperCli());
-  if (!bin) {
-    throw new Error(
-      "whisper-cli not found. Install whisper.cpp (brew install whisper-cpp) or set FRAMECRAFT_WHISPER.",
-    );
+  const engine = opts?.engine ?? "auto";
+  if (engine !== "auto" && engine !== "parakeet" && engine !== "whisper") {
+    throw new Error(`unknown engine "${engine}" — use auto, parakeet, or whisper`);
   }
-  const model = opts?.model ?? DEFAULT_WHISPER_MODEL;
-  const modelPath = await ensureWhisperModel(model, opts?.onBytes);
   const { ffmpeg, ffprobe } = await locateFfmpeg();
   const p = await probe(ffprobe, mediaPath);
 
@@ -220,18 +207,69 @@ export async function transcribe(
   const key = createHash("sha1")
     .update(mediaPath)
     .update(String((await stat(mediaPath)).mtimeMs))
-    .update(model)
-    .update(opts?.prompt ?? "")
     .digest("hex")
     .slice(0, 16);
   const wavPath = join(cacheDir, `${key}.wav`);
-
   await runFfmpeg(ffmpeg, ["-i", mediaPath, "-ar", "16000", "-ac", "1", "-c:a", "pcm_s16le", wavPath]);
+
+  const postPass = (words: TranscriptWord[]) => {
+    const terms = (opts?.prompt ?? "")
+      .split(/[,;\n]/)
+      .flatMap((part) => [part.trim(), ...part.trim().split(/\s+/)])
+      .filter(Boolean);
+    return joinContractions(terms.length ? stitchTerms(words, terms) : words);
+  };
+
+  // Parakeet: preferred engine — better WER than large-v3, faster, multilingual.
+  if (engine !== "whisper" && parakeetSpeaks(opts?.language) && !sherpaUnsupportedReason()) {
+    try {
+      await ensureParakeetModel((done) => opts?.onBytes?.(done));
+      const words = await transcribeWithParakeet(wavPath, p.duration);
+      return {
+        version: 1,
+        source: mediaPath,
+        model: PARAKEET_MODEL_LABEL,
+        language: opts?.language ?? "auto",
+        duration: p.duration,
+        words: postPass(words),
+      };
+    } catch (err) {
+      if (engine === "parakeet") throw err;
+      // auto: fall through to whisper
+    }
+  } else if (engine === "parakeet") {
+    const why = !parakeetSpeaks(opts?.language)
+      ? `Parakeet does not transcribe --language ${opts?.language}; it covers ${PARAKEET_LANGUAGES.split(" ").join(", ")}. Use --engine whisper.`
+      : (sherpaUnsupportedReason() ?? "Parakeet is unavailable on this system.");
+    throw new Error(why);
+  }
+
+  const bin = opts?.whisperBin ?? (await findWhisperCli());
+  if (!bin) {
+    throw new Error(
+      "whisper-cli not found. Install whisper.cpp (brew install whisper-cpp) or set FRAMECRAFT_WHISPER.",
+    );
+  }
+  const model = initialModelForLanguage(opts?.model ?? DEFAULT_WHISPER_MODEL, opts?.language);
+  const modelPath = await ensureWhisperModel(model, opts?.onBytes);
 
   // whisper-cli writes <wav>.json next to input when -oj is passed.
   // -ml 1 (max-len 1) splits output to ~word granularity.
-  const jsonPath = `${wavPath}.json`;
-  const argv = ["-m", modelPath, "-f", wavPath, "-oj", "-ml", "1", "-l", "en", "-np"];
+  const jsonPath = `${wavPath}.${model}.json`;
+  const argv = [
+    "-m",
+    modelPath,
+    "-f",
+    wavPath,
+    "-oj",
+    "-ml",
+    "1",
+    "-l",
+    opts?.language ?? "en",
+    "-np",
+    "-of",
+    jsonPath.slice(0, -5),
+  ];
   if (opts?.prompt) argv.push("--prompt", opts.prompt);
   await execFileAsync(bin, argv, {
     maxBuffer: 64 * 1024 * 1024,
@@ -258,18 +296,12 @@ export async function transcribe(
     });
   }
 
-  const terms = (opts?.prompt ?? "")
-    .split(/[,;\n]/)
-    .flatMap((part) => [part.trim(), ...part.trim().split(/\s+/)])
-    .filter(Boolean);
-  const stitched = joinContractions(terms.length ? stitchTerms(words, terms) : words);
-
   return {
     version: 1,
     source: mediaPath,
     model,
-    language: raw.result?.language ?? "en",
+    language: raw.result?.language ?? opts?.language ?? "en",
     duration: p.duration,
-    words: stitched,
+    words: postPass(words),
   };
 }

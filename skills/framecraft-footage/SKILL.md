@@ -16,10 +16,11 @@ media → transcribe → cuts → scaffold → blocks/style → check → snapsh
 ```
 
 1. **`framecraft transcribe <media> --json`** → `transcript.json` (word-level
-   timestamps). If the file exists already, reuse it. When you know the
-   names/jargon in the audio (brand names, products, speakers), pass
-   `--prompt "Fiverr, Dyligent"` — it measurably improves recognition. For
-   speed over accuracy, `--model small.en`.
+   timestamps). If the file exists already, reuse it. Default engine `auto`
+   runs NVIDIA Parakeet (best accuracy); `--engine whisper` forces whisper.cpp.
+   When you know the names/jargon in the audio (brands, products, speakers),
+   pass `--prompt "Fiverr, Dyligent"` — it biases recognition and stitches
+   fragment-spelled terms back together.
 2. **`framecraft cuts transcript.json --json`** → `cuts.json` — dead air
    removed at word boundaries. Tune with `--threshold` (silence gap, default
    0.35s) and `--pad` (breathing room, default 0.06s). Read the user's ask:

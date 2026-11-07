@@ -26,13 +26,18 @@ to stderr in `--json` mode. Error codes: `E_INTERNAL`, `E_INVALID_PROJECT`,
 
 ## Footage pipeline
 
-- `transcribe <media> [--model large-v3-turbo] [--prompt "names, jargon"] [--out transcript.json] --json`
-  → word-level transcript via local whisper.cpp (model auto-downloads to
-  `~/.cache/framecraft/whisper/` and is sha256-verified). Default
-  `large-v3-turbo` trades a one-time 1.6GB download for much better names and
-  jargon than `small.en`; use `small.en` when speed matters more. `--prompt`
-  biases recognition — pass it names or domain terms the audio uses (brands,
-  products, people's names) whenever they're known.
+- `transcribe <media> [--engine auto|parakeet|whisper] [--model large-v3-turbo]
+  [--language en] [--prompt "names, jargon"] [--out transcript.json] --json`
+  → word-level transcript. Engine `auto` (default) prefers NVIDIA
+  **parakeet-tdt-0.6b-v3** via sherpa-onnx — better WER than whisper-large-v3
+  and ~5-10x faster, covering English + 25 European languages, model
+  auto-downloads (~670MB, sha256-verified). `whisper` uses local whisper.cpp
+  (default `large-v3-turbo`; `small.en` for speed) and is the fallback when
+  Parakeet is unsupported or the language is outside its set. `--prompt`
+  biases recognition AND stitches fragment-spelled terms ("F iver r"→"Fiverr")
+  — pass names/jargon whenever known.
+- `models [install parakeet|<whisper model>] [--json]` — list model status or
+  prefetch a model without a media file.
 - `cuts <transcript.json> [--threshold 0.35] [--pad 0.06] [--out cuts.json]`
   → dead-air cut plan. Accepts framecraft or raw whisper-cli JSON.
 - `scaffold <media> [--cuts cuts.json|--transcript t.json] [--width --height]

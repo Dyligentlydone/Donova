@@ -59,3 +59,9 @@ tests/              vitest unit tests
 - GSAP stays a code-path only: Studio/no-code surfaces never emit GSAP — they write `data-fc-motion` (see `plan/12-CLOUD-PLATFORM.md §9`). License: GSAP Standard (Webflow) — free for this use; get written confirmation before commercial launch.
 - beginFrame needs `chrome-headless-shell` and a (virtual) display; on headless hosts without one the engine auto-falls back to screenshot capture — verdict cached in `~/.framecraft/probes/`.
 - Product name is centralized in `packages/contract/src/names.ts`.
+
+## Notices
+
+- Speech recognition may use **NVIDIA Parakeet-TDT 0.6B v3** (`--engine parakeet`, the default `auto` preference), licensed [CC-BY-4.0](https://creativecommons.org/licenses/by/4.0/) — © NVIDIA Corporation. Converted int8 ONNX build: [csukuangfj/sherpa-onnx-nemo-parakeet-tdt-0.6b-v3-int8](https://huggingface.co/csukuangfj/sherpa-onnx-nemo-parakeet-tdt-0.6b-v3-int8).
+- Whisper fallback runs **whisper.cpp** (MIT) with OpenAI Whisper ggml models (MIT).
+- sherpa-onnx runtime: Apache-2.0 (k2-fsa).
