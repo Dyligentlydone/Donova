@@ -1,6 +1,43 @@
 # STATUS — what exists today (read before building)
 
-Last updated: 2026-11-07 (HF command delegates wired — see §-3). Update this file whenever you finish an MV task.
+Last updated: 2026-11-07 (HF feature-parity pass — see §-4). Update this file whenever you finish an MV task.
+
+## -4. Feature-parity pass (everything non-gated plugged in)
+
+**Commands — batch 2 delegates** (same `hf.ts` passthrough): `lint`, `info`, `compositions`, `docs`,
+`browser`, `clean`, `lambda`, `cloudrun`, `compare-sheet` (HF `compare`). Deprecated-upstream `inspect`
+and `validate` deliberately skipped — `gate` covers them. `fc clean` verified real (freed 2.3 GB of
+HF cache); `lambda`/`cloudrun` expose deploy + `sites create` for renders on the *user's own* AWS/GCP.
+
+**Starter examples** — 9 HyperFrames example projects ported to `registry/examples/`:
+`product-promo`, `swiss-grid`, `vignelli`, `warm-grain`, `kinetic-type`, `nyt-graph`, `path-traced-3d`,
+`play-mode`, `decision-tree`. `fc init --template <name>` copies one + derives `framecraft.json` from
+its `registry-item.json` dimensions. Catalog lists them as `type: "example"` (472 items total).
+Verified: `fc init fc-promo --template product-promo` → `hyperframes lint` 0/0.
+
+**Skills — batch 2** (5 more, refs remapped `hyperframes`→`framecraft`, gated commands kept marked):
+`changelog-video` (VO step now `fc tts` + `fc transcribe` word-align; gate call → `fc gate
+--caption-zone`), `slideshow` (keeps `hyperframes-slideshow+json` contract strings — `fc present` and
+the upstream player element detect those literal names), `remotion-to-framecraft` (renamed),
+`figma`, `media-use` (flipped to **local-first**: `fc tts`/`remove-background`/`media-treatment` are
+the default column; HeyGen sign-in optional). Still skipped (Pro-gated): `reverse-any-video`,
+`style-sampling`.
+
+**SDK** — `@hyperframes/sdk@0.9.20` added as a dep and re-exported via `framecraft/cli` `sdk.ts`:
+`openComposition(html)` gives find/patch/timing/history ops on our files natively (verified: 319
+element handles on fc-e2e). Agents can now do structured composition edits, not just CLI calls.
+
+**Adapters — audited, not needed for parity:** every ported block wraps its engine (three.js, d3,
+lottie, shaders) inside a registered `__timelines` GSAP timeline, so our universal timeline seek
+covers all 463 items without per-engine adapters.
+
+**Remaining real gaps (all need item-3+ work, not plugs):**
+- Studio vendoring/rebrand + wiring OUR agent into Studio's mutation routes (item 3)
+- `<hyperframes-slideshow>` element — lives in `@hyperframes/player`'s slideshow export; our
+  `framecraft-player` doesn't ship a slideshow wrapper yet (decks still run via `fc present`)
+- `share`/hosted publish — HeyGen backend; ours would need our own share infra
+- HeyGen `cloud` render — gated; `lambda`/`cloudrun` to user-owned clouds now covers self-hosting
+- `media-use` resolve verb — HeyGen catalog/gen needs auth; local-tool column fully works
 
 ## -3. HyperFrames command delegates (plugged like Studio)
 

@@ -35,6 +35,7 @@
     "@framecraft/producer": "workspace:*",
     "@framecraft/runtime": "workspace:*",
     "@framecraft/studio-server": "workspace:*",
+    "@hyperframes/sdk": "0.9.20",
     "citty": "^0.1.6",
     "hyperframes": "0.9.20",
     "puppeteer-core": "^24.10.0"

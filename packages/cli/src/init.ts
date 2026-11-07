@@ -1,5 +1,6 @@
-import { mkdir, writeFile } from "node:fs/promises";
+import { mkdir, readdir, writeFile } from "node:fs/promises";
 import { basename, join, resolve } from "node:path";
+import { fileURLToPath } from "node:url";
 
 /** `framecraft init` — scaffold a new project (06 §init). */
 export async function initProject(
@@ -12,6 +13,8 @@ export async function initProject(
     fps?: number;
     /** Footage project: copy media into assets/, scaffold segments (17 §3.6). */
     footage?: string;
+    /** Starter template from registry/examples/ (e.g. product-promo). */
+    template?: string;
   },
 ): Promise<string[]> {
   const root = resolve(dir);
@@ -23,6 +26,33 @@ export async function initProject(
   await mkdir(root, { recursive: true });
   await mkdir(join(root, "compositions"), { recursive: true });
   await mkdir(join(root, "media"), { recursive: true });
+
+  if (opts?.template) {
+    const examplesDir = fileURLToPath(new URL("../../../registry/examples", import.meta.url));
+    const srcDir = join(examplesDir, opts.template);
+    const { cp, readFile } = await import("node:fs/promises");
+    const available = (await readdir(examplesDir)).sort();
+    await cp(srcDir, root, { recursive: true }).catch(() => {
+      throw new Error(`unknown template "${opts.template}" — available: ${available.join(", ")}`);
+    });
+    // Derive project config from the example's own registry-item metadata.
+    let meta: { name?: string; dimensions?: { width?: number; height?: number }; duration?: number } = {};
+    try {
+      meta = JSON.parse(await readFile(join(srcDir, "registry-item.json"), "utf8"));
+    } catch {}
+    const config = {
+      $schema: "https://framecraft.dev/schemas/project.schema.json",
+      id: name,
+      name,
+      composition: "index.html",
+      fps,
+      width: opts?.width ?? meta.dimensions?.width ?? w,
+      height: opts?.height ?? meta.dimensions?.height ?? h,
+      render: { format: "mp4", quality: "standard", codec: "h264", alpha: false },
+    };
+    await writeFile(join(root, "framecraft.json"), `${JSON.stringify(config, null, 2)}\n`);
+    return [...(await readdir(root)), "framecraft.json"];
+  }
 
   if (opts?.footage) {
     // Footage project: copy media under assets/ so the file server + agent

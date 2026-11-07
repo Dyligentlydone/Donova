@@ -15,3 +15,14 @@ export { styleCmd, resolveStylePath, globalStylePath } from "./style.js";
 export { doctor, type DoctorResult } from "./doctor.js";
 export { CliError, ERR } from "./errors.js";
 export type { Transcript, TranscriptWord, CutPlan, CutSegment } from "@framecraft/media";
+
+// Headless composition-editing engine (Apache-2.0): find/patch/timing/history
+// ops on our own composition files — the same API their Studio routes use.
+export { openComposition } from "@hyperframes/sdk";
+export type {
+  SdkDocument,
+  EditOp,
+  ElementHandle,
+  FindQuery,
+  Composition,
+} from "@hyperframes/sdk";

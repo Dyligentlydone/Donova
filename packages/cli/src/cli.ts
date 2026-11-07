@@ -103,6 +103,7 @@ const initCmd = defineCommand({
     name: { type: "string", description: "project name" },
     duration: { type: "string", description: "duration seconds", default: "5" },
     footage: { type: "string", description: "raw footage file → footage project layout" },
+    template: { type: "string", description: "starter template from registry/examples" },
     width: { type: "string", description: "output width (default: source)" },
     height: { type: "string", description: "output height (default: source)" },
     ...JSON_ARG,
@@ -113,6 +114,7 @@ const initCmd = defineCommand({
         name: args.name,
         duration: Number(args.duration),
         footage: args.footage,
+        template: args.template,
         width: args.width ? Number(args.width) : undefined,
         height: args.height ? Number(args.height) : undefined,
       });
@@ -734,8 +736,22 @@ const main = defineCommand({
       "grade-compare",
       "Render candidate grades onto a reference frame",
     ),
+    "compare-sheet": hfDelegate(
+      "compare-sheet",
+      "compare",
+      "Render composition variants into one labeled comparison sheet",
+    ),
     benchmark: hfDelegate("benchmark", "benchmark", "Render speed/size sweeps across configs"),
     present: hfDelegate("present", "present", "Open a slideshow deck in presenter mode"),
+    // Second delegate batch — completes the non-gated HF surface:
+    lint: hfDelegate("lint", "lint", "HyperFrames-rules static lint on compositions"),
+    info: hfDelegate("info", "info", "Project metadata"),
+    compositions: hfDelegate("compositions", "compositions", "List compositions in a project"),
+    docs: hfDelegate("docs", "docs", "HyperFrames reference docs in the terminal"),
+    browser: hfDelegate("browser", "browser", "Manage the Chrome used for rendering"),
+    clean: hfDelegate("clean", "clean", "Remove hyperframes artifacts from disk"),
+    lambda: hfDelegate("lambda", "lambda", "Deploy/drive distributed renders on AWS Lambda"),
+    cloudrun: hfDelegate("cloudrun", "cloudrun", "Deploy/drive distributed renders on Google Cloud Run"),
   },
 });
 
