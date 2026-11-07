@@ -294,7 +294,8 @@ const transcribeCliCmd = defineCommand({
   meta: { name: "transcribe", description: "Transcribe media → transcript.json (local whisper)" },
   args: {
     media: { type: "positional", required: true },
-    model: { type: "string", description: "whisper model", default: "small.en" },
+    model: { type: "string", description: "whisper model", default: "large-v3-turbo" },
+    prompt: { type: "string", description: "vocabulary hint for whisper (names, jargon)" },
     out: { type: "string", description: "output transcript path" },
     ...JSON_ARG,
   },
@@ -303,6 +304,7 @@ const transcribeCliCmd = defineCommand({
       transcribeCmd({
         media: String(args.media),
         model: String(args.model),
+        prompt: args.prompt,
         out: args.out,
         json: args.json,
         onBytes: (n) => process.stderr.write(`\rmodel download: ${(n / 1e6).toFixed(0)} MB`),

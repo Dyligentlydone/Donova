@@ -31,7 +31,15 @@ export const WHISPER_MODELS: Record<string, { file: string; sha256?: string; siz
     sizeMB: 466,
   },
   "medium.en": { file: "ggml-medium.en.bin", sizeMB: 1500 },
+  // Near-large-v3 accuracy at ~8x its speed — the default.
+  "large-v3-turbo": {
+    file: "ggml-large-v3-turbo.bin",
+    sha256: "1fc70f774d38eb169993ac391eea357ef47c88757ef72ee5943879b7e8e2bc69",
+    sizeMB: 1620,
+  },
 };
+
+export const DEFAULT_WHISPER_MODEL = "large-v3-turbo";
 
 const HF_BASE = "https://huggingface.co/ggerganov/whisper.cpp/resolve/main";
 
@@ -89,7 +97,10 @@ async function download(url: string, dest: string, onBytes?: (n: number) => void
 }
 
 /** Ensure the named model exists locally; download + verify if absent. */
-export async function ensureWhisperModel(model = "small.en", onBytes?: (n: number) => void): Promise<string> {
+export async function ensureWhisperModel(
+  model = DEFAULT_WHISPER_MODEL,
+  onBytes?: (n: number) => void,
+): Promise<string> {
   const spec = WHISPER_MODELS[model];
   if (!spec)
     throw new Error(`unknown whisper model "${model}" (have: ${Object.keys(WHISPER_MODELS).join(", ")})`);
@@ -113,6 +124,61 @@ export async function ensureWhisperModel(model = "small.en", onBytes?: (n: numbe
   return path;
 }
 
+/**
+ * Whisper splits words it doesn't know into fragments ("Fiverr" → "F iver r").
+ * When the caller supplies hint terms via --prompt, stitch any run of ≤4
+ * consecutive words whose concatenation matches a term back into that term.
+ */
+export function stitchTerms(words: TranscriptWord[], terms: string[]): TranscriptWord[] {
+  const norm = (s: string) => s.toLowerCase().replace(/[^a-z0-9]/g, "");
+  const targets = terms.map((t) => ({ t: t.trim(), key: norm(t) })).filter((x) => x.key.length >= 3);
+  if (!targets.length) return words;
+  const out: TranscriptWord[] = [];
+  for (let i = 0; i < words.length; ) {
+    let matched: { t: string; n: number } | null = null;
+    for (let n = Math.min(4, words.length - i); n >= 1 && !matched; n--) {
+      const run = words.slice(i, i + n);
+      // Fragments of one word sit close together; a run spanning a real pause
+      // is more likely several real words.
+      const contiguous = run.every((w, j) => j === 0 || w.start - (run[j - 1]?.end ?? 0) < 0.5);
+      if (!contiguous) break;
+      const key = norm(run.map((w) => w.w).join(""));
+      const hit = targets.find((x) => x.key === key);
+      if (hit) matched = { t: hit.t, n };
+    }
+    if (matched) {
+      const run = words.slice(i, i + matched.n);
+      const first = run[0];
+      const last = run[run.length - 1];
+      if (first && last) out.push({ w: matched.t, start: first.start, end: last.end });
+      i += matched.n;
+    } else {
+      const w = words[i];
+      if (w) out.push(w);
+      i += 1;
+    }
+  }
+  return out;
+}
+
+/**
+ * Whisper emits contractions as two tokens ("couldn" + "'t"). Rejoin any
+ * apostrophe-starting fragment to its predecessor so captions pop whole words.
+ */
+export function joinContractions(words: TranscriptWord[]): TranscriptWord[] {
+  const out: TranscriptWord[] = [];
+  for (const w of words) {
+    const prev = out[out.length - 1];
+    if (prev && /^['’]/.test(w.w) && w.start - prev.end < 0.3) {
+      prev.w += w.w;
+      prev.end = w.end;
+    } else {
+      out.push({ ...w });
+    }
+  }
+  return out;
+}
+
 interface WhisperCliSegment {
   offsets?: { from?: number; to?: number };
   text?: string;
@@ -134,6 +200,8 @@ export async function transcribe(
     outDir?: string;
     onBytes?: (n: number) => void;
     whisperBin?: string;
+    /** Vocabulary hint passed to whisper (--prompt) — names, jargon, prior context. */
+    prompt?: string;
   },
 ): Promise<Transcript> {
   const bin = opts?.whisperBin ?? (await findWhisperCli());
@@ -142,7 +210,7 @@ export async function transcribe(
       "whisper-cli not found. Install whisper.cpp (brew install whisper-cpp) or set FRAMECRAFT_WHISPER.",
     );
   }
-  const model = opts?.model ?? "small.en";
+  const model = opts?.model ?? DEFAULT_WHISPER_MODEL;
   const modelPath = await ensureWhisperModel(model, opts?.onBytes);
   const { ffmpeg, ffprobe } = await locateFfmpeg();
   const p = await probe(ffprobe, mediaPath);
@@ -153,6 +221,7 @@ export async function transcribe(
     .update(mediaPath)
     .update(String((await stat(mediaPath)).mtimeMs))
     .update(model)
+    .update(opts?.prompt ?? "")
     .digest("hex")
     .slice(0, 16);
   const wavPath = join(cacheDir, `${key}.wav`);
@@ -162,7 +231,9 @@ export async function transcribe(
   // whisper-cli writes <wav>.json next to input when -oj is passed.
   // -ml 1 (max-len 1) splits output to ~word granularity.
   const jsonPath = `${wavPath}.json`;
-  await execFileAsync(bin, ["-m", modelPath, "-f", wavPath, "-oj", "-ml", "1", "-l", "en", "-np"], {
+  const argv = ["-m", modelPath, "-f", wavPath, "-oj", "-ml", "1", "-l", "en", "-np"];
+  if (opts?.prompt) argv.push("--prompt", opts.prompt);
+  await execFileAsync(bin, argv, {
     maxBuffer: 64 * 1024 * 1024,
     timeout: 600_000,
   });
@@ -187,12 +258,18 @@ export async function transcribe(
     });
   }
 
+  const terms = (opts?.prompt ?? "")
+    .split(/[,;\n]/)
+    .flatMap((part) => [part.trim(), ...part.trim().split(/\s+/)])
+    .filter(Boolean);
+  const stitched = joinContractions(terms.length ? stitchTerms(words, terms) : words);
+
   return {
     version: 1,
     source: mediaPath,
     model,
     language: raw.result?.language ?? "en",
     duration: p.duration,
-    words,
+    words: stitched,
   };
 }

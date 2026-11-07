@@ -259,6 +259,13 @@ Lessons (each was a real bug — do not regress):
     overflow the frame (shipped in the reference edit v1).
 13. FFmpeg 9: no `-vsync`; WebM uses Opus and no `+faststart`.
 14. whisper-cli JSON with `-ml 1 -sow`: first entry can be empty; punctuation attached.
+15. **Whisper default is `large-v3-turbo`** (sha256-pinned, ~1.6GB) — near-large-v3
+    accuracy at ~8× large-v3 speed. `--model small.en` remains for fast passes.
+    `--prompt "names, jargon"` both conditions whisper AND drives two
+    deterministic post-passes in `transcribe.ts`: `stitchTerms` rejoins
+    fragment-spelled terms ("F iver r" → "Fiverr", ≤4 words, <0.5s gaps) and
+    `joinContractions` rejoins `'t`-style suffixes. Verified on IMG_4063:
+    Fiverr×2 + Zoom casing + all contractions fixed.
 
 Performance reference: 42 s 1080×1920 reel, 1265 frames, screenshot mode, 4 workers
 on this Mac → **11 min 18 s**. Basic fixture (640×360, 2 s) → 4.7 s.

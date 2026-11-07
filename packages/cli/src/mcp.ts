@@ -70,14 +70,20 @@ const TOOLS: Tool[] = [
     description: "Whisper transcription with word timings (downloads model on first use)",
     inputSchema: req(
       "framecraft_transcribe",
-      { media: { type: "string" }, out: { type: "string" }, model: { type: "string" } },
+      {
+        media: { type: "string" },
+        out: { type: "string" },
+        model: { type: "string" },
+        prompt: { type: "string" },
+      },
       ["media"],
     ),
     run: (a) =>
       transcribeCmd({
         media: String(a.media),
         out: (a.out as string) ?? "transcript.json",
-        model: (a.model as string) ?? "small.en",
+        model: (a.model as string) ?? "large-v3-turbo",
+        prompt: a.prompt as string | undefined,
       }),
   },
   {

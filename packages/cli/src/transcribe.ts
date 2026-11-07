@@ -1,6 +1,6 @@
 import { writeFile } from "node:fs/promises";
 import { dirname, join, resolve } from "node:path";
-import { transcribe as runTranscribe } from "@framecraft/media";
+import { DEFAULT_WHISPER_MODEL, transcribe as runTranscribe } from "@framecraft/media";
 import { CliError, ERR } from "./errors.js";
 
 /**
@@ -11,11 +11,13 @@ export async function transcribeCmd(opts: {
   model?: string;
   out?: string;
   json?: boolean;
+  prompt?: string;
   onBytes?: (n: number) => void;
 }): Promise<{ path: string; words: number; duration: number; model: string }> {
   const mediaPath = resolve(opts.media);
   const t = await runTranscribe(mediaPath, {
-    model: opts.model ?? "small.en",
+    model: opts.model ?? DEFAULT_WHISPER_MODEL,
+    prompt: opts.prompt,
     onBytes: opts.json ? undefined : opts.onBytes,
   }).catch((e: Error) => {
     const msg = e.message ?? String(e);

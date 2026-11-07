@@ -26,9 +26,13 @@ to stderr in `--json` mode. Error codes: `E_INTERNAL`, `E_INVALID_PROJECT`,
 
 ## Footage pipeline
 
-- `transcribe <media> [--model small.en] [--out transcript.json] --json`
+- `transcribe <media> [--model large-v3-turbo] [--prompt "names, jargon"] [--out transcript.json] --json`
   → word-level transcript via local whisper.cpp (model auto-downloads to
-  `~/.cache/framecraft/whisper/` and is sha256-verified).
+  `~/.cache/framecraft/whisper/` and is sha256-verified). Default
+  `large-v3-turbo` trades a one-time 1.6GB download for much better names and
+  jargon than `small.en`; use `small.en` when speed matters more. `--prompt`
+  biases recognition — pass it names or domain terms the audio uses (brands,
+  products, people's names) whenever they're known.
 - `cuts <transcript.json> [--threshold 0.35] [--pad 0.06] [--out cuts.json]`
   → dead-air cut plan. Accepts framecraft or raw whisper-cli JSON.
 - `scaffold <media> [--cuts cuts.json|--transcript t.json] [--width --height]
