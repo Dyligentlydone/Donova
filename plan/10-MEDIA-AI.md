@@ -38,6 +38,9 @@ Editing: Studio Captions panel edits text/timing per card; regenerates only affe
 ```ts
 tts(text, { provider, voice, speed, out }): Promise<{ path; duration; words?: WordTiming[] }>
 ```
+> **Updated by 17 §12:** default local provider is **Kokoro-82M** (Apache-2.0), with
+> `say` as fallback. The list below is kept for the paid/alternative providers.
+
 Providers:
 - `local-say` (macOS `say -o out.aiff --data-format=LEF32@48000` → ffmpeg to wav/m4a),
 - `edge` (Microsoft Edge read-aloud voices via the `msedge-tts` npm package; returns word boundaries) — free, quality good, terms: check usage restrictions before commercial default,
@@ -45,6 +48,11 @@ Providers:
 Script with SSML-lite markers `[pause 0.5]` mapped per provider.
 
 ## 5. Background removal
+> **Updated by 17 §11:** run a model bake-off first (U²-Net human-seg baseline, as used
+> by HyperFrames, vs MODNet, vs winner + temporal smoothing + guided filter). Exclude
+> RMBG (non-commercial) and Robust Video Matting (GPL). Requires alpha-aware frame
+> extraction (17 §3.1.2). Original notes below.
+
 - Images: `onnxruntime-node` + a matting model (RMBG-1.4 or BiRefNet-lite ONNX; check model license — RMBG-1.4 is non-commercial; prefer a commercially licensed model such as U²-Net (Apache-2.0) or license BiRefNet weights accordingly). Pre: resize to 1024, normalize; post: upscale mask, guided-filter refine, output PNG with alpha.
 - Video: per-frame matting at extract fps with temporal smoothing (EMA on mask), encode WebM VP9 alpha. Long job; show progress; GPU via onnxruntime CoreML/CUDA EP when available.
 
@@ -58,7 +66,7 @@ Script with SSML-lite markers `[pause 0.5]` mapped per provider.
 - Image generation: OpenAI Images, Google Imagen/Gemini, fal.ai (Flux) — provider interface `generateImage(prompt, {size, style})`.
 - Video generation (cloud plan): fal.ai / Replicate hosting Veo/Kling/etc. — `generateVideo(prompt, {duration, aspect, imageRef?})` async job.
 - Music: user library (`assets/music/`) + licensed catalog via cloud (e.g. a stock music API partner); generative music provider optional.
-- SFX: bundled small CC0 pack (whoosh, pop, click, riser, impact, typing) under `registry/sfx/` with licenses.
+- SFX: bundled pack under `registry/sfx/` — synthesized by our own script or CC0 only, never Pixabay-licensed files (see 17 §7.3 for the list, format, and install flow).
 All downloads recorded in a media ledger `assets/.ledger.json` `{ file, source, url, license, attribution, sha256, createdAt }`.
 
 ## 8. Color grading

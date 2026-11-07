@@ -22,6 +22,14 @@ Plus the differentiators in `14-DIFFERENTIATORS.md`: footage-first editing (tran
 editing, silence/filler removal, auto-reframe), the Style Bible engine, incremental
 re-rendering, and in-browser draft rendering.
 
+**North star (added 2026-11-06, see `17-VIBE-EDIT.md`, which wins on conflicts):**
+Framecraft is a video editor for other people, built around **vibe editing** — the user
+brings footage and describes the edit; an AI agent (external via CLI/skills/MCP, or the
+built-in Studio chat) does it, and the user's lasting preferences are saved in their
+own `style.md`. The product ships neutral tools, blocks, and general editing skills,
+never one creator's style. The Style Bible analyzer in `14 §2` becomes optional; the
+user-owned `style.md` is the primary mechanism.
+
 ## 2. The five core ideas (memorize these)
 
 1. **A video is a web page.** A composition is an HTML file. Timing lives in `data-*`

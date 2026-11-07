@@ -43,6 +43,11 @@ From transcript keywords/noun phrases (LLM extraction) → stock search (10 §7)
 
 ## 2. Style Bible engine
 
+> **Updated by 17 §5:** the primary "my style" mechanism is now the **user-owned
+> `style.md`** that the agent reads before editing and updates from feedback. The
+> analyzer and `style.json` below are an optional later feature that can *propose*
+> entries for `style.md`; they must never override user-written entries.
+
 Turns "edit it in my style" into data.
 
 ### 2.1 Analyzer (`framecraft analyze-style refs/*.mp4 --out style.json`)

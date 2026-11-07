@@ -9,6 +9,11 @@ Two ways AI authors videos:
 Quality of output is dominated by the skills content and by the feedback loop
 (write → check → snapshot → look → fix). Invest here.
 
+> **Updated by 17 (vibe editing):** footage editing is the priority. Build the
+> `framecraft-footage` skill (17 §6), the SDK + MCP server (17 §8), and the Studio chat
+> specifics (17 §9) first. The agent must read and maintain the user's `style.md`
+> (17 §5.3). Workflow skills 8–12 below come after the MV track.
+
 ## 1. Skills format
 
 ```

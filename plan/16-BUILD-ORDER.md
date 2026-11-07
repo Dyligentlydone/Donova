@@ -1,8 +1,78 @@
 # 16 — Build Order (the task list)
 
-Work top to bottom. Each task: **spec** reference, **deps**, and **done when** (acceptance).
-Tick `- [x]` when done; add a one-line note for any decision. Do not skip ahead; later
-milestones assume earlier contracts are stable.
+Each task: **spec** reference, **deps**, and **done when** (acceptance).
+Tick `- [x]` when done; add a one-line note for any decision.
+
+> **Current priority: the MV track below.** A first working version of M0–M6 already
+> exists (see `plan/STATUS.md`); M-tasks stay unticked until their full acceptance
+> criteria pass. Do MV tasks in order; pull in M-tasks only where an MV task names
+> them as a dependency. Spec for every MV task: `plan/17-VIBE-EDIT.md`.
+
+---
+
+## MV — Vibe-edit track (DO THIS FIRST)
+
+North star (17 §0): a user drops in footage, describes the edit, an agent produces it,
+and their lasting preferences go to *their* `style.md`. No creator style is built
+into the app.
+
+### MV0 — Stabilize
+- [ ] **MV0.1 Canonical `data-media-start`** — 17 §3.1.1. Deps: none. Done when: one attribute drives video frames + audio; old names accepted with lint info + autofix; media fixture and reference-style multi-segment test pass.
+- [ ] **MV0.2 Alpha-aware frame extraction** — 17 §3.1.2. Done when: WebM-alpha and ProRes-4444 fixtures render with transparency over a colored background; opaque videos still extract JPG.
+- [ ] **MV0.3 Tests that run** — 17 §3.1.3. Done when: `pnpm test` runs all unit tests; `pnpm test:golden` exists and runs determinism, frame-accuracy, parallel-vs-serial checks.
+- [ ] **MV0.4 JSON output contract + error codes** — 17 §4.1. Done when: contract test runs every command with `--json` (envelope + exit codes 0/1/2); unattended progress is newline-terminated.
+- [ ] **MV0.5 `check` noise fixes** — 17 §3.1.5. Done when: motion-only projects get no `no-animations`; audio holder elements don't warn `clip-missing-class`.
+
+### MV1 — Agent tool layer
+- [ ] **MV1.1 `doctor`** — 17 §4.2. Done when: every check implemented with fix hints; `--json` schema test; exit 1 on any fail.
+- [ ] **MV1.2 `transcribe` (own whisper install + model download)** — 17 §4.3, 10 §2. Done when: model downloads with sha256 verify + resume; `transcript.json` matches schema; WER/timing criteria (10 §9); cache hit on rerun; `E_WHISPER_MISSING` hint per OS. Never reads `~/.cache/hyperframes`.
+- [ ] **MV1.3 `cuts` (`@framecraft/media`, pure core)** — 17 §4.4. Done when: unit tests (gap collapse, fillers, keep/drop, no truncated words, monotonic remap, idempotent); `sourceToComp`/`compToSource` exported.
+- [ ] **MV1.4 `scaffold footage`** — 17 §4.5. Done when: generated `index.html` passes `check` with 0 errors for 9:16, 16:9, 1:1; no grade/zoom/cards/SFX in output.
+- [ ] **MV1.5 `probe`, `timeline`, `snapshot --contact-sheet`, `render --draft/--range`, `catalog`, worker auto-sizing** — 17 §4.6. Done when: each has `--json`; contact sheet labeled with timecodes; draft renders at half size.
+- [ ] **MV1.6 `init --footage`** — 17 §1 layout + 6.3 AGENTS/CLAUDE.md. Done when: scaffolds the layout, copies media into `assets/raw/`, writes agent instructions pointing to skills + style file.
+
+### MV2 — Style file
+- [ ] **MV2.1 `style init|show|path` + resolution (project → global via `framecraft.json`)** — 17 §5.1–5.2. Done when: unit tests for resolution order; template matches §5.2.
+- [ ] **MV2.2 SDK `style()` / `updateStyle()`** — 17 §5.3. Done when: update appends a decisions row, never deletes user lines, marks superseded entries.
+
+### MV3 — Skills
+- [ ] **MV3.1 Router skill update (`framecraft`)** — 17 §6.1.
+- [ ] **MV3.2 `framecraft-footage` + all references** — 17 §6.2. Done when: every listed reference exists; code-block extraction test lints/renders every `html composition` block.
+- [ ] **MV3.3 `framecraft-cli`, `framecraft-registry`, `framecraft-motion`** — 17 §6.1.
+- [ ] **MV3.4 `skills update/list`** — 09 §3, 17 §6.3. Done when: installs into all agent dirs; modified skill not overwritten without `--force`.
+
+### MV4 — Blocks + SFX
+- [ ] **MV4.1 Block format v2 (`vars`, `slots`, `snippet.html`, `preview.mp4`) + validate script** — 17 §7.1, 11 §2/§4.
+- [ ] **MV4.2 Footage blocks (all 14 in 17 §7.2) + motion presets** — Done when: each passes validate, renders a preview, themes via vars only; neutral defaults reviewed.
+- [ ] **MV4.3 `add word-captions --from cuts.json` generator** — 17 §7.2. Done when: generates spans with `data-word-id`; renders the reference-length (≈140 words) captions without sharding the render plan.
+- [ ] **MV4.4 SFX library (synth script + CC0 only) + `add sfx/*`** — 17 §7.3. Done when: 15 sounds with `sfx.json` + `LICENSES.md`; no Pixabay files anywhere in the repo; install prints wiring snippet.
+
+### MV5 — SDK + MCP
+- [ ] **MV5.1 `@framecraft/sdk`** — 17 §8.1. Done when: CLI commands call the SDK (no duplicated logic); unit tests per op; writes return lint summaries.
+- [ ] **MV5.2 `framecraft mcp`** — 17 §8.2. Done when: MCP inspector lists tools; snapshot tool returns images; Claude Code setup documented and manually verified.
+- [ ] **MV5.3 "Copy prompt for your agent" in Studio** — 17 §8.3.
+
+### MV6 — Studio vibe-edit chat
+- [ ] **MV6.1 `@framecraft/agent` loop + Anthropic provider + tools on SDK** — 17 §9.1–9.3, 09 §4. Done when: fake-provider scripted test passes.
+- [ ] **MV6.2 studio-server agent endpoints (turn, SSE stream, abort) + history snapshots/undo turn** — 17 §9.1, §9.4. Done when: undo restores byte-for-byte; path-escape test rejects.
+- [ ] **MV6.3 Chat panel UI + Style panel + Assets panel (SFX play/drag)** — 17 §9.5, §5.4, §7.3. Done when: preview updates < 1 s after agent writes, keeping playhead.
+- [ ] **MV6.4 Real-provider smoke test** — 17 §9.6 (env-gated). Done when: §0 scenario + style write-back pass.
+
+### MV7 — Render speed
+- [ ] **MV7.1 `render --profile`** — 17 §10.1.
+- [ ] **MV7.2 Draft mode, overlay preloading, ready-wait tightening, worker sizing** — 17 §10.2–10.5. Done when: targets met or documented with profile numbers.
+- [ ] **MV7.3 Linux beginFrame verification in the render-worker image** — 17 §10.6.
+
+### MV8 — Background removal
+- [ ] **MV8.1 Model bake-off (U²-Net vs MODNet vs winner+smoothing+guided filter)** — 17 §11.3. Done when: results + choice in `plan/DECISIONS.md` with frames and flicker numbers.
+- [ ] **MV8.2 `remove-background` command + Studio button** — 17 §11. Deps: MV0.2. Done when: §11 acceptance.
+
+### MV9 — TTS
+- [ ] **MV9.1 `tts` (Kokoro local default, `say` fallback, ElevenLabs/OpenAI)** — 17 §12. Done when: returns path + duration + word timings for each provider; `doctor` reports provider availability.
+
+### MV10 — Evals + track acceptance
+- [ ] **MV10.1 `evals/vibe/` fixtures, briefs, scorer, nightly job** — 17 §13.
+- [ ] **MV10.2 Track acceptance** — 17 §13 last paragraph (Studio chat + MCP scenarios pass, grep shows no creator-specific style values in `packages/` or `skills/`, eval mean ≥ 70%).
 
 ---
 
@@ -81,6 +151,7 @@ milestones assume earlier contracts are stable.
 - [ ] **T6.2 Resolution presets + supersampling + range render** — 04 §1, §5. Done when: 4K from 1080 comp; range equivalence test.
 - [ ] **T6.3 `init` + templates + scaffolded AGENTS.md/CLAUDE.md** — 06 §1, §3, §4. Done when: every template `init → check → render` in CI.
 - [ ] **T6.4 `info`, `compositions`, `timeline`, `doctor`, `browser`, `clean`, `upgrade`, `history`, `keyframes`, `batch`** — 06 §1. Done when: command matrix test passes.
+  > MV note: doctor → MV1.1
 - [ ] **T6.5 `render --docker`** — run producer inside published image with project mounted. Done when: output equals CI golden render hash.
 - [ ] **T6.6 Producer HTTP server** — 04 §7. Done when: 04 §9 server criterion passes.
 - [ ] **T6.7 Telemetry (opt-in)** — 06 §1 Telemetry. Done when: no network calls when disabled (test with request interception); events schema documented.
@@ -88,10 +159,15 @@ milestones assume earlier contracts are stable.
 ## M7 — Media AI
 
 - [ ] **T7.1 whisper.cpp install + transcribe** — 10 §2. Done when: WER and timing criteria (10 §9).
+  > MV note: → superseded by MV1.2
 - [ ] **T7.2 Captions generator + 6 caption-style blocks** — 10 §3, 11 §5. Done when: 10 §9 captions criterion; each style renders.
+  > MV note: caption blocks → MV4.2/MV4.3
 - [ ] **T7.3 TTS providers (say, edge, elevenlabs, openai)** — 10 §4. Done when: each returns audio + duration + word timings (or derived via transcription); provider-missing errors are clear.
+  > MV note: → superseded by MV9.1 (Kokoro default)
 - [ ] **T7.4 Beats, silence, loudness analysis** — 10 §6. Done when: 10 §9 criteria.
+  > MV note: silence part → MV1.3
 - [ ] **T7.5 Background removal (image, video)** — 10 §5 (verify model license first; log in DECISIONS.md). Done when: IoU criterion.
+  > MV note: → superseded by MV8
 - [ ] **T7.6 Stock + image generation providers + media ledger** — 10 §7. Done when: mocked-API tests; ledger entries written with license.
 - [ ] **T7.7 Color grading (preview WebGL + render ffmpeg) + 12 looks** — 10 §8. Done when: parity PSNR ≥ 35 dB.
 - [ ] **T7.8 Proxies for heavy media** — 10 §1. Done when: ProRes/HEVC10 preview via proxy, render via original.
@@ -99,12 +175,17 @@ milestones assume earlier contracts are stable.
 ## M8 — Skills + agent
 
 - [ ] **T8.1 Core skills content** — 09 §2 items 1–5 (write carefully; every code sample must pass `check` — add a test that extracts code blocks tagged `html composition` and lints/renders them).
+  > MV note: → MV3 first
 - [ ] **T8.2 Workflow skills** — 09 §2 items 6–13.
 - [ ] **T8.3 `skills update/list` + plugin manifests** — 09 §3. Done when: 09 §5 install criterion.
+  > MV note: → MV3.4
 - [ ] **T8.4 SDK** (`@framecraft/sdk`): open project, list/patch elements, timing ops, run lint/check/snapshot/render — shared by agent + studio-server. Done when: unit tests for each op with minimal-diff assertions.
+  > MV note: → superseded by MV5.1
 - [ ] **T8.5 Agent core: provider interface (Anthropic first), tools, loop, guardrails, context mgmt** — 09 §4. Done when: fake-provider scripted test; real-provider smoke test behind env flag.
+  > MV note: → MV6.1
 - [ ] **T8.6 `framecraft agent` CLI** — 06 §1. Done when: runs a brief end-to-end on a fixture with the real provider (manual verification recorded).
 - [ ] **T8.7 Agent eval harness** — 09 §4.5. Done when: nightly job produces a score report.
+  > MV note: → MV10.1
 
 ## M9 — Registry
 
@@ -127,8 +208,10 @@ milestones assume earlier contracts are stable.
 - [ ] **T10.9 Undo/redo (server history, grouping)** — 08 §9.
 - [ ] **T10.10 Code editor tab with inline lint** — 08 §2.
 - [ ] **T10.11 Panels: Files, Assets (upload, drag to timeline), Blocks (registry browse + drag in), Layers, Captions, Variables, Audio, Color** — 08 §2, §5, 10 §3, §8.
+  > MV note: Assets/SFX panel → MV6.3
 - [ ] **T10.12 Render dialog + queue** — 08 §10.
 - [ ] **T10.13 Agent chat panel** — 08 §7, 09 §4. Done when: 08 §12 agent criterion.
+  > MV note: → superseded by MV6
 - [ ] **T10.14 Studio e2e suite complete** — 08 §12 all pass in CI.
 
 ## M11 — Cloud
@@ -157,10 +240,12 @@ milestones assume earlier contracts are stable.
 
 - [ ] **T13.1 Transcript editing (EDL → split clips, word anchors, micro-fades)** — 14 §1.1.
 - [ ] **T13.2 Silence & filler removal (`framecraft cut`, Studio button)** — 14 §1.2.
+  > MV note: → MV1.3 (cuts) + skill guidance
 - [ ] **T13.3 Auto-reframe** — 14 §1.3.
 - [ ] **T13.4 Multicam sync** — 14 §1.4.
 - [ ] **T13.5 Smart B-roll suggestions** — 14 §1.5.
 - [ ] **T13.6 Style Bible analyzer + style.json + Style panel + application in workflows** — 14 §2.
+  > MV note: → replaced by user-owned style.md (MV2); analyzer optional later
 - [ ] **T13.7 One-click "Make it social" package** — 14 §1.6.
 - [ ] **T13.8 Incremental re-rendering** — 14 §3.
 - [ ] **T13.9 In-browser draft export (experimental flag)** — 14 §4.

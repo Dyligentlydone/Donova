@@ -1,6 +1,7 @@
 # Framecraft build plan — index
 
-Start with `../AGENTS.md`, then `00-OVERVIEW.md`, then follow `16-BUILD-ORDER.md`.
+Start with `../AGENTS.md`, then `STATUS.md`, then `17-VIBE-EDIT.md`, then
+`00-OVERVIEW.md`, then follow `16-BUILD-ORDER.md` (MV track first).
 
 | File | Covers |
 |---|---|
@@ -20,6 +21,8 @@ Start with `../AGENTS.md`, then `00-OVERVIEW.md`, then follow `16-BUILD-ORDER.md
 | `13-DESKTOP-APP.md` | Electron app, bundling, onboarding, signing, updates |
 | `14-DIFFERENTIATORS.md` | Footage-first editing, Style Bible, incremental render, browser export |
 | `15-TESTING.md` | Test layers, fixtures, golden/determinism/parity harness, perf budgets, CI |
-| `16-BUILD-ORDER.md` | Ordered task list with acceptance criteria |
+| `16-BUILD-ORDER.md` | Ordered task list with acceptance criteria (MV track first) |
+| `17-VIBE-EDIT.md` | **North star + priority track**: agent tools, style.md, footage skills, neutral blocks + SFX, SDK/MCP, Studio chat, render speed, background removal, TTS, evals |
+| `STATUS.md` | What exists today, verified results, lessons learned, divergences from the plan |
 
 Reference implementation (read-only, Apache-2.0): `../_analysis/hyperframes-src/`.
