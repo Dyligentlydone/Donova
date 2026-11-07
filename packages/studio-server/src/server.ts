@@ -1,13 +1,16 @@
+import { execFile } from "node:child_process";
 import { createReadStream, existsSync } from "node:fs";
 import { mkdir, readFile, readdir, writeFile } from "node:fs/promises";
 import { type Server, createServer } from "node:http";
 import { extname, join, normalize, resolve, sep } from "node:path";
 import { fileURLToPath } from "node:url";
+import { promisify } from "node:util";
 import { parseCompositionHtml } from "@framecraft/contract";
 import { startFileServer } from "@framecraft/engine";
 import { lintHtml } from "@framecraft/lint";
 import { render } from "@framecraft/producer";
 import * as parse5 from "parse5";
+import { Agent } from "./agent.js";
 
 /**
  * Studio server (08 §server). JSON over HTTP; no auth (local).
@@ -152,6 +155,92 @@ export async function startStudioServer(
   ];
   const uiDir = uiCandidates.find((d) => existsSync(join(d, "index.html"))) ?? uiCandidates[0] ?? "";
 
+  // --- Agent (MV6). Commands run through the framecraft bin so Studio reuses
+  // the exact CLI surface; renderDraft goes through the in-process renderer.
+  const execFileP = promisify(execFile);
+  const cliBin =
+    process.env.FRAMECRAFT_CLI ??
+    fileURLToPath(new URL("../../cli/bin/framecraft.mjs", import.meta.url));
+
+  const runCmd = async (cmd: string, args: Record<string, unknown>): Promise<unknown> => {
+    if (cmd === "renderDraft") {
+      const r = await render({
+        projectDir: root,
+        composition: "index.html",
+        out: join(root, "draft.mp4"),
+        quality: "draft",
+        workers: 1,
+      });
+      return r;
+    }
+    const POSITIONAL: Record<string, string> = {
+      transcribe: "media",
+      cuts: "transcript",
+      scaffold: "media",
+      captions: "transcript",
+      probe: "media",
+      add: "name",
+    };
+    const argv = [cliBin, cmd];
+    const rest = { ...args };
+    const pk = POSITIONAL[cmd];
+    if (pk != null) {
+      if (rest[pk] != null) argv.push(String(rest[pk]));
+      delete rest[pk];
+    }
+    for (const [k, v] of Object.entries(rest)) {
+      if (v == null || v === false) continue;
+      if (v === true) argv.push(`--${k}`);
+      else argv.push(`--${k}`, String(v));
+    }
+    argv.push("--json");
+    const { stdout } = await execFileP(process.execPath, argv, { cwd: root, timeout: 300_000 });
+    try {
+      return JSON.parse(stdout);
+    } catch {
+      return { stdout };
+    }
+  };
+
+  const agent = new Agent(root, {
+    runCmd,
+    mutateHtml: async (mutations) => {
+      const fp = join(root, "index.html");
+      const out = await applyMutation("index.html", await readFile(fp, "utf8"), mutations);
+      await writeFile(fp, out);
+    },
+    readContext: async () => {
+      const indexHtml = existsSync(join(root, "index.html"))
+        ? await readFile(join(root, "index.html"), "utf8")
+        : "";
+      let duration = 0;
+      try {
+        duration = parseCompositionHtml(indexHtml, { path: "index.html", isRoot: true }).spec
+          .duration;
+      } catch {
+        /* leave 0 */
+      }
+      const stylePath = join(root, "style.md");
+      const files: string[] = [];
+      const walk = async (d: string, prefix = ""): Promise<void> => {
+        for (const e of await readdir(d, { withFileTypes: true })) {
+          if (e.name.startsWith(".") || e.name === "node_modules") continue;
+          const rel = prefix ? `${prefix}/${e.name}` : e.name;
+          if (e.isDirectory()) await walk(join(d, e.name), rel);
+          else files.push(rel);
+        }
+      };
+      await walk(root);
+      return {
+        indexHtml,
+        styleMd: existsSync(stylePath) ? await readFile(stylePath, "utf8") : null,
+        files,
+        duration,
+      };
+    },
+  });
+  await agent.load();
+
   const server = createServer(async (req, res) => {
     const url = new URL(req.url ?? "/", "http://x");
     const p = url.pathname;
@@ -237,6 +326,45 @@ export async function startStudioServer(
       if (p.startsWith("/api/render/")) {
         const job = jobs.get(p.slice("/api/render/".length));
         return job ? send(200, job) : send(404, { error: "no job" });
+      }
+      // --- Agent chat (MV6) ---
+      if (p === "/api/chat" && req.method === "POST") {
+        const body = JSON.parse(await readBody(req)) as { message?: string };
+        if (!body.message?.trim()) return send(400, { error: "message required" });
+        const turn = await agent.chat(body.message.trim());
+        return send(200, turn);
+      }
+      if (p === "/api/undo" && req.method === "POST") {
+        return send(200, await agent.undo());
+      }
+      if (p === "/api/turns") {
+        return send(200, { turns: agent.historyTurns });
+      }
+      if (p === "/api/style" && req.method === "GET") {
+        const fp = join(root, "style.md");
+        return send(200, existsSync(fp) ? { path: "style.md", content: await readFile(fp, "utf8") } : { path: "style.md", content: null });
+      }
+      if (p === "/api/style" && req.method === "PUT") {
+        const body = JSON.parse(await readBody(req)) as { content: string };
+        await writeFile(join(root, "style.md"), body.content);
+        return send(200, { ok: true });
+      }
+      if (p === "/api/assets") {
+        const media: string[] = [];
+        const blocks: string[] = [];
+        const list = async (d: string, into: string[]) => {
+          if (!existsSync(d)) return;
+          for (const e of await readdir(d, { withFileTypes: true })) {
+            if (e.name.startsWith(".")) continue;
+            if (e.isDirectory()) await list(join(d, e.name), into);
+            else into.push(join(d, e.name).slice(root.length + 1));
+          }
+        };
+        await list(join(root, "media"), media);
+        for (const e of await readdir(join(root, "compositions")).catch(() => [])) {
+          if (typeof e === "string" && !e.startsWith(".")) blocks.push(e);
+        }
+        return send(200, { media, blocks, style: existsSync(join(root, "style.md")) });
       }
       if (p === "/api/files") {
         const walk = async (d: string, prefix = ""): Promise<string[]> => {

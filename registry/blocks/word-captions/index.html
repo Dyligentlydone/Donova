@@ -1,0 +1,20 @@
+<!-- word-captions block: styles for generated caption elements.
+     Generate the caption track with:
+       framecraft captions --transcript t.json --cuts cuts.json
+     Generated elements carry class="fc-cap" / class="fc-cap fc-cap-em". -->
+<div data-composition-id="word-captions" data-width="1080" data-height="1920" data-duration="1">
+<style>
+  .fc-cap {
+    position: absolute;
+    left: 50%;
+    bottom: var(--fc-cap-bottom, 30%);
+    transform: translateX(-50%);
+    font: var(--fc-cap-font, 800 64px/1.1 system-ui, sans-serif);
+    color: var(--fc-cap-color, #fff);
+    text-shadow: var(--fc-cap-shadow, 0 2px 12px rgba(0,0,0,0.7));
+    white-space: nowrap;
+    pointer-events: none;
+  }
+  .fc-cap-em { color: var(--fc-cap-accent, #ffd166); }
+</style>
+</div>

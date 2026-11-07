@@ -323,6 +323,115 @@ function applyVisibility(t: number): void {
   }
 }
 
+/* --------------------------- sub-compositions ----------------------------- */
+
+/**
+ * data-composition-src support (02 §sub-comps, MV4).
+ * Each host element with data-composition-src fetches that HTML file and
+ * inlines its content. The host's data-var-* attributes parameterize the
+ * block two ways:
+ *   - CSS custom props:  data-var-accent → --fc-accent on the host (so
+ *     var(--fc-accent) resolves anywhere inside the pasted subtree).
+ *   - Text slots:        [data-fc-var="title"] inside the block gets the
+ *     host's data-var-title as textContent (absent var keeps default text;
+ *     empty-string var hides the slot).
+ * Imported timed children are remapped: their local data-start/duration are
+ * scaled by hostDuration/subDuration (HyperFrames sub-comp semantics) and
+ * offset by the host's start; data-fc-motion anim t/dur scale the same way.
+ */
+async function loadSubComps(): Promise<void> {
+  for (let depth = 0; depth < 4; depth++) {
+    const hosts = [...document.querySelectorAll<HTMLElement>("[data-composition-src]")].filter(
+      (el) => el.dataset.fcSubLoaded !== "1",
+    );
+    if (!hosts.length) return;
+    await Promise.all(
+      hosts.map(async (host) => {
+        host.dataset.fcSubLoaded = "1";
+        const src = attr(host, "data-composition-src");
+        if (!src) return;
+        try {
+          const res = await fetch(src);
+          if (!res.ok) return;
+          const html = await res.text();
+          const doc = new DOMParser().parseFromString(html, "text/html");
+          const subRoot = doc.querySelector("[data-composition-id]");
+          const content = subRoot ? [...subRoot.childNodes] : [...doc.body.childNodes];
+
+          const hostStart = num(attr(host, "data-start"), 0);
+          const hostEnd = (() => {
+            const e = attr(host, "data-end");
+            if (e != null) return num(e, hostStart);
+            return hostStart + num(attr(host, "data-duration"), 0);
+          })();
+          const hostDur = Math.max(hostEnd - hostStart, FRAME_EPS);
+          // Sub duration: comp root's data-duration, else first imported timed
+          // child's, else the host's (no scaling).
+          let subDur = subRoot ? num(attr(subRoot, "data-duration"), 0) : 0;
+          if (!(subDur > 0)) {
+            for (const n of content) {
+              if (n instanceof Element && n.hasAttribute("data-duration")) {
+                subDur = num(attr(n, "data-duration"), 0);
+                break;
+              }
+            }
+          }
+          const scale = subDur > 0 ? hostDur / subDur : 1;
+
+          // Vars: data-var-* → --fc-* on the host.
+          for (const a of host.attributes) {
+            if (a.name.startsWith("data-var-")) {
+              host.style.setProperty(`--fc-${a.name.slice(9)}`, a.value);
+            }
+          }
+
+          const frag = document.createDocumentFragment();
+          for (const n of content) frag.appendChild(document.importNode(n, true));
+          host.appendChild(frag);
+
+          // Text slots.
+          for (const slot of host.querySelectorAll<HTMLElement>("[data-fc-var]")) {
+            const key = attr(slot, "data-fc-var") ?? "";
+            const v = attr(host, `data-var-${key}`);
+            if (v == null) continue; // keep default text
+            if (v === "") slot.style.display = "none";
+            else slot.textContent = v;
+          }
+
+          // Remap timing of imported timed children.
+          for (const el of host.querySelectorAll<HTMLElement>("[data-start]")) {
+            if (el === host) continue;
+            const s = num(attr(el, "data-start"), 0);
+            el.setAttribute("data-start", String(hostStart + s * scale));
+            const d = attr(el, "data-duration");
+            if (d != null) el.setAttribute("data-duration", String(num(d, 0) * scale));
+            const e = attr(el, "data-end");
+            if (e != null) el.setAttribute("data-end", String(hostStart + num(e, 0) * scale));
+            const mot = attr(el, "data-fc-motion");
+            if (mot && scale !== 1) {
+              try {
+                const spec = JSON.parse(mot);
+                if (Array.isArray(spec.anims)) {
+                  for (const a of spec.anims) {
+                    if (typeof a.t === "number") a.t *= scale;
+                    if (typeof a.dur === "number") a.dur *= scale;
+                  }
+                  if (typeof spec.stagger === "number") spec.stagger *= scale;
+                  el.setAttribute("data-fc-motion", JSON.stringify(spec));
+                }
+              } catch {
+                /* leave as-is */
+              }
+            }
+          }
+        } catch {
+          /* missing/unfetchable sub-comp — leave host empty */
+        }
+      }),
+    );
+  }
+}
+
 /* ------------------------------- media sync ------------------------------- */
 
 interface MediaEl {
@@ -620,6 +729,7 @@ async function boot(): Promise<void> {
     manifestFor(compId).timelines.push(tl);
   }
 
+  await loadSubComps();
   collectTimedEls();
   collectMedia();
   buildMotionAnims();

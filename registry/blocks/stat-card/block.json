@@ -1,0 +1,10 @@
+{
+  "name": "stat-card",
+  "description": "One huge number/word + small label. For 'zero dollars' moments.",
+  "tags": ["card", "stat", "number"],
+  "vars": [
+    {"name": "value", "default": "0", "hint": "Big number/text"},
+    {"name": "label", "default": "", "hint": "Small caption under it"},
+    {"name": "accent", "default": "#ffffff", "hint": "Value color"}
+  ]
+}

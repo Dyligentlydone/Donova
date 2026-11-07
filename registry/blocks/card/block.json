@@ -1,0 +1,12 @@
+{
+  "name": "card",
+  "description": "Glass info card: pill label + title + body. Neutral defaults — drive colors via data-var-*.",
+  "tags": ["card", "overlay", "glass"],
+  "vars": [
+    {"name": "title", "default": "TITLE", "hint": "Main line"},
+    {"name": "body", "default": "", "hint": "Optional second line"},
+    {"name": "pill", "default": "", "hint": "Small uppercase tag text (hidden if empty)"},
+    {"name": "accent", "default": "#4f8cff", "hint": "Pill/border accent"},
+    {"name": "pos", "default": "top", "hint": "top|bottom placement zone"}
+  ]
+}

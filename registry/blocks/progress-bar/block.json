@@ -1,0 +1,9 @@
+{
+  "name": "progress-bar",
+  "description": "Thin progress line across the frame top (or bottom).",
+  "tags": ["progress", "bar", "chrome"],
+  "vars": [
+    {"name": "accent", "default": "#4f8cff", "hint": "Bar color"},
+    {"name": "pos", "default": "top", "hint": "top|bottom"}
+  ]
+}

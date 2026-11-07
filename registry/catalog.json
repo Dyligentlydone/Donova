@@ -1,7 +1,36 @@
 {
   "version": 1,
   "items": [
-    { "name": "fade-title", "type": "block", "path": "blocks/fade-title" },
-    { "name": "caption-strip", "type": "block", "path": "blocks/caption-strip" }
+    { "name": "fade-title", "type": "block", "path": "blocks/fade-title", "tags": ["title", "text"] },
+    { "name": "caption-strip", "type": "block", "path": "blocks/caption-strip", "tags": ["captions", "text"] },
+    { "name": "word-captions", "type": "block", "path": "blocks/word-captions", "tags": ["captions", "footage"] },
+    { "name": "phrase-captions", "type": "block", "path": "blocks/phrase-captions", "tags": ["captions", "footage"] },
+    { "name": "card", "type": "block", "path": "blocks/card", "tags": ["card", "overlay"] },
+    { "name": "alert-card", "type": "block", "path": "blocks/alert-card", "tags": ["card", "alert"] },
+    { "name": "stat-card", "type": "block", "path": "blocks/stat-card", "tags": ["stat", "card"] },
+    { "name": "cta", "type": "block", "path": "blocks/cta", "tags": ["cta", "outro"] },
+    { "name": "title-card", "type": "block", "path": "blocks/title-card", "tags": ["title", "opener"] },
+    { "name": "lower-third", "type": "block", "path": "blocks/lower-third", "tags": ["lower-third"] },
+    { "name": "progress-bar", "type": "block", "path": "blocks/progress-bar", "tags": ["progress"] },
+    { "name": "flash", "type": "block", "path": "blocks/flash", "tags": ["flash", "transition"] },
+    { "name": "grade", "type": "block", "path": "blocks/grade", "tags": ["grade", "vignette"] },
+    { "name": "zoom-transition", "type": "block", "path": "blocks/zoom-transition", "tags": ["zoom", "transition"] },
+    { "name": "motion-presets", "type": "block", "path": "blocks/motion-presets", "tags": ["motion", "reference"] },
+    { "name": "subtitle-line", "type": "block", "path": "blocks/subtitle-line", "tags": ["subtitle", "captions"] },
+    { "name": "sfx-pop", "type": "sfx", "path": "sfx/pop", "tags": ["pop", "ui"] },
+    { "name": "sfx-whoosh", "type": "sfx", "path": "sfx/whoosh", "tags": ["whoosh", "transition"] },
+    { "name": "sfx-riser", "type": "sfx", "path": "sfx/riser", "tags": ["riser"] },
+    { "name": "sfx-impact", "type": "sfx", "path": "sfx/impact", "tags": ["impact", "bass"] },
+    { "name": "sfx-click", "type": "sfx", "path": "sfx/click", "tags": ["click"] },
+    { "name": "sfx-swish", "type": "sfx", "path": "sfx/swish", "tags": ["swish"] },
+    { "name": "sfx-ding", "type": "sfx", "path": "sfx/ding", "tags": ["ding"] },
+    { "name": "sfx-buzz", "type": "sfx", "path": "sfx/buzz", "tags": ["buzz", "error"] },
+    { "name": "sfx-swoosh-down", "type": "sfx", "path": "sfx/swoosh-down", "tags": ["swoosh"] },
+    { "name": "sfx-tick", "type": "sfx", "path": "sfx/tick", "tags": ["tick"] },
+    { "name": "sfx-chime", "type": "sfx", "path": "sfx/chime", "tags": ["chime"] },
+    { "name": "sfx-thud", "type": "sfx", "path": "sfx/thud", "tags": ["thud"] },
+    { "name": "sfx-air", "type": "sfx", "path": "sfx/air", "tags": ["air", "ambience"] },
+    { "name": "sfx-camera-shutter", "type": "sfx", "path": "sfx/camera-shutter", "tags": ["shutter"] },
+    { "name": "sfx-notification", "type": "sfx", "path": "sfx/notification", "tags": ["notification"] }
   ]
 }

@@ -1,0 +1,9 @@
+{
+  "name": "subtitle-line",
+  "description": "Static lower-third subtitle text style (non-kinetic broadcast look).",
+  "tags": ["subtitle", "captions", "broadcast"],
+  "vars": [
+    {"name": "text", "default": "Subtitle", "hint": "Line text"},
+    {"name": "cap-color", "default": "#ffffff", "hint": "Text color"}
+  ]
+}

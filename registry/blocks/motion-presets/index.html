@@ -1,0 +1,16 @@
+<!-- motion-presets: copy a recipe's JSON into data-fc-motion on your element.
+     punch-in | punch-out | pop | push | pull-back | shake | fade-up | flash-in -->
+<div data-composition-id="motion-presets" data-width="640" data-height="360" data-duration="1">
+<script>
+  window.FC_MOTION_PRESETS = {
+    "punch-in":  {"v":1,"anims":[{"t":0,"dur":0.18,"ease":"back.out(2)","props":{"scale":[0.6,1],"opacity":[0,1]}}]},
+    "punch-out": {"v":1,"anims":[{"t":0,"dur":0.2,"ease":"power2.in","props":{"scale":[1,1.15],"opacity":[1,0]}}]},
+    "pop":       {"v":1,"anims":[{"t":0,"dur":0.3,"ease":"back.out(1.8)","props":{"scale":[0.9,1.03,1]}}]},
+    "push":      {"v":1,"anims":[{"t":0,"dur":1,"ease":"linear","props":{"scale":[1,1.12]}}]},
+    "pull-back": {"v":1,"anims":[{"t":0,"dur":0.6,"ease":"power2.out","props":{"scale":[1.15,1]}}]},
+    "shake":     {"v":1,"anims":[{"t":0,"dur":0.4,"ease":"linear","props":{"translateX":[0,-8,8,-6,6,-3,3,0]}}]},
+    "fade-up":   {"v":1,"anims":[{"t":0,"dur":0.6,"ease":"power3.out","props":{"opacity":[0,1],"translateY":[24,0]}}]},
+    "flash-in":  {"v":1,"anims":[{"t":0,"dur":0.06,"ease":"power1.out","props":{"opacity":[0,1]}}]}
+  };
+</script>
+</div>

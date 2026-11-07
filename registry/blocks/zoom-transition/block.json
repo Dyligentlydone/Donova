@@ -1,0 +1,10 @@
+{
+  "name": "zoom-transition",
+  "description": "Punch zoom applied to a clip's inner wrapper — wraps the common jump-cut-zoom presets.",
+  "tags": ["zoom", "transition", "motion"],
+  "vars": [
+    {"name": "from", "default": "1.12", "hint": "Start scale"},
+    {"name": "to", "default": "1.0", "hint": "End scale"},
+    {"name": "dur", "default": "0.35", "hint": "Zoom seconds"}
+  ]
+}

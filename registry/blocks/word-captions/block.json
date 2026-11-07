@@ -1,0 +1,12 @@
+{
+  "name": "word-captions",
+  "description": "One-word kinetic captions generated from transcript+cuts. Install, then run `framecraft captions` to generate the track.",
+  "tags": ["captions", "text", "footage"],
+  "vars": [
+    { "name": "cap-font", "default": "800 64px/1.1 system-ui, sans-serif", "hint": "CSS font shorthand" },
+    { "name": "cap-color", "default": "#ffffff", "hint": "Caption text color" },
+    { "name": "cap-accent", "default": "#ffd166", "hint": "Emphasis-word color" },
+    { "name": "cap-bottom", "default": "30%", "hint": "Distance from frame bottom (safe zone)" },
+    { "name": "cap-shadow", "default": "0 2px 12px rgba(0,0,0,0.7)", "hint": "Text shadow for legibility" }
+  ]
+}

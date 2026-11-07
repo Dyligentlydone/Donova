@@ -1,0 +1,9 @@
+{
+  "name": "grade",
+  "description": "Full-frame grade + vignette overlay. Neutral: darkens edges slightly; drive strength/tint via vars.",
+  "tags": ["grade", "vignette", "look"],
+  "vars": [
+    {"name": "tint", "default": "rgba(8,10,16,0.12)", "hint": "Overlay tint"},
+    {"name": "vignette", "default": "0.5", "hint": "Edge darkness 0-1"}
+  ]
+}

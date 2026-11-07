@@ -1,0 +1,10 @@
+{
+  "name": "alert-card",
+  "description": "Danger/warning variant of card — pops with a shake on entry.",
+  "tags": ["card", "alert", "danger"],
+  "vars": [
+    {"name": "title", "default": "ALERT", "hint": "Main line"},
+    {"name": "body", "default": "", "hint": "Optional second line"},
+    {"name": "accent", "default": "#e5484d", "hint": "Alert color"}
+  ]
+}

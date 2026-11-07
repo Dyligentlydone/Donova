@@ -1,0 +1,9 @@
+{
+  "name": "cta",
+  "description": "Call-to-action pill (follow/subscribe/etc.) that slides up and holds.",
+  "tags": ["cta", "pill", "outro"],
+  "vars": [
+    {"name": "text", "default": "Follow for more", "hint": "Pill text"},
+    {"name": "accent", "default": "#4f8cff", "hint": "Pill color"}
+  ]
+}

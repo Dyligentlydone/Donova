@@ -1,0 +1,96 @@
+{
+  "version": 1,
+  "license": "Framecraft original (synthesized, free to redistribute)",
+  "sounds": [
+    {
+      "name": "pop",
+      "file": "pop/pop.wav",
+      "duration": 0.25,
+      "description": "short UI pop, card land"
+    },
+    {
+      "name": "whoosh",
+      "file": "whoosh/whoosh.wav",
+      "duration": 0.7,
+      "description": "noise sweep, transition"
+    },
+    {
+      "name": "riser",
+      "file": "riser/riser.wav",
+      "duration": 0.7,
+      "description": "rising pitch, anticipation"
+    },
+    {
+      "name": "impact",
+      "file": "impact/impact.wav",
+      "duration": 0.5,
+      "description": "bass hit + snap"
+    },
+    {
+      "name": "click",
+      "file": "click/click.wav",
+      "duration": 0.08,
+      "description": "tiny click"
+    },
+    {
+      "name": "swish",
+      "file": "swish/swish.wav",
+      "duration": 0.4,
+      "description": "light fabric swish"
+    },
+    {
+      "name": "ding",
+      "file": "ding/ding.wav",
+      "duration": 0.6,
+      "description": "bell ding"
+    },
+    {
+      "name": "buzz",
+      "file": "buzz/buzz.wav",
+      "duration": 0.4,
+      "description": "error buzz"
+    },
+    {
+      "name": "swoosh-down",
+      "file": "swoosh-down/swoosh-down.wav",
+      "duration": 0.6,
+      "description": "descending swoosh"
+    },
+    {
+      "name": "tick",
+      "file": "tick/tick.wav",
+      "duration": 0.05,
+      "description": "metronome tick"
+    },
+    {
+      "name": "chime",
+      "file": "chime/chime.wav",
+      "duration": 0.8,
+      "description": "two-note chime"
+    },
+    {
+      "name": "thud",
+      "file": "thud/thud.wav",
+      "duration": 0.4,
+      "description": "low thud"
+    },
+    {
+      "name": "air",
+      "file": "air/air.wav",
+      "duration": 1,
+      "description": "soft airy wash"
+    },
+    {
+      "name": "camera-shutter",
+      "file": "camera-shutter/camera-shutter.wav",
+      "duration": 0.25,
+      "description": "photo shutter"
+    },
+    {
+      "name": "notification",
+      "file": "notification/notification.wav",
+      "duration": 0.5,
+      "description": "soft two-tone alert"
+    }
+  ]
+}

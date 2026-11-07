@@ -1,0 +1,11 @@
+{
+  "name": "phrase-captions",
+  "description": "2–5 word caption groups from transcript+cuts (interview/documentary style).",
+  "tags": ["captions", "text", "footage"],
+  "vars": [
+    { "name": "cap-font", "default": "700 44px/1.25 system-ui, sans-serif", "hint": "CSS font shorthand" },
+    { "name": "cap-color", "default": "#ffffff", "hint": "Caption color" },
+    { "name": "cap-bg", "default": "rgba(0,0,0,0.55)", "hint": "Pill/background behind text" },
+    { "name": "cap-bottom", "default": "12%", "hint": "Distance from frame bottom" }
+  ]
+}

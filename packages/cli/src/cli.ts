@@ -6,6 +6,8 @@ import { defineCommand, runMain } from "citty";
 import { addBlock } from "./add.js";
 import { checkProject, reportCheck } from "./check.js";
 import { compareVideos } from "./compare.js";
+import { copyPrompt } from "./copyPrompt.js";
+import { captionsCmd } from "./captions.js";
 import { cutsCmd } from "./cuts.js";
 import { doctor, reportDoctor } from "./doctor.js";
 import { ERR, guardJson, jsonErr, jsonOut } from "./errors.js";
@@ -13,6 +15,7 @@ import { initProject } from "./init.js";
 import { probeCmd, timelineCmd } from "./inspect.js";
 import { previewProject } from "./preview.js";
 import { scaffoldCmd } from "./scaffold.js";
+import { skillsUpdateCmd } from "./skills.js";
 import { contactSheet, snapshotTimes } from "./snapshot.js";
 import { styleCmd } from "./style.js";
 import { transcribeCmd } from "./transcribe.js";
@@ -233,7 +236,9 @@ const addCmd = defineCommand({
         console.log(`installed ${args.name} → ${r.dest}`);
         console.log(`files: ${r.files.join(", ")}`);
         console.log(
-          `use:  <div class="clip" data-start="…" data-duration="…" data-composition-src="compositions/${args.name}/index.html"></div>`,
+          r.files[0]?.startsWith("media/")
+            ? `use:  <audio class="clip" data-start="…" data-duration="…" src="${r.files[0]}"></audio>`
+            : `use:  <div class="clip" data-start="…" data-duration="…" data-composition-src="compositions/${args.name}/index.html"></div>`,
         );
       }
     });
@@ -342,6 +347,34 @@ const scaffoldCliCmd = defineCommand({
   },
 });
 
+const captionsCliCmd = defineCommand({
+  meta: { name: "captions", description: "Transcript → caption track in index.html" },
+  args: {
+    transcript: { type: "positional", required: true },
+    cuts: { type: "string", description: "cuts.json to map source→comp time" },
+    mode: { type: "string", description: "word | phrase", default: "word" },
+    emphasis: { type: "string", description: "comma-separated words to accent" },
+    max: { type: "string", description: "max words per phrase", default: "4" },
+    dir: { type: "string", description: "project dir", default: "." },
+    ...JSON_ARG,
+  },
+  async run({ args }) {
+    const res = await guardJson(args.json, () =>
+      captionsCmd({
+        dir: String(args.dir),
+        transcript: String(args.transcript),
+        cuts: args.cuts,
+        mode: String(args.mode) === "phrase" ? "phrase" : "word",
+        emphasis: args.emphasis ? String(args.emphasis).split(",") : [],
+        maxPhraseWords: Number(args.max),
+      }),
+    );
+    if (res == null) return;
+    if (args.json) jsonOut(res);
+    else console.log(`captions: ${res.captions} ${res.mode}-captions → ${res.path}`);
+  },
+});
+
 const probeCliCmd = defineCommand({
   meta: { name: "probe", description: "Probe media file" },
   args: { media: { type: "positional", required: true }, ...JSON_ARG },
@@ -391,6 +424,53 @@ const styleCliCmd = defineCommand({
   },
 });
 
+const skillsCliCmd = defineCommand({
+  meta: { name: "skills", description: "Install agent skills into a project" },
+  args: {
+    action: { type: "positional", description: "update", default: "update" },
+    dir: { type: "string", description: "project dir", default: "." },
+    only: { type: "string", description: "comma-separated skill names" },
+    global: { type: "boolean", default: false },
+    ...JSON_ARG,
+  },
+  async run({ args }) {
+    const res = await guardJson(args.json, () =>
+      skillsUpdateCmd({
+        dir: String(args.dir),
+        only: args.only ? String(args.only).split(",") : undefined,
+        global: args.global,
+      }),
+    );
+    if (res == null) return;
+    if (args.json) jsonOut(res);
+    else {
+      console.log(`installed skills: ${res.installed.join(", ")}`);
+      for (const t of res.targets.slice(0, 6)) console.log(`  ${t}`);
+      if (res.targets.length > 6) console.log(`  … +${res.targets.length - 6} more`);
+    }
+  },
+});
+
+const mcpCliCmd = defineCommand({
+  meta: { name: "mcp", description: "MCP server over stdio for agent clients" },
+  args: {},
+  async run() {
+    await import("./mcp.js");
+    // mcp.ts installs the stdio loop on import; keep alive.
+    await new Promise(() => {});
+  },
+});
+
+const copyPromptCliCmd = defineCommand({
+  meta: { name: "copy-prompt", description: "Print a ready-made agent prompt for this project" },
+  args: { dir: { type: "string", default: "." }, ...JSON_ARG },
+  async run({ args }) {
+    const text = await copyPrompt({ dir: String(args.dir) });
+    if (args.json) jsonOut({ prompt: text });
+    else console.log(text);
+  },
+});
+
 const main = defineCommand({
   meta: { name: CLI_NAME, version: VERSION, description: "Framecraft — HTML to video" },
   subCommands: {
@@ -406,9 +486,13 @@ const main = defineCommand({
     transcribe: transcribeCliCmd,
     cuts: cutsCliCmd,
     scaffold: scaffoldCliCmd,
+    captions: captionsCliCmd,
     probe: probeCliCmd,
     timeline: timelineCliCmd,
     style: styleCliCmd,
+    skills: skillsCliCmd,
+    mcp: mcpCliCmd,
+    "copy-prompt": copyPromptCliCmd,
   },
 });
 
