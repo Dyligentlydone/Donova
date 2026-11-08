@@ -53,6 +53,9 @@ async function sourceHasAlpha(ffprobe: string, srcPath: string): Promise<boolean
   try {
     const p = await probe(ffprobe, srcPath);
     if (p.pixFmt && ALPHA_PIXFMT.test(p.pixFmt)) return true;
+    // WebM alpha rides a stream tag (alpha_mode=1), not the main pix_fmt —
+    // the mask lives in BlockAdditional data decoded by libvpx.
+    if (p.alphaMode) return true;
     // VP9 stores alpha in a side channel; ffprobe exposes it via codec/pix_fmt
     // only in some builds — treat vp9-in-webm cautiously by checking pix_fmt suffix.
     if (p.codec === "vp9" && (p.pixFmt ?? "").includes("a")) return true;

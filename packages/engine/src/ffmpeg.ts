@@ -61,6 +61,8 @@ export interface ProbeResult {
   sampleRate?: number;
   channels?: number;
   pixFmt?: string;
+  /** WebM/MOV alpha carried as a stream tag rather than pix_fmt (alpha_mode=1). */
+  alphaMode?: boolean;
 }
 
 export async function probe(ffprobe: string, path: string): Promise<ProbeResult> {
@@ -105,6 +107,7 @@ export async function probe(ffprobe: string, path: string): Promise<ProbeResult>
     sampleRate: audio?.sample_rate ? Number(audio.sample_rate) : undefined,
     channels: audio?.channels,
     pixFmt: video?.pix_fmt,
+    alphaMode: video?.tags?.alpha_mode === "1" || video?.tags?.alpha_mode === "yes",
   };
 }
 

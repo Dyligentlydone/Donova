@@ -1,6 +1,21 @@
 # STATUS — what exists today (read before building)
 
-Last updated: 2026-11-07 (Studio rebranded to "donova" — see §-5; speed-ramp verified end-to-end — see §-6). Update this file whenever you finish an MV task.
+Last updated: 2026-11-07 (alpha-video frame extraction fixed — see §-7; Studio rebranded to "donova" — see §-5). Update this file whenever you finish an MV task.
+
+## -7. Alpha-video frame extraction (person cutouts render over text/footage)
+
+WebM/MOV sources whose alpha rides a stream tag (`alpha_mode=1`, BlockAdditional data)
+rather than `pix_fmt` were misclassified as opaque → extracted JPG → the overlay painted
+the full scene over everything beneath it (hid text layer entirely in the flower-catch
+render while preview stayed correct). Fix: `probe()` now surfaces `alphaMode` from the
+stream tag and `sourceHasAlpha` checks it → `libvpx-vp9` decode + PNG extraction.
+Verified: `flower-him.webm` cutout renders as a transparent person layer; coral text
+behind him occludes correctly in the final MP4 (t=8.7: his head masks mid-text).
+Watch out: alpha footage → PNG extraction is ~10x the bytes of JPG (116 frames ≈ 1.5GB).
+
+Gotcha for agent/scaffold hygiene: a stray `fc init`/`scaffold` run in the repo root
+will overwrite this repo's own AGENTS.md with the project template (happened once —
+restored from HEAD). Always pass `--dir` explicitly.
 
 ## -6. Speed ramps + video transforms — verified end-to-end (flower-catch test)
 
