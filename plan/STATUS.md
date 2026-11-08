@@ -2,6 +2,23 @@
 
 Last updated: 2026-11-07 (alpha-video frame extraction fixed — see §-7; Studio rebranded to "donova" — see §-5). Update this file whenever you finish an MV task.
 
+## -7b. Cutout webms need dense keyframes (live-preview seekability)
+
+`fc remove-background` encoded VP9-alpha with libvpx's default GOP → the 119-frame
+cutout had **one keyframe**. Chrome can't seek mid-GOP on VP9-alpha: `currentTime`
+updates but the decoder shows frame 0 frozen → Studio preview rendered a ghost
+person (cutout stuck at its first frame while the base video played on). Both
+render paths were immune — ffmpeg decodes sequentially, never needs keyframes.
+Fix: `-g 15` in `bgRemoval.ts` → ~8 keyframes per 4s cutout. Verified in real
+Chrome preview: cutout seeks + tracks the zoom, text-behind-person reads.
+
+Two related traps, both bitten once: (a) `ffmpeg -i a.webm -c:v libvpx-vp9 out.webm`
+**drops alpha** — the native vp9 decoder ignores BlockAdditional; must pass
+`-c:v libvpx-vp9` on the INPUT side to keep it. (b) U²-Net masks on camouflage
+backgrounds are ragged (bush-texture halo in person shape) — mostly invisible in
+this compositing scheme because kept pixels duplicate the identical base frame;
+errors only show as a soft halo against layers *behind* the person (e.g. text).
+
 ## -7. Alpha-video frame extraction (person cutouts render over text/footage)
 
 WebM/MOV sources whose alpha rides a stream tag (`alpha_mode=1`, BlockAdditional data)

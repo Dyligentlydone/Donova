@@ -243,6 +243,10 @@ export async function removeBackgroundVideo(opts: {
     "libvpx-vp9",
     "-pix_fmt",
     "yuva420p",
+    // Keyframe every 0.5s: live <video> previews seek the webm, and Chrome's
+    // VP9-alpha decoder shows frame 0 frozen when a seek lands mid-GOP.
+    "-g",
+    "15",
     "-auto-alt-ref",
     "0",
     opts.out,
