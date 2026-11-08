@@ -49,7 +49,7 @@ function tracksFromClips(
           volume: clip.audio.volume ?? 1,
           fadeIn: clip.audio.fadeIn ?? 0,
           fadeOut: clip.audio.fadeOut ?? 0,
-          speed: Number(clip.attrs["data-speed"] ?? "1") || 1,
+          speed: Number(clip.attrs["data-speed"] ?? clip.attrs["data-playback-rate"] ?? "1") || 1,
         });
       }
       // Untimed <audio>/<video> children inside this clip inherit its window.
@@ -69,14 +69,14 @@ function tracksFromClips(
           volume: Number(mi.attrs["data-volume"] ?? "1") || 1,
           fadeIn: Number(mi.attrs["data-audio-fade-in"] ?? "0") || 0,
           fadeOut: Number(mi.attrs["data-audio-fade-out"] ?? "0") || 0,
-          speed: Number(mi.attrs["data-speed"] ?? "1") || 1,
+          speed: Number(mi.attrs["data-speed"] ?? mi.attrs["data-playback-rate"] ?? "1") || 1,
         });
       }
       const subSrc = clip.attrs["data-composition-src"];
       if (subSrc && compFor) {
         const sub = compFor(subSrc);
         if (sub) {
-          const speed = Number(clip.attrs["data-speed"] ?? "1") || 1;
+          const speed = Number(clip.attrs["data-speed"] ?? clip.attrs["data-playback-rate"] ?? "1") || 1;
           walk(sub, start, localScale * speed);
         }
       }

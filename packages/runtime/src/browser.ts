@@ -567,7 +567,13 @@ function collectMedia(): void {
     const holder = el.closest("[data-start]") ?? el;
     const start = num(attr(holder, "data-start"), 0);
     const audioOffset = num(attr(holder, "data-audio-offset") ?? attr(el, "data-audio-offset"), 0);
-    const speed = num(attr(holder, "data-speed") ?? attr(el, "data-speed"), 1);
+    const speed = num(
+      attr(holder, "data-speed") ??
+        attr(el, "data-speed") ??
+        attr(holder, "data-playback-rate") ??
+        attr(el, "data-playback-rate"),
+      1,
+    );
     const mediaStart = num(
       attr(holder, "data-media-start") ?? attr(el, "data-media-start") ?? attr(el, "data-trim-start"),
       0,

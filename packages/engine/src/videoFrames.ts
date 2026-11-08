@@ -116,7 +116,7 @@ export async function prepareVideoFrames(
 
     const trimStart =
       Number(job.attrs["data-media-start"] ?? job.attrs["data-trim-start"] ?? job.audioStart ?? 0) || 0;
-    const speed = Number(job.attrs["data-speed"] ?? "1") || 1;
+    const speed = Number(job.attrs["data-speed"] ?? job.attrs["data-playback-rate"] ?? "1") || 1;
     const duration = job.window.duration;
     const frameCount = Math.max(1, Math.ceil(duration * fps));
     const srcPath = join(projectDir, src);

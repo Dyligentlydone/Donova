@@ -19,8 +19,15 @@ Three latent bugs found + fixed along the way:
   slowed audio bled past its slot. Fixed — slowed segments now exactly fill their window.
 
 `data-speed` is now confirmed wired through all three paths: element seek, frame-overlay extraction
-(`mediaDur = duration*speed`), and `atempo` audio. HF Studio preview plays segments at native speed
-(their runtime doesn't read our attr) — preview/render divergence to note until vendoring.
+(`mediaDur = duration*speed`), and `atempo` audio.
+
+**Preview parity found**: Studio's speed attr is `data-playback-rate` (Studio writes it on retimed
+clips). Without it their preview played our slowed segment's media 1:1 then cut back at the next
+clip's media-start. All readers now accept `data-speed ?? data-playback-rate` (bidirectional —
+HF-retimed clips render correctly under our engine too) and emitters/agents should write both.
+Verified in their player iframe: `__player.seek(6.3)` → vid-1 at media 6.0, playbackRate 0.7 — exact
+match with render math. Zoom authored as registered `__timelines` GSAP (not `data-fc-motion`) so it
+seeks in both engines; gsap served from local `assets/gsap.min.js`.
 
 ## -5. Studio rebrand (donova) — v3 patcher, de-HeyGen surface pass
 

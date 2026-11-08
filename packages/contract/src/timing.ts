@@ -65,7 +65,7 @@ export function resolveTimeline(
       if (subSrc && subComps?.has(subSrc)) {
         const sub = subComps.get(subSrc);
         if (sub) {
-          const speed = Number(clip.attrs["data-speed"] ?? "1") || 1;
+          const speed = Number(clip.attrs["data-speed"] ?? clip.attrs["data-playback-rate"] ?? "1") || 1;
           flattenComp(sub, {
             offset: localStart,
             scale: ctx.scale * speed,
