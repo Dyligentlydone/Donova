@@ -102,8 +102,10 @@ export function buildAudioGraph(jobs: AudioTrackJob[]): {
     const parts: string[] = [];
     const pre: string[] = [];
     if (j.mediaStart > 0 || j.duration > 0) {
+      // atrim cuts MEDIA seconds: a speed != 1 clip consumes duration*speed of
+      // source, and atempo then stretches/shrinks it back to the film slot.
       pre.push(
-        `atrim=start=${j.mediaStart.toFixed(6)}:duration=${j.duration.toFixed(6)}`,
+        `atrim=start=${j.mediaStart.toFixed(6)}:duration=${(j.duration * j.speed).toFixed(6)}`,
         "asetpts=PTS-STARTPTS",
       );
     }

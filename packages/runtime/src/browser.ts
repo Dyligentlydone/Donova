@@ -555,6 +555,7 @@ async function loadSubComps(): Promise<void> {
 interface MediaEl {
   el: HTMLMediaElement;
   start: number; // composition seconds when media begins
+  mediaStart: number; // source seconds where the clip begins (data-media-start)
   speed: number;
 }
 let mediaEls: MediaEl[] = [];
@@ -567,7 +568,11 @@ function collectMedia(): void {
     const start = num(attr(holder, "data-start"), 0);
     const audioOffset = num(attr(holder, "data-audio-offset") ?? attr(el, "data-audio-offset"), 0);
     const speed = num(attr(holder, "data-speed") ?? attr(el, "data-speed"), 1);
-    mediaEls.push({ el, start: start + audioOffset, speed });
+    const mediaStart = num(
+      attr(holder, "data-media-start") ?? attr(el, "data-media-start") ?? attr(el, "data-trim-start"),
+      0,
+    );
+    mediaEls.push({ el, start: start + audioOffset, mediaStart, speed });
   }
 }
 
@@ -579,9 +584,10 @@ function seekMedia(t: number, timeoutMs = 4000): Promise<void> {
     // Videos replaced by deterministic frame overlays don't need element
     // seeks — their audio is muxed by the FFmpeg graph, not the element.
     if ((m.el as HTMLElement).dataset.fcOverlay === "1") continue;
-    const local = (t - m.start) * m.speed;
+    const elapsed = (t - m.start) * m.speed;
+    const local = m.mediaStart + elapsed;
     const dur = m.el.duration;
-    const inWindow = local >= -FRAME_EPS && (!Number.isFinite(dur) || local <= dur + FRAME_EPS);
+    const inWindow = elapsed >= -FRAME_EPS && (!Number.isFinite(dur) || local <= dur + FRAME_EPS);
     const target = Math.max(0, local);
     if (!inWindow) {
       if (!m.el.paused) m.el.pause();
@@ -631,6 +637,7 @@ interface VideoMapEntry {
 interface VideoOverlay {
   video: HTMLVideoElement;
   img: HTMLImageElement;
+  wrapper: HTMLDivElement;
   entry: VideoMapEntry;
   pending?: Promise<void>;
 }
@@ -675,7 +682,7 @@ async function loadVideoMap(): Promise<void> {
       }
       v.style.opacity = "0"; // keep for semantics/audio map; frame comes from img
       v.dataset.fcOverlay = "1";
-      videoOverlays.push({ video: v, img, entry: e });
+      videoOverlays.push({ video: v, img, wrapper, entry: e });
     }
   } catch {
     /* no video map — fine */
@@ -697,6 +704,17 @@ function updateVideoFrames(t: number): Promise<void> {
     if (t < ov.entry.start - FRAME_EPS || t > ov.entry.start + ov.entry.duration + FRAME_EPS) {
       continue;
     }
+    // Mirror the source element's transform (data-fc-motion anims drive the
+    // video element; without this the rendered frame ignores zoom/punch-ins).
+    // Individual longhands (scale/rotate/translate) don't fold into
+    // `transform` — mirror each so either authoring style works.
+    const cs = getComputedStyle(ov.video);
+    const ws = ov.wrapper.style;
+    ws.transform = cs.transform === "none" ? "" : cs.transform;
+    ws.translate = cs.translate === "none" ? "" : cs.translate;
+    ws.rotate = cs.rotate === "none" ? "" : cs.rotate;
+    ws.scale = cs.scale === "none" ? "" : cs.scale;
+    ws.transformOrigin = cs.transformOrigin;
     const url = frameUrl(ov.entry, t);
     if (ov.img.getAttribute("src") === url) continue;
     jobs.push(

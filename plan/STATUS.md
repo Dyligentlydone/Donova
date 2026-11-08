@@ -1,6 +1,26 @@
 # STATUS — what exists today (read before building)
 
-Last updated: 2026-11-07 (Studio rebranded to "donova" — see §-5). Update this file whenever you finish an MV task.
+Last updated: 2026-11-07 (Studio rebranded to "donova" — see §-5; speed-ramp verified end-to-end — see §-6). Update this file whenever you finish an MV task.
+
+## -6. Speed ramps + video transforms — verified end-to-end (flower-catch test)
+
+First real vibe-edit (`/Users/dyl/hf-test/@dylwill/projects/flower-catch`): 3-segment razor +
+retime + zoom. `data-speed="0.7"` on the catch segment + `data-fc-motion` scale keyframes on each
+`video.clip`. Rendered 2160x3840@30 — punch-in lands on the catch, slowed audio syncs.
+
+Three latent bugs found + fixed along the way:
+
+- `runtime/src/browser.ts` `collectMedia`/`seekMedia`: `data-media-start` was never applied to
+  element seeks — segmented clips previewed from the head. Now `local = mediaStart + elapsed*speed`.
+- `runtime/src/browser.ts` `updateVideoFrames`: frame overlays didn't mirror the video's transform,
+  so zoom anims were invisible in renders. Wrapper now copies transform + translate/rotate/scale
+  longhands + origin per frame (WAAPI `scale` doesn't fold into computed `transform` — mirror each).
+- `producer/src/audio.ts`: `atrim` cut `duration` (film) not `duration*speed` (media consumed), so
+  slowed audio bled past its slot. Fixed — slowed segments now exactly fill their window.
+
+`data-speed` is now confirmed wired through all three paths: element seek, frame-overlay extraction
+(`mediaDur = duration*speed`), and `atempo` audio. HF Studio preview plays segments at native speed
+(their runtime doesn't read our attr) — preview/render divergence to note until vendoring.
 
 ## -5. Studio rebrand (donova) — v3 patcher, de-HeyGen surface pass
 
