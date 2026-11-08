@@ -12,7 +12,12 @@
     },
     "./package.json": "./package.json"
   },
-  "files": ["dist", "bin", "schemas", "vendor"],
+  "files": [
+    "dist",
+    "bin",
+    "schemas",
+    "vendor"
+  ],
   "scripts": {
     "build": "tsup src/index.ts --format esm --dts --clean",
     "test": "vitest run --passWithNoTests",
@@ -35,9 +40,10 @@
     "@framecraft/producer": "workspace:*",
     "@framecraft/runtime": "workspace:*",
     "@framecraft/studio-server": "workspace:*",
-    "@hyperframes/sdk": "0.9.20",
+    "@hyperframes/inspector": "0.9.22",
+    "@hyperframes/sdk": "0.9.22",
     "citty": "^0.1.6",
-    "hyperframes": "0.9.20",
+    "hyperframes": "0.9.22",
     "puppeteer-core": "^24.10.0"
   }
 }

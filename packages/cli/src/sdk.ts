@@ -26,3 +26,7 @@ export type {
   FindQuery,
   Composition,
 } from "@hyperframes/sdk";
+
+// Composition inspection: which HTML/CSS/GSAP source owns an element,
+// animation schedules, live-preview probing — the agent's eyes before edits.
+export { Inspector } from "@hyperframes/inspector";

@@ -51,15 +51,18 @@ importers:
       '@framecraft/studio-server':
         specifier: workspace:*
         version: link:../studio-server
+      '@hyperframes/inspector':
+        specifier: 0.9.22
+        version: 0.9.22(yauzl@3.4.0)
       '@hyperframes/sdk':
-        specifier: 0.9.20
-        version: 0.9.20(@types/node@22.20.5)
+        specifier: 0.9.22
+        version: 0.9.22(@types/node@22.20.5)
       citty:
         specifier: ^0.1.6
         version: 0.1.6
       hyperframes:
-        specifier: 0.9.20
-        version: 0.9.20(@types/node@22.20.5)
+        specifier: 0.9.22
+        version: 0.9.22(@types/node@22.20.5)
       puppeteer-core:
         specifier: ^24.10.0
         version: 24.43.1(bare-buffer@3.7.1)
@@ -777,20 +780,24 @@ packages:
     peerDependencies:
       hono: ^4 || ^5.0.0-0
 
-  '@hyperframes/core@0.9.20':
-    resolution: {integrity: sha512-eRTOsFa5VYOKJOghME1ztd7gZureo8pCxDgTeNQ2NbCujGdQo1vt8hIqoNurmFmtdb7jyGvIPplOgO0RbkbA9Q==}
+  '@hyperframes/core@0.9.22':
+    resolution: {integrity: sha512-tSucxOo6RDq+gpgjehfyyGpgsuMvCmmxgxQQxHvxtrs/r9cZ7h+kC3UTUbQ4tP6WGfBc443k4qCToAd12qJaJw==}
 
-  '@hyperframes/lint@0.9.20':
-    resolution: {integrity: sha512-zvw0MDJaLD8FpNlMY1NnGoZF/HY9KP8P0CqrB0qQrttfCsxuGd/ElF2m9ujowE0AhSfcJlP3aktOY7NxetccOg==}
+  '@hyperframes/inspector@0.9.22':
+    resolution: {integrity: sha512-AFBndiKzBo8c5/nW3r9q56zBU+xqksesQkG/zG3s5jwSQ5HX2Oj9gtR8gbPjMH5vKjnRaxwEoze7uO7zjpK+bA==}
+    hasBin: true
 
-  '@hyperframes/parsers@0.9.20':
-    resolution: {integrity: sha512-EYvjQoHPw2NQtMaH1/AIxf0fyKtnV91CvQlGX3nsT4MhscOlFCqRQdY0KKczCriu2wYrRxaR9X2FeTyd2eUH1g==}
+  '@hyperframes/lint@0.9.22':
+    resolution: {integrity: sha512-lVeONgVAPxZrRFWfFwL1CpiSYcB5emayclqqmNvXCzUFon7bowVKDjaXj7L54nzIFdenUNt2NV5l1M4MXqNLTw==}
 
-  '@hyperframes/sdk@0.9.20':
-    resolution: {integrity: sha512-qGRDj9zzw9zqyakuByjuRm/0e1OIB6yS1i8wVQ/rWXFJKzbMwONs5AjJUnWZmnf0WZdHnsD2nKWWCV/GEj2fBw==}
+  '@hyperframes/parsers@0.9.22':
+    resolution: {integrity: sha512-PRkNwd2oRZhCT12F7b8hPEWOSSSo60dmMEXdTz/0TR/Y/rczJD/LL8G4T65Wy1DLCY7Wr7au27EP155JawlEyw==}
 
-  '@hyperframes/studio-server@0.9.20':
-    resolution: {integrity: sha512-sXn62aoq/n3fsP0Ha1BN3X3Ok3VoydM7CpuLfdD81LJnwxST3XqzNc1iu22sP/uruoBGQ34vqJPvtCwBAuYXqw==}
+  '@hyperframes/sdk@0.9.22':
+    resolution: {integrity: sha512-ZekwdB/AXod2FfRxGQ7QV7cUKqhw3pXPNBegkS6ga8Z+a8GWW/72Rl4BIe6qypmBgzB5pJune3UWv0q7vg75IA==}
+
+  '@hyperframes/studio-server@0.9.22':
+    resolution: {integrity: sha512-eFOWAgc/LKXlxRcgvq1eitdkXYbf7MJtewCRRa9ZACDusP2XmbCvYglmqcGq9j396fPSaXfpBM6I9uCYmtCPZw==}
 
   '@img/colour@1.1.0':
     resolution: {integrity: sha512-Td76q7j57o/tLVdgS746cYARfSyxk8iEfRxewL9h4OMzYhbW4TAcppl0mT4eyqXddh6L/jwoM75mo7ixa/pCeQ==}
@@ -1214,6 +1221,9 @@ packages:
   '@tootallnate/quickjs-emscripten@0.23.0':
     resolution: {integrity: sha512-C5Mc6rdnsaJDjO3UpGW/CQTHtCKaYlScZTly4JIu97Jxo/odCiH0ITnDXSJPTOrEKk/ycSZ0AOgTmkDtkOsvIA==}
 
+  '@types/esrecurse@4.3.1':
+    resolution: {integrity: sha512-xJBAbDifo5hpffDBuHl0Y8ywswbiAp/Wi7Y/GtAgSlZyIABppyurxVueOPE8LUQOxdlgi6Zqce7uoEpqNTeiUw==}
+
   '@types/estree@1.0.10':
     resolution: {integrity: sha512-lTyOMnOcmRBzdCv6/4zUZCrEhV0xrqQiUZBZtVcbmLHBXKLnN8q89v/wKRF/Q0HbwVsqbIG3o5HDoFl9sduM+g==}
 
@@ -1625,10 +1635,18 @@ packages:
     engines: {node: '>=6.0'}
     hasBin: true
 
+  eslint-scope@9.1.2:
+    resolution: {integrity: sha512-xS90H51cKw0jltxmvmHy2Iai1LIqrfbw57b79w/J7MfvDfkIkFZ+kj6zC3BjtUwh150HsSSdxXZcsuv72miDFQ==}
+    engines: {node: ^20.19.0 || ^22.13.0 || >=24}
+
   esprima@4.0.1:
     resolution: {integrity: sha512-eGuFFw7Upda+g4p+QHvnW0RyTX/SVeJBDM/gCtMARO0cLuT2HcEKnTPvhjV6aGeqrCB/sbNop0Kszm0jsaWU4A==}
     engines: {node: '>=4'}
     hasBin: true
+
+  esrecurse@4.3.0:
+    resolution: {integrity: sha512-KmfKL3b6G+RXvP8N1vr3Tq1kL/oCFgn2NYXEtqP8/L3pKapUA4G8cFVaoF3SU323CD4XypR/ffioHmkti6/Tag==}
+    engines: {node: '>=4.0'}
 
   estraverse@5.3.0:
     resolution: {integrity: sha512-MMdARuVEQziNTeJD8DgMqmhwR11BRQ/cBP+pLtYdSTnf3MIO8fFeiINEbX36ZdNlfU/7A9f3gUw49B3oQsvwBA==}
@@ -1737,8 +1755,8 @@ packages:
     resolution: {integrity: sha512-vK9P5/iUfdl95AI+JVyUuIcVtd4ofvtrOr3HNtM2yxC9bnMbEdp3x01OhQNnjb8IJYi38VlTE3mBXwcfvywuSw==}
     engines: {node: '>= 14'}
 
-  hyperframes@0.9.20:
-    resolution: {integrity: sha512-CmjQdproG2Gjl+5ruhgghGGxzdhDNMB/iPkPxr4UaiWf+pAYwLvCqWbkwI8yodlYOVp0EvNcXr9QBgS5QXth3Q==}
+  hyperframes@0.9.22:
+    resolution: {integrity: sha512-CBGabIX+fG5sWzgVUt/w98OqoEzGP9i/Z7bjC+9blFA5jq2G1VXIFNk5lBrtKcbhU6ftiI41e/gGDp2iWpBS0Q==}
     engines: {node: '>=22'}
     hasBin: true
 
@@ -2691,12 +2709,12 @@ snapshots:
     dependencies:
       hono: 4.13.17
 
-  '@hyperframes/core@0.9.20(@types/node@22.20.5)':
+  '@hyperframes/core@0.9.22(@types/node@22.20.5)':
     dependencies:
       '@chenglou/pretext': 0.0.5
-      '@hyperframes/lint': 0.9.20
-      '@hyperframes/parsers': 0.9.20
-      '@hyperframes/studio-server': 0.9.20(@types/node@22.20.5)
+      '@hyperframes/lint': 0.9.22
+      '@hyperframes/parsers': 0.9.22
+      '@hyperframes/studio-server': 0.9.22(@types/node@22.20.5)
       acorn: 8.19.0
       linkedom: 0.18.15
       postcss: 8.5.32
@@ -2707,9 +2725,27 @@ snapshots:
       - '@types/node'
       - canvas
 
-  '@hyperframes/lint@0.9.20':
+  '@hyperframes/inspector@0.9.22(yauzl@3.4.0)':
     dependencies:
-      '@hyperframes/parsers': 0.9.20
+      '@hyperframes/core': 0.9.22(@types/node@22.20.5)
+      '@hyperframes/parsers': 0.9.22
+      '@jridgewell/trace-mapping': 0.3.31
+      acorn: 8.19.0
+      esbuild: 0.28.2
+      eslint-scope: 9.1.2
+      htmlparser2: 10.1.0
+      postcss: 8.5.32
+      puppeteer-core: 25.16.0(yauzl@3.4.0)
+    transitivePeerDependencies:
+      - bufferutil
+      - canvas
+      - proxy-agent
+      - utf-8-validate
+      - yauzl
+
+  '@hyperframes/lint@0.9.22':
+    dependencies:
+      '@hyperframes/parsers': 0.9.22
       acorn: 8.19.0
       acorn-walk: 8.3.5
       htmlparser2: 10.1.0
@@ -2720,7 +2756,7 @@ snapshots:
     transitivePeerDependencies:
       - canvas
 
-  '@hyperframes/parsers@0.9.20':
+  '@hyperframes/parsers@0.9.22':
     dependencies:
       '@babel/parser': 7.29.13
       acorn: 8.19.0
@@ -2732,19 +2768,19 @@ snapshots:
     transitivePeerDependencies:
       - canvas
 
-  '@hyperframes/sdk@0.9.20(@types/node@22.20.5)':
+  '@hyperframes/sdk@0.9.22(@types/node@22.20.5)':
     dependencies:
-      '@hyperframes/core': 0.9.20(@types/node@22.20.5)
-      '@hyperframes/parsers': 0.9.20
+      '@hyperframes/core': 0.9.22(@types/node@22.20.5)
+      '@hyperframes/parsers': 0.9.22
       linkedom: 0.18.15
     transitivePeerDependencies:
       - '@types/node'
       - canvas
 
-  '@hyperframes/studio-server@0.9.20(@types/node@22.20.5)':
+  '@hyperframes/studio-server@0.9.22(@types/node@22.20.5)':
     dependencies:
-      '@hyperframes/core': 0.9.20(@types/node@22.20.5)
-      '@hyperframes/parsers': 0.9.20
+      '@hyperframes/core': 0.9.22(@types/node@22.20.5)
+      '@hyperframes/parsers': 0.9.22
       hono: 4.13.17
       linkedom: 0.18.15
       postcss: 8.5.32
@@ -3058,6 +3094,8 @@ snapshots:
   '@swc/helpers@0.5.24': {}
 
   '@tootallnate/quickjs-emscripten@0.23.0': {}
+
+  '@types/esrecurse@4.3.1': {}
 
   '@types/estree@1.0.10': {}
 
@@ -3495,7 +3533,18 @@ snapshots:
     optionalDependencies:
       source-map: 0.6.1
 
+  eslint-scope@9.1.2:
+    dependencies:
+      '@types/esrecurse': 4.3.1
+      '@types/estree': 1.0.10
+      esrecurse: 4.3.0
+      estraverse: 5.3.0
+
   esprima@4.0.1: {}
+
+  esrecurse@4.3.0:
+    dependencies:
+      estraverse: 5.3.0
 
   estraverse@5.3.0: {}
 
@@ -3623,7 +3672,7 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  hyperframes@0.9.20(@types/node@22.20.5):
+  hyperframes@0.9.22(@types/node@22.20.5):
     dependencies:
       '@hono/node-server': 2.1.6(hono@4.13.17)
       '@puppeteer/browsers': 3.2.6(yauzl@3.4.0)

@@ -727,6 +727,7 @@ const main = defineCommand({
       "normalize-audio",
       "LUFS-match one audio clip to another",
     ),
+    inspect: hfDelegate("inspect", "inspect", "Rendered visual layout inspection across the timeline"),
     diff: hfDelegate("diff", "diff", "Score render vs source video frame-by-frame"),
     measure: hfDelegate("measure", "measure", "Measure a video: cuts, motion, crops, eases, look"),
     history: hfDelegate("history", "history", "List/undo/restore recorded project changes"),
