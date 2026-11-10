@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// audio.mjs — the shared Framecraft audio engine. ONE implementation of TTS +
+// audio.mjs — the shared Editnce audio engine. ONE implementation of TTS +
 // BGM + SFX. Callers do NOT vendor a copy: they write a neutral
 // `audio_request.json` (mapping their storyboard/scenes into it) and call:
 //

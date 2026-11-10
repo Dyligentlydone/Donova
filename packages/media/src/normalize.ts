@@ -6,14 +6,14 @@ interface RawWhisperSegment {
 }
 
 /**
- * Accept either a framecraft transcript ({ words: [...] }) or raw whisper-cli
+ * Accept either an editnce transcript ({ words: [...] }) or raw whisper-cli
  * -oj output ({ transcription: [...] }) and normalize to Transcript.
  * Duration falls back to the last word's end when the raw format lacks it.
  */
 export function normalizeTranscript(json: unknown, source = "media", duration?: number): Transcript {
   const obj = json as Record<string, unknown>;
 
-  // Already a framecraft transcript.
+  // Already an editnce transcript.
   if (Array.isArray(obj?.words)) {
     const t = obj as unknown as Transcript;
     return { ...t, words: t.words.map((w) => ({ w: w.w, start: w.start, end: w.end, p: w.p })) };

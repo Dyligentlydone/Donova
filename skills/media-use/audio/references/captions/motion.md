@@ -80,7 +80,7 @@ Don't use the same highlight animation on every group — cycle through styles u
 
 ## Runtime Tools
 
-Caption motion uses standard Framecraft runtime APIs. Use the canonical sources:
+Caption motion uses standard Editnce runtime APIs. Use the canonical sources:
 
 - **GSAP timeline + tween syntax** — `/hyperframes` → `references/runtimes.md` and `references/motion.md`
 - **Fitting caption text** — `/hyperframes` → `references/captions.md`

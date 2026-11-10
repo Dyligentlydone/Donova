@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * Remembered defaults CLI — the lightweight tier of Framecraft user memory.
+ * Remembered defaults CLI — the lightweight tier of Editnce user memory.
  *
  *   node prefs.mjs get --hyperframes . [--json]
  *     Print the merged view (project `.media/preferences.json` over user

@@ -1,6 +1,6 @@
-import { tts } from "@framecraft/media";
+import { tts } from "@editnce/media";
 
-/** `framecraft tts` — text → audio file (MV9). */
+/** `editnce tts` — text → audio file (MV9). */
 export async function ttsCmd(opts: {
   text: string;
   out: string;

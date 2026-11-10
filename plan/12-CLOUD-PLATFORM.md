@@ -9,7 +9,7 @@ generation, music), team features, and billing.
 | Service | Stack | Responsibility |
 |---|---|---|
 | `api` | Hono (Node 22), Drizzle ORM, Postgres 16, Redis | auth, projects, uploads, render jobs, publish, billing, usage, AI proxy |
-| `render-worker` | Docker image: Debian bookworm-slim + chrome-headless-shell (pinned) + ffmpeg 7 static + fonts (Noto, Inter, Roboto, emoji) + `@framecraft/producer` | pulls jobs, renders shards, uploads outputs |
+| `render-worker` | Docker image: Debian bookworm-slim + chrome-headless-shell (pinned) + ffmpeg 7 static + fonts (Noto, Inter, Roboto, emoji) + `@editnce/producer` | pulls jobs, renders shards, uploads outputs |
 | `web` | Next.js (App Router) or Vite SSR — pick Next.js | marketing, docs, catalog site, share pages `/v/:slug`, dashboard, checkout |
 | storage | Cloudflare R2 (S3 API) | bundles, assets, outputs, previews |
 | CDN | Cloudflare | player bundle, registry, published videos |
@@ -37,11 +37,11 @@ webhooks(id, org_id, url, secret, events[], created_at)
 ## 3. Auth
 - Web: email magic link + Google/GitHub OAuth (use Better Auth or Lucia-style session cookies; httpOnly, SameSite=Lax).
 - CLI/Desktop: **OAuth 2.0 Device Authorization Grant (RFC 8628)**:
-  1. `POST /oauth/device/code {client_id:"framecraft-cli", scope}` → `{device_code, user_code: "WDJB-MJHT", verification_uri: "https://framecraft.dev/activate", verification_uri_complete, expires_in: 900, interval: 5}`.
+  1. `POST /oauth/device/code {client_id:"editnce-cli", scope}` → `{device_code, user_code: "WDJB-MJHT", verification_uri: "https://editnce.dev/activate", verification_uri_complete, expires_in: 900, interval: 5}`.
   2. CLI prints code, opens browser.
   3. CLI polls `POST /oauth/token {grant_type:"urn:ietf:params:oauth:grant-type:device_code", device_code}` → `authorization_pending` | `slow_down` | `{access_token, refresh_token, expires_in}`.
-  4. Store at `~/.config/framecraft/credentials.json` (mode 0600) or OS keychain (desktop).
-- API tokens for CI (`FRAMECRAFT_API_TOKEN`), hashed with SHA-256 at rest, shown once.
+  4. Store at `~/.config/editnce/credentials.json` (mode 0600) or OS keychain (desktop).
+- API tokens for CI (`EDITNCE_API_TOKEN`), hashed with SHA-256 at rest, shown once.
 
 ## 4. Cloud render flow
 1. CLI/Studio builds a bundle manifest: every project file → sha256, size (exclude `renders/`, `node_modules/`, `.git/`, caches).
@@ -59,7 +59,7 @@ container: 4 vCPU / 8 GB, 2 concurrent shards.
 
 ## 5. Publish & share
 - `POST /v1/publications {render_job_id, visibility, title}` → slug.
-- Share page `/v/:slug`: `<fc-player video-src=mp4>` + title + download (if allowed) + "Made with Framecraft" + OG tags (`og:video`, poster).
+- Share page `/v/:slug`: `<fc-player video-src=mp4>` + title + download (if allowed) + "Made with Editnce" + OG tags (`og:video`, poster).
 - Optional "live" share: upload compiled bundle; page uses live `<fc-player src>` (interactive decks).
 - Visibility: public, unlisted (default), private (org members, signed URLs 1 h).
 
@@ -73,7 +73,7 @@ container: 4 vCPU / 8 GB, 2 concurrent shards.
 - Overage: metered usage reported to Stripe usage records daily.
 
 ## 8. Public API (for developers)
-`/v1/renders`, `/v1/bundles`, `/v1/publications`, `/v1/templates/:name/render` (render a registry/example template with variables — the "video API" use case), webhooks. OpenAPI spec generated from Hono route schemas (zod-openapi). SDK: `@framecraft/cloud` (typed client).
+`/v1/renders`, `/v1/bundles`, `/v1/publications`, `/v1/templates/:name/render` (render a registry/example template with variables — the "video API" use case), webhooks. OpenAPI spec generated from Hono route schemas (zod-openapi). SDK: `@editnce/cloud` (typed client).
 
 ## 9. Legal/compliance checklist (must be done before public launch)
 - Our own license choice: Apache-2.0 for local core packages (or source-available) and proprietary for cloud/desktop — decide and add LICENSE files.

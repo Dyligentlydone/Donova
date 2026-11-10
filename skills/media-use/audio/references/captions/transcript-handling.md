@@ -8,7 +8,7 @@ The CLI auto-detects and normalizes these formats:
 
 | Format                | Extension | Source                                                                      | Word-level?       |
 | --------------------- | --------- | --------------------------------------------------------------------------- | ----------------- |
-| whisper.cpp JSON      | `.json`   | `framecraft init --video`, `framecraft transcribe`                        | Yes               |
+| whisper.cpp JSON      | `.json`   | `editnce init --video`, `editnce transcribe`                        | Yes               |
 | OpenAI Whisper API    | `.json`   | `openai.audio.transcriptions.create({ timestamp_granularities: ["word"] })` | Yes               |
 | SRT subtitles         | `.srt`    | Video editors, subtitle tools, YouTube                                      | No (phrase-level) |
 | VTT subtitles         | `.vtt`    | Web players, YouTube, transcription services                                | No (phrase-level) |
@@ -36,7 +36,7 @@ After every transcription, **read the transcript and check for quality issues be
 
 1. **Retry with `medium.en`** if the original used `small.en` or smaller:
    ```bash
-   framecraft transcribe audio.mp3 --model medium.en
+   editnce transcribe audio.mp3 --model medium.en
    ```
 2. **If `medium.en` also fails** (still >20% music tokens or garbled), tell the user the audio is too noisy for local transcription and suggest:
    - Providing lyrics manually as an SRT/VTT file
@@ -74,7 +74,7 @@ curl https://api.openai.com/v1/audio/transcriptions \
   -F "timestamp_granularities[]=word" \
   -o transcript-openai.json
 
-framecraft transcribe transcript-openai.json
+editnce transcribe transcript-openai.json
 ```
 
 **Groq Whisper API** (fast, free tier available):
@@ -87,7 +87,7 @@ curl https://api.groq.com/openai/v1/audio/transcriptions \
   -F "timestamp_granularities[]=word" \
   -o transcript-groq.json
 
-framecraft transcribe transcript-groq.json
+editnce transcribe transcript-groq.json
 ```
 
 ## If No Transcript Exists

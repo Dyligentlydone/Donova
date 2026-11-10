@@ -10,9 +10,9 @@ import { styleCmd } from "./style.js";
 import { transcribeCmd } from "./transcribe.js";
 
 /**
- * `framecraft mcp` — a minimal MCP server over stdio (JSON-RPC 2.0, newline-
+ * `editnce mcp` — a minimal MCP server over stdio (JSON-RPC 2.0, newline-
  * framed). Exposes the agent toolset so Claude Code, Cursor, or any MCP client
- * can drive Framecraft without shelling out (17 §studio, MV5).
+ * can drive Editnce without shelling out (17 §studio, MV5).
  *
  * Tools mirror the CLI commands; every one returns a JSON text result.
  */
@@ -32,28 +32,28 @@ const req = (_name: string, props: Record<string, unknown>, required: string[]) 
 
 const TOOLS: Tool[] = [
   {
-    name: "framecraft_check",
-    description: "Validate a Framecraft project (contract + runtime errors, layout, contrast)",
-    inputSchema: req("framecraft_check", {}, []),
+    name: "editnce_check",
+    description: "Validate an Editnce project (contract + runtime errors, layout, contrast)",
+    inputSchema: req("editnce_check", {}, []),
     run: (a) => checkProject((a.dir as string) ?? "."),
   },
   {
-    name: "framecraft_probe",
+    name: "editnce_probe",
     description: "Probe a media file (codec, duration, dimensions, audio)",
-    inputSchema: req("framecraft_probe", { media: { type: "string" } }, ["media"]),
+    inputSchema: req("editnce_probe", { media: { type: "string" } }, ["media"]),
     run: (a) => probeCmd(String(a.media)),
   },
   {
-    name: "framecraft_timeline",
+    name: "editnce_timeline",
     description: "Resolved clip list with computed timings",
-    inputSchema: req("framecraft_timeline", {}, []),
+    inputSchema: req("editnce_timeline", {}, []),
     run: (a) => timelineCmd((a.dir as string) ?? "."),
   },
   {
-    name: "framecraft_snapshot",
+    name: "editnce_snapshot",
     description: "Capture PNG frames at given times (visual verification)",
     inputSchema: req(
-      "framecraft_snapshot",
+      "editnce_snapshot",
       { times: { type: "array", items: { type: "number" } }, out: { type: "string" } },
       ["times"],
     ),
@@ -66,10 +66,10 @@ const TOOLS: Tool[] = [
       ),
   },
   {
-    name: "framecraft_transcribe",
+    name: "editnce_transcribe",
     description: "Whisper transcription with word timings (downloads model on first use)",
     inputSchema: req(
-      "framecraft_transcribe",
+      "editnce_transcribe",
       {
         media: { type: "string" },
         out: { type: "string" },
@@ -91,10 +91,10 @@ const TOOLS: Tool[] = [
       }),
   },
   {
-    name: "framecraft_cuts",
+    name: "editnce_cuts",
     description: "Transcript → dead-air cut plan",
     inputSchema: req(
-      "framecraft_cuts",
+      "editnce_cuts",
       {
         transcript: { type: "string" },
         threshold: { type: "number" },
@@ -112,10 +112,10 @@ const TOOLS: Tool[] = [
       }),
   },
   {
-    name: "framecraft_scaffold",
+    name: "editnce_scaffold",
     description: "Footage → neutral index.html (optionally applying a cut plan)",
     inputSchema: req(
-      "framecraft_scaffold",
+      "editnce_scaffold",
       { media: { type: "string" }, cuts: { type: "string" }, transcript: { type: "string" } },
       ["media"],
     ),
@@ -128,10 +128,10 @@ const TOOLS: Tool[] = [
       }),
   },
   {
-    name: "framecraft_captions",
+    name: "editnce_captions",
     description: "Generate a caption track in index.html from a transcript",
     inputSchema: req(
-      "framecraft_captions",
+      "editnce_captions",
       {
         transcript: { type: "string" },
         cuts: { type: "string" },
@@ -150,23 +150,23 @@ const TOOLS: Tool[] = [
       }),
   },
   {
-    name: "framecraft_add",
+    name: "editnce_add",
     description: "Install a registry block or SFX into the project",
-    inputSchema: req("framecraft_add", { name: { type: "string" } }, ["name"]),
+    inputSchema: req("editnce_add", { name: { type: "string" } }, ["name"]),
     run: (a) => addBlock((a.dir as string) ?? ".", String(a.name)),
   },
   {
-    name: "framecraft_style",
+    name: "editnce_style",
     description: "Style file ops: init | show | path",
-    inputSchema: req("framecraft_style", { action: { type: "string", enum: ["init", "show", "path"] } }, [
+    inputSchema: req("editnce_style", { action: { type: "string", enum: ["init", "show", "path"] } }, [
       "action",
     ]),
     run: (a) => styleCmd({ action: a.action as "init" | "show" | "path", dir: (a.dir as string) ?? "." }),
   },
   {
-    name: "framecraft_doctor",
+    name: "editnce_doctor",
     description: "Environment check (node, ffmpeg, chrome, disk, model)",
-    inputSchema: req("framecraft_doctor", {}, []),
+    inputSchema: req("editnce_doctor", {}, []),
     run: (a) => doctor({ projectDir: a.dir as string | undefined }),
   },
 ];
@@ -208,7 +208,7 @@ process.stdin.on("data", async (chunk) => {
           ok(id, {
             protocolVersion: "2024-11-05",
             capabilities: { tools: {} },
-            serverInfo: { name: "framecraft", version: "0.1.0" },
+            serverInfo: { name: "editnce", version: "0.1.0" },
           });
           break;
         case "notifications/initialized":

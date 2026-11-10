@@ -1,5 +1,5 @@
 {
-  "name": "@framecraft/cli",
+  "name": "@editnce/cli",
   "version": "0.1.0",
   "private": true,
   "type": "module",
@@ -24,17 +24,17 @@
     "vitest": "2.1.9"
   },
   "bin": {
-    "framecraft": "./bin/framecraft.mjs",
-    "fc": "./bin/framecraft.mjs"
+    "editnce": "./bin/editnce.mjs",
+    "ec": "./bin/editnce.mjs"
   },
   "dependencies": {
-    "@framecraft/contract": "workspace:*",
-    "@framecraft/engine": "workspace:*",
-    "@framecraft/lint": "workspace:*",
-    "@framecraft/media": "workspace:*",
-    "@framecraft/producer": "workspace:*",
-    "@framecraft/runtime": "workspace:*",
-    "@framecraft/studio-server": "workspace:*",
+    "@editnce/contract": "workspace:*",
+    "@editnce/engine": "workspace:*",
+    "@editnce/lint": "workspace:*",
+    "@editnce/media": "workspace:*",
+    "@editnce/producer": "workspace:*",
+    "@editnce/runtime": "workspace:*",
+    "@editnce/studio-server": "workspace:*",
     "@hyperframes/inspector": "0.9.22",
     "@hyperframes/sdk": "0.9.22",
     "citty": "^0.1.6",

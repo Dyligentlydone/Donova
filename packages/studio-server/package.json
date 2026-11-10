@@ -1,5 +1,5 @@
 {
-  "name": "@framecraft/studio-server",
+  "name": "@editnce/studio-server",
   "version": "0.1.0",
   "private": true,
   "type": "module",
@@ -22,11 +22,11 @@
     "typescript": "5.7.3"
   },
   "dependencies": {
-    "@framecraft/contract": "workspace:*",
-    "@framecraft/engine": "workspace:*",
-    "@framecraft/producer": "workspace:*",
-    "@framecraft/lint": "workspace:*",
-    "@framecraft/runtime": "workspace:*",
+    "@editnce/contract": "workspace:*",
+    "@editnce/engine": "workspace:*",
+    "@editnce/producer": "workspace:*",
+    "@editnce/lint": "workspace:*",
+    "@editnce/runtime": "workspace:*",
     "parse5": "^7.2.1"
   }
 }

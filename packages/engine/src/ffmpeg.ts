@@ -1,7 +1,7 @@
 import { execFile, spawn } from "node:child_process";
 import { createRequire } from "node:module";
 import { promisify } from "node:util";
-import { ENV_PREFIX } from "@framecraft/contract";
+import { ENV_PREFIX, LEGACY } from "@editnce/contract";
 
 const execFileAsync = promisify(execFile);
 
@@ -15,8 +15,8 @@ let cached: FfmpegPaths | null = null;
 /** Locate ffmpeg/ffprobe: env override → ffmpeg-static/ffprobe-static → PATH. */
 export async function locateFfmpeg(): Promise<FfmpegPaths> {
   if (cached) return cached;
-  const envFfmpeg = process.env[`${ENV_PREFIX}FFMPEG`];
-  const envFfprobe = process.env[`${ENV_PREFIX}FFPROBE`];
+  const envFfmpeg = process.env[`${ENV_PREFIX}FFMPEG`] ?? process.env[`${LEGACY.envPrefix}FFMPEG`];
+  const envFfprobe = process.env[`${ENV_PREFIX}FFPROBE`] ?? process.env[`${LEGACY.envPrefix}FFPROBE`];
 
   let ffmpeg = envFfmpeg;
   let ffprobe = envFfprobe;

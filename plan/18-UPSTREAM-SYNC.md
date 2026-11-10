@@ -1,4 +1,4 @@
-# 18 — Upstream Sync Backlog (HyperFrames → Framecraft)
+# 18 — Upstream Sync Backlog (HyperFrames → Editnce)
 
 We pin `hyperframes` as a dependency for the Studio bundle + delegate commands, so
 engine fixes ship to us for free on each bump. What does NOT come free: features
@@ -47,7 +47,7 @@ This file tracks items worth porting, reviewed per release. Last sync: 0.9.20 �
   from uploads, `--dry-run` on upload size — keeps bundles under limits.
 - **Plan v2 manifest-last publisher**: writes plan artifacts straight to S3/GCS —
   reference implementation for our render-job artifact flow (already reachable
-  via `fc cloudrun` delegate for our own use).
+  via `ec cloudrun` delegate for our own use).
 
 ## Studio freebies already in the served bundle (0.9.22)
 

@@ -1,6 +1,6 @@
 {
   "name": "word-captions",
-  "description": "One-word kinetic captions generated from transcript+cuts. Install, then run `framecraft captions` to generate the track.",
+  "description": "One-word kinetic captions generated from transcript+cuts. Install, then run `editnce captions` to generate the track.",
   "tags": ["captions", "text", "footage"],
   "vars": [
     {

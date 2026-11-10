@@ -22,7 +22,7 @@ const MODEL_URL = "https://github.com/danielgatis/rembg/releases/download/v0.0.0
 const MODEL_SIZE = 320; // model input is 320×320
 
 function modelDir(): string {
-  return join(process.env.HOME ?? tmpdir(), ".cache", "framecraft", "models");
+  return join(process.env.HOME ?? tmpdir(), ".cache", "editnce", "models");
 }
 
 export async function ensureModel(): Promise<string> {

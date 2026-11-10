@@ -1,4 +1,4 @@
-# 07 — Lint & Check (`@framecraft/lint`)
+# 07 — Lint & Check (`@editnce/lint`)
 
 Two layers:
 1. **lint** — static analysis of HTML/CSS/JS (fast, no browser). Runs in CLI, Studio (on
@@ -33,8 +33,8 @@ interface LintContext {
 interface Finding { ruleId; severity; message; hint; file; line; col; endLine?; endCol?; elementId?; data?: unknown }
 ```
 
-Config in `framecraft.json` → `"lint": { "rules": { "<id>": "off"|"warning"|"error" } }`.
-Inline disable: `<!-- framecraft-lint-disable rule_id -->` before an element.
+Config in `editnce.json` → `"lint": { "rules": { "<id>": "off"|"warning"|"error" } }`.
+Inline disable: `<!-- editnce-lint-disable rule_id -->` before an element.
 
 ## 2. Rule set (implement all; grouped; severity in brackets)
 

@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * Recipes CLI — the heavyweight tier of Framecraft user memory.
+ * Recipes CLI — the heavyweight tier of Editnce user memory.
  *
  *   node recipe.mjs freeze --hyperframes . --name <n> [--workflow <w>] [--blocks a,b,c]
  *     Freeze the current approved run as a named recipe: frame.md + the

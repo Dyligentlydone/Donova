@@ -4,8 +4,8 @@ import { access, statfs } from "node:fs/promises";
 import { homedir, totalmem } from "node:os";
 import { join } from "node:path";
 import { promisify } from "node:util";
-import { CACHE_DIR, ENV_PREFIX } from "@framecraft/contract";
-import { locateFfmpeg } from "@framecraft/engine";
+import { CACHE_DIR, ENV_PREFIX, LEGACY } from "@editnce/contract";
+import { locateFfmpeg } from "@editnce/engine";
 import {
   WHISPER_MODELS,
   findWhisperCli,
@@ -13,7 +13,7 @@ import {
   sherpaRuntimeLoadError,
   sherpaUnsupportedReason,
   whisperModelDir,
-} from "@framecraft/media";
+} from "@editnce/media";
 
 const execFileAsync = promisify(execFile);
 
@@ -44,7 +44,7 @@ async function binVersion(bin: string, arg = "-version"): Promise<string | null>
 }
 
 /**
- * `framecraft doctor` — environment + project health (17 §3.1.1).
+ * `editnce doctor` — environment + project health (17 §3.1.1).
  * Every check prints an actionable hint; JSON output is machine-readable.
  */
 export async function doctor(opts?: { projectDir?: string }): Promise<DoctorResult> {
@@ -56,7 +56,7 @@ export async function doctor(opts?: { projectDir?: string }): Promise<DoctorResu
     name: "node",
     ok: nodeMajor >= 22,
     value: process.version,
-    hint: nodeMajor >= 22 ? undefined : "Framecraft needs Node ≥ 22.",
+    hint: nodeMajor >= 22 ? undefined : "Editnce needs Node ≥ 22.",
     required: true,
   });
 
@@ -95,20 +95,21 @@ export async function doctor(opts?: { projectDir?: string }): Promise<DoctorResu
       name: "ffmpeg",
       ok: false,
       value: "not found",
-      hint: "Install ffmpeg (brew install ffmpeg) or set FRAMECRAFT_FFMPEG.",
+      hint: "Install ffmpeg (brew install ffmpeg) or set EDITNCE_FFMPEG.",
       required: true,
     });
     checks.push({
       name: "ffprobe",
       ok: false,
       value: "not found",
-      hint: "Install ffmpeg (brew install ffmpeg) or set FRAMECRAFT_FFPROBE.",
+      hint: "Install ffmpeg (brew install ffmpeg) or set EDITNCE_FFPROBE.",
       required: true,
     });
   }
 
   // --- Chrome headless shell (cached download, no download attempt here) ---
-  const chromeDir = join(homedir(), CACHE_DIR, "chrome");
+  const legacyChromeDir = join(homedir(), LEGACY.cacheDir, "chrome");
+  const chromeDir = existsSync(legacyChromeDir) ? legacyChromeDir : join(homedir(), CACHE_DIR, "chrome");
   const chromePresent = existsSync(chromeDir);
   let chromeVersion: string | undefined;
   if (chromePresent) {
@@ -144,7 +145,7 @@ export async function doctor(opts?: { projectDir?: string }): Promise<DoctorResu
     value: whisper ?? "not found",
     hint:
       whisper == null
-        ? "Install whisper.cpp for `framecraft transcribe` (brew install whisper-cpp)."
+        ? "Install whisper.cpp for `editnce transcribe` (brew install whisper-cpp)."
         : undefined,
     required: false,
   });
@@ -156,7 +157,7 @@ export async function doctor(opts?: { projectDir?: string }): Promise<DoctorResu
     name: "whisper models",
     ok: presentModels.length > 0,
     value: presentModels.length ? presentModels.join(", ") : "none downloaded",
-    hint: presentModels.length ? undefined : "Downloaded automatically on first `framecraft transcribe`.",
+    hint: presentModels.length ? undefined : "Downloaded automatically on first `editnce transcribe`.",
     required: false,
   });
   const parakeetReason = sherpaUnsupportedReason();
@@ -178,7 +179,7 @@ export async function doctor(opts?: { projectDir?: string }): Promise<DoctorResu
         : `runtime ${parakeetRuntime}`),
     hint:
       parakeetRuntime === "ok" && !parakeetModel
-        ? "framecraft models install parakeet (downloads ~670MB, or auto-downloads on first transcribe)"
+        ? "editnce models install parakeet (downloads ~670MB, or auto-downloads on first transcribe)"
         : undefined,
     required: false,
   });
@@ -207,10 +208,12 @@ export async function doctor(opts?: { projectDir?: string }): Promise<DoctorResu
   });
 
   // --- write access to cache ---
-  const cacheRoot = join(homedir(), CACHE_DIR);
+  // legacy framecraft cache counts too; if neither exists yet, test the home dir
+  const legacyCache = join(homedir(), LEGACY.cacheDir);
+  const cacheRoot = existsSync(legacyCache) ? legacyCache : join(homedir(), CACHE_DIR);
   let writable = true;
   try {
-    await access(cacheRoot, constants.W_OK);
+    await access(existsSync(cacheRoot) ? cacheRoot : homedir(), constants.W_OK);
   } catch {
     writable = false;
   }
@@ -229,7 +232,7 @@ export async function doctor(opts?: { projectDir?: string }): Promise<DoctorResu
       name: "project index.html",
       ok: existsSync(indexPath),
       value: indexPath,
-      hint: existsSync(indexPath) ? undefined : "No index.html — run `framecraft init` or scaffold.",
+      hint: existsSync(indexPath) ? undefined : "No index.html — run `editnce init` or scaffold.",
       required: false,
     });
   }

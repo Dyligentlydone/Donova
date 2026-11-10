@@ -1,46 +1,46 @@
 ---
 name: media-use
-description: Get or make any media for a Framecraft video - music, sound effects, images, icons, logos, voiceover, avatar and generated video, transcripts, cutouts, colour grades and looks - with HeyGen or free local tools, and mix placed audio. Also for footage that looks dark, flat or dull, or should be stylized or hidden.
+description: Get or make any media for an Editnce video - music, sound effects, images, icons, logos, voiceover, avatar and generated video, transcripts, cutouts, colour grades and looks - with HeyGen or free local tools, and mix placed audio. Also for footage that looks dark, flat or dull, or should be stylized or hidden.
 ---
 
-**Plugin installs:** Inside a Framecraft plugin, follow [plugin execution rules](../framecraft/SKILL.md).
+**Plugin installs:** Inside an Editnce plugin, follow [plugin execution rules](../editnce/SKILL.md).
 
 
-# Media in Framecraft
+# Media in Editnce
 
 Media lands as a local file in the project's `assets/` with a ledger record; renders never fetch. One verb finds or makes it:
 
 ```bash
-framecraft media-use resolve --type <type> --intent "<what you need>" --project <dir>
+editnce media-use resolve --type <type> --intent "<what you need>" --project <dir>
 ```
 
 It prints one line, `resolved <id> → <path> (<type>, <metadata>)`. List reusable assets first with `--candidates` and judge the fit yourself; reuse, ingest (`--from`) and adopt are in `references/resolve.md`.
 
 ## Where it comes from
 
-| Need | Free | Framecraft credits | Local or the person's own key (only when they ask) |
+| Need | Free | Editnce credits | Local or the person's own key (only when they ask) |
 | --- | --- | --- | --- |
 | Music (`bgm`) | HeyGen catalog of 10k+ tracks (signed in) | Generated track | Local MusicGen |
 | Sound effects (`sfx`) | HeyGen (signed in); Openverse (credit CC BY); bundled | | |
 | Images, icons | HeyGen asset search, 75k+ (signed in) | Generated images | Local FLUX (mflux), if installed |
 | Logos (`logo`) | theSVG, GitHub avatar, favicon; never redrawn | | |
-| Voiceover (`voice`) | Voice Turbo, Free plan: 3 min a month | Voice Turbo on a paid plan, other HeyGen voices, cloning | `framecraft tts` (Kokoro on device) |
+| Voiceover (`voice`) | Voice Turbo, Free plan: 3 min a month | Voice Turbo on a paid plan, other HeyGen voices, cloning | `editnce tts` (Kokoro on device) |
 | A presenter speaking | | Avatar video (`--type video`) | Local LTX for generic clips, if installed |
-| Transcripts | `framecraft transcribe` (Parakeet or whisper) | | |
-| Cutouts | | Video: `--type cutout` | `framecraft remove-background` |
-| Grades, LUTs, looks | `framecraft media-treatment` | | |
+| Transcripts | `editnce transcribe` (Parakeet or whisper) | | |
+| Cutouts | | Video: `--type cutout` | `editnce remove-background` |
+| Grades, LUTs, looks | `editnce media-treatment` | | |
 
-**Local first.** Framecraft defaults to the free local tools column — no sign-in is needed for `framecraft tts`, `framecraft transcribe`, `framecraft remove-background`, `framecraft media-treatment`, `framecraft audio`, or bundled assets. HeyGen-backed paths (their music catalog, asset search, cloud models) are optional upgrades: if the person has a `hyperframes auth` sign-in they unlock the HeyGen column, but never block a request on it — prefer local tools unless asked otherwise.
+**Local first.** Editnce defaults to the free local tools column — no sign-in is needed for `editnce tts`, `editnce transcribe`, `editnce remove-background`, `editnce media-treatment`, `editnce audio`, or bundled assets. HeyGen-backed paths (their music catalog, asset search, cloud models) are optional upgrades: if the person has a `hyperframes auth` sign-in they unlock the HeyGen column, but never block a request on it — prefer local tools unless asked otherwise.
 
 **Host apps.** Inside an app with its own media tools, use those first. When `HEYGEN_API_BASE` is set, the host pays: don't ask for a sign-in; relay a refused call's message as written and stop.
 
-**HeyGen.** `framecraft media-use generate` makes images, shots, talking photos, voices and music on the sign-in alone. Helpers and direct recipes need the [`heygen` CLI](https://developers.heygen.com/cli); if it is missing, give the link and wait until they say it is installed. Direct `heygen` recipes bill that CLI's own login: use them only when that payer is selected.
+**HeyGen.** `editnce media-use generate` makes images, shots, talking photos, voices and music on the sign-in alone. Helpers and direct recipes need the [`heygen` CLI](https://developers.heygen.com/cli); if it is missing, give the link and wait until they say it is installed. Direct `heygen` recipes bill that CLI's own login: use them only when that payer is selected.
 
 **Credits.** Plan for the best result: no cheaper or free swaps, no dropped items, unless asked to save cost. Don't volunteer prices, estimates or usage; `--plan` is for you. A credit limit the person sets: write it once to `.hyperframes/credit-limit.json` as `{"credits": N}`; every paid call then refuses what would go past it (`--max-credits` only tightens). A step that won't fit (a `--plan` over what is left, or a refused call): say what doesn't, ask before dropping or shrinking it. A refused call names a `billing` command: say why, ask them to run it, then retry.
 
 ## Looks on real footage
 
-Feedback that footage is dark, flat or dull, should feel retro or printed, needs a face hidden, or needs a reveal is media intent. Inspect the real `<img>`/`<video>`, pick one intent, and follow `references/media-treatments.md`; persist with `framecraft media-treatment`, never a CSS, SVG or `.cube` stand-in.
+Feedback that footage is dark, flat or dull, should feel retro or printed, needs a face hidden, or needs a reveal is media intent. Inspect the real `<img>`/`<video>`, pick one intent, and follow `references/media-treatments.md`; persist with `editnce media-treatment`, never a CSS, SVG or `.cube` stand-in.
 
 ## Offer once, never add silently
 

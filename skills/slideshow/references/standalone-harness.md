@@ -1,8 +1,8 @@
-# Standalone Framecraft Slideshow Harness
+# Standalone Editnce Slideshow Harness
 
 ## 1. Interim framing — why this exists
 
-These patterns are a **temporary workaround** for standalone demos. The durable solution is engine-hosted: a future `framecraft studio --slideshow` / studio present mode will host the composition over the real Framecraft engine, which drives seek-timelines frame-by-frame, owns the gesture frame, and reads the slideshow island directly from the composition. When that path ships, most of what follows collapses.
+These patterns are a **temporary workaround** for standalone demos. The durable solution is engine-hosted: a future `editnce studio --slideshow` / studio present mode will host the composition over the real Editnce engine, which drives seek-timelines frame-by-frame, owns the gesture frame, and reads the slideshow island directly from the composition. When that path ships, most of what follows collapses.
 
 Until then, a standalone slideshow opened via the bare player bundle must work around three facts:
 
@@ -20,7 +20,7 @@ Do not treat these as the blessed authoring model. When the engine-hosted path s
 
 The parent page hosts the two dist bundles, wraps the components, duplicates the island, and owns all audio.
 
-For public or user-facing generated projects, make this wrapper the root `index.html` so opening the project in a browser runs the slideshow. Put the raw Framecraft composition in a separate path such as `composition/index.html`. In repo examples you may still see this file called `demo.html`; that name is a reference pattern, not the preferred handoff for a standalone deck.
+For public or user-facing generated projects, make this wrapper the root `index.html` so opening the project in a browser runs the slideshow. Put the raw Editnce composition in a separate path such as `composition/index.html`. In repo examples you may still see this file called `demo.html`; that name is a reference pattern, not the preferred handoff for a standalone deck.
 
 ```html
 <!doctype html>
@@ -32,10 +32,10 @@ For public or user-facing generated projects, make this wrapper the root `index.
 
     <!--
       Load both bundles from packages/player/dist.
-      The global builds register <framecraft-player> and <hyperframes-slideshow>
+      The global builds register <editnce-player> and <hyperframes-slideshow>
       as custom elements — no import map needed.
     -->
-    <script src="../../../packages/player/dist/framecraft-player.global.js"></script>
+    <script src="../../../packages/player/dist/editnce-player.global.js"></script>
     <script src="../../../packages/player/dist/slideshow/hyperframes-slideshow.global.js"></script>
 
     <style>
@@ -65,11 +65,11 @@ For public or user-facing generated projects, make this wrapper the root `index.
       tabindex="0"
       style="display: block; position: relative; width: 100vw; height: 100vh"
     >
-      <framecraft-player
+      <editnce-player
         interactive
         style="position: absolute; inset: 0"
         src="composition/index.html"
-      ></framecraft-player>
+      ></editnce-player>
 
       <!--
         DUPLICATED ISLAND — keep in sync with the island inside index.html.
@@ -141,7 +141,7 @@ Audible playback has one extra browser constraint: a `BroadcastChannel` message 
   var unlockButton = null;
 
   function frameDocument() {
-    var player = document.querySelector("framecraft-player");
+    var player = document.querySelector("editnce-player");
     var frame = player && player.iframeElement;
     try {
       return frame && frame.contentDocument ? frame.contentDocument : null;
@@ -383,7 +383,7 @@ function notesDeckKey(slideshowEl) {
   const explicit = slideshowEl.getAttribute("notes-storage-key");
   if (explicit && explicit.trim()) return explicit.trim();
 
-  const playerSrc = slideshowEl.querySelector("framecraft-player")?.getAttribute("src") || "";
+  const playerSrc = slideshowEl.querySelector("editnce-player")?.getAttribute("src") || "";
   let resolvedPlayerSrc = playerSrc;
   try {
     resolvedPlayerSrc = new URL(playerSrc, location.href).href;
@@ -436,7 +436,7 @@ For converted source pages, preserve the original page's visual design, motion l
 
 ### Navigation camera transitions for converted pages
 
-When a source page uses scroll to move a translated/scaled world, slideshow navigation usually seeks directly to each slide's hold frame. That seek bypasses any in-timeline interpolation near the scene boundary, so a deck can compute the right camera positions and still appear to jump. Add an explicit standalone navigation transition for manual slide changes, while keeping normal Framecraft timeline seeks static and deterministic.
+When a source page uses scroll to move a translated/scaled world, slideshow navigation usually seeks directly to each slide's hold frame. That seek bypasses any in-timeline interpolation near the scene boundary, so a deck can compute the right camera positions and still appear to jump. Add an explicit standalone navigation transition for manual slide changes, while keeping normal Editnce timeline seeks static and deterministic.
 
 Use this pattern only for direct-open/presenter slideshow UI. Do not depend on CSS transitions for rendered video output; rendered compositions must still be correct when seeking a single frame.
 
@@ -495,7 +495,7 @@ function updateCameraForTime(t, opts) {
 
 During measurement, temporarily remove the transform with `hf-camera-static`, compute all element union rects, then restore `currentCamera` without animation. On initial load, resize, and validation-style seeks, call `updateCameraForTime(t, { staticCamera: true })`. In the standalone wrapper, set `iframe.contentWindow.__hfCameraTransitionsEnabled = true` after the player iframe is available. That keeps the exported composition seekable while letting presenter navigation glide between focal points.
 
-Before validation, resolve source font variables. Framecraft lint accepts concrete generic stacks such as `system-ui, sans-serif` and `ui-monospace, monospace`, or real `@font-face` declarations pointing at local font files. It does not accept `font-family: var(--f-body)` / `var(--f-mono)` as a render-safe family.
+Before validation, resolve source font variables. Editnce lint accepts concrete generic stacks such as `system-ui, sans-serif` and `ui-monospace, monospace`, or real `@font-face` declarations pointing at local font files. It does not accept `font-family: var(--f-body)` / `var(--f-mono)` as a render-safe family.
 
 ```html
 <!-- In index.html (composition) -->
@@ -723,9 +723,9 @@ Omitting any scene (including branch scenes) from this manifest means the slides
 
 Wrapper-owned SFX should live in the parent page. Browsers enforce user-activation for AudioContext and HTMLAudioElement.play() — an iframe without its own activation (i.e., the user never clicked inside it) is often autoplay-blocked. The user's keypress lands on the parent, so the parent is the reliable frame for click/transition sound effects.
 
-Normal slide media should stay in the composition. The slideshow player now stops slide media automatically on slide/sequence changes by calling `framecraft-player.stopMedia()`, which pauses iframe `<video>` / `<audio>`, runtime WebAudio, and parent proxies adopted from iframe media. Same-slide fragment reveals do not stop media, and global/deck-level parent audio such as `audio-src` is left alone. Do not hand-roll per-slide cleanup scripts for regular video/audio players.
+Normal slide media should stay in the composition. The slideshow player now stops slide media automatically on slide/sequence changes by calling `editnce-player.stopMedia()`, which pauses iframe `<video>` / `<audio>`, runtime WebAudio, and parent proxies adopted from iframe media. Same-slide fragment reveals do not stop media, and global/deck-level parent audio such as `audio-src` is left alone. Do not hand-roll per-slide cleanup scripts for regular video/audio players.
 
-Every copied `<video>` / `<audio>` with a `src` must be timed for Framecraft ownership:
+Every copied `<video>` / `<audio>` with a `src` must be timed for Editnce ownership:
 
 ```html
 <video
@@ -755,7 +755,7 @@ The component:
 
 - Tracks `muted` state (default `false`); exposes a `muted` getter
 - Reflects to a `data-hf-muted` attribute on the host when muted
-- Applies mute globally to child `<framecraft-player>` media and top-level page `<audio>` / `<video>` elements
+- Applies mute globally to child `<editnce-player>` media and top-level page `<audio>` / `<video>` elements
 - Dispatches `CustomEvent("hf-sound", { detail: { muted }, bubbles: true, composed: true })` on every toggle
 - Browser-checks the actual iframe media state after changes; every composition `<video>` / `<audio>` should report `muted: true` after clicking the nav mute button
 
@@ -875,7 +875,7 @@ Do NOT add a mute button inside the composition. The `#sfx-mute` coral button pa
 </script>
 ```
 
-**Sourcing SFX files:** resolve each one with `framecraft media-use resolve --type sfx --intent "<whoosh | click | transition>" --project .` (Openverse CC0 / CC BY, bundled library offline; CC BY credits land in a `CREDITS.md` beside the resolved files), copy the files to a local `sfx/` directory next to `demo.html` and reference them by relative path. Do not fetch SFX at render time — the Framecraft determinism rule forbids runtime network requests; pre-download and commit them.
+**Sourcing SFX files:** resolve each one with `editnce media-use resolve --type sfx --intent "<whoosh | click | transition>" --project .` (Openverse CC0 / CC BY, bundled library offline; CC BY credits land in a `CREDITS.md` beside the resolved files), copy the files to a local `sfx/` directory next to `demo.html` and reference them by relative path. Do not fetch SFX at render time — the Editnce determinism rule forbids runtime network requests; pre-download and commit them.
 
 ---
 
@@ -1012,6 +1012,6 @@ if (!renderer) {
 | Presenter media events are not bridged                | Audience follows slides but not play/pause/seek/mute            | Mirror native media events over `BroadcastChannel("hf-slideshow:" + location.pathname)` in standalone wrappers with interactive media            |
 | Remote play is blocked in the audience window         | Audience media time jumps but video never plays                 | Try muted playback first; if `media.play()` rejects, show an audience unlock button and ignore live `timeupdate` chasing until playback succeeds |
 | Audience muted autoplay publishes back to presenter   | Presenter audio starts, then mutes or cuts out                  | Publish media events only from presenter mode; audience mute is a local browser-autoplay workaround, not shared media state                      |
-| Copied media lacks Framecraft timing                 | Lint errors on untimed media; preview/render diverge            | Add `data-start`, `data-duration`, and `data-has-audio="true"` when audible; avoid `preload="none"`                                              |
+| Copied media lacks Editnce timing                 | Lint errors on untimed media; preview/render diverge            | Add `data-start`, `data-duration`, and `data-has-audio="true"` when audible; avoid `preload="none"`                                              |
 | Source font CSS variables kept as font-family values  | StaticGuard font-family contract errors                         | Replace with concrete render-safe stacks or add local `@font-face` declarations                                                                  |
 | Converted scroll/camera source jumps between slides   | Per-slide focal points are correct but manual navigation snaps  | Add a standalone navigation-camera transition hook; disable it for measurement, initial load, resize, and render/validation seeks                |

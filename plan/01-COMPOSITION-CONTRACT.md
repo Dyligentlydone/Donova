@@ -1,4 +1,4 @@
-# 01 — Composition Contract (`@framecraft/contract`)
+# 01 — Composition Contract (`@editnce/contract`)
 
 The contract is the public file format. Everything (runtime, lint, producer, Studio,
 agent, registry) reads it through this package. Changing it is a breaking change.
@@ -10,7 +10,7 @@ my-video/
 ├── index.html              # root composition (required)
 ├── compositions/           # sub-compositions (*.html)
 ├── assets/                 # media: video, audio, images, fonts, lottie json
-├── framecraft.json         # project config (see §9)
+├── editnce.json         # project config (see §9)
 ├── meta.json               # { id, name, createdAt } (id = uuid, stable)
 ├── transcript.json         # optional, word-level transcript (see 10-MEDIA-AI §2)
 ├── style.json              # optional, Style Bible tokens (see 14-DIFFERENTIATORS §3)
@@ -259,21 +259,21 @@ Rules:
 - Child timing is local to the child. Host `data-playback-start` offsets the child clock.
 - A sub-composition file must also be renderable standalone (`render -c compositions/x.html`).
 
-## 9. `framecraft.json`
+## 9. `editnce.json`
 
 ```json
 {
-  "$schema": "https://framecraft.dev/schema/framecraft.json",
+  "$schema": "https://editnce.dev/schema/editnce.json",
   "version": 1,
   "entry": "index.html",
-  "registry": "https://registry.framecraft.dev/registry.json",
+  "registry": "https://registry.editnce.dev/registry.json",
   "paths": { "blocks": "compositions", "components": "compositions/components", "assets": "assets" },
   "render": { "fps": 30, "quality": "standard", "format": "mp4" },
   "engineVersion": "0.1.0"
 }
 ```
 
-Ship JSON Schemas for `framecraft.json`, `registry.json`, `registry-item.json`,
+Ship JSON Schemas for `editnce.json`, `registry.json`, `registry-item.json`,
 `transcript.json`, `style.json` under `packages/contract/schemas/` and publish them.
 
 ## 10. Parser API (`contract/src/parse.ts`)

@@ -30,33 +30,33 @@ importers:
 
   packages/cli:
     dependencies:
-      '@framecraft/contract':
+      '@editnce/contract':
         specifier: workspace:*
         version: link:../contract
-      '@framecraft/engine':
+      '@editnce/engine':
         specifier: workspace:*
         version: link:../engine
-      '@framecraft/lint':
+      '@editnce/lint':
         specifier: workspace:*
         version: link:../lint
-      '@framecraft/media':
+      '@editnce/media':
         specifier: workspace:*
         version: link:../media
-      '@framecraft/producer':
+      '@editnce/producer':
         specifier: workspace:*
         version: link:../producer
-      '@framecraft/runtime':
+      '@editnce/runtime':
         specifier: workspace:*
         version: link:../runtime
-      '@framecraft/studio-server':
+      '@editnce/studio-server':
         specifier: workspace:*
         version: link:../studio-server
       '@hyperframes/inspector':
         specifier: 0.9.22
-        version: 0.9.22(yauzl@3.4.0)
+        version: 0.9.22(@types/node@22.20.5)(yauzl@3.4.0)
       '@hyperframes/sdk':
         specifier: 0.9.22
-        version: 0.9.22(@types/node@22.20.5)
+        version: 0.9.22
       citty:
         specifier: ^0.1.6
         version: 0.1.6
@@ -95,10 +95,10 @@ importers:
 
   packages/engine:
     dependencies:
-      '@framecraft/contract':
+      '@editnce/contract':
         specifier: workspace:*
         version: link:../contract
-      '@framecraft/runtime':
+      '@editnce/runtime':
         specifier: workspace:*
         version: link:../runtime
       '@puppeteer/browsers':
@@ -120,7 +120,7 @@ importers:
 
   packages/lint:
     dependencies:
-      '@framecraft/contract':
+      '@editnce/contract':
         specifier: workspace:*
         version: link:../contract
     devDependencies:
@@ -136,10 +136,10 @@ importers:
 
   packages/media:
     dependencies:
-      '@framecraft/contract':
+      '@editnce/contract':
         specifier: workspace:*
         version: link:../contract
-      '@framecraft/engine':
+      '@editnce/engine':
         specifier: workspace:*
         version: link:../engine
       onnxruntime-node:
@@ -176,10 +176,10 @@ importers:
 
   packages/producer:
     dependencies:
-      '@framecraft/contract':
+      '@editnce/contract':
         specifier: workspace:*
         version: link:../contract
-      '@framecraft/engine':
+      '@editnce/engine':
         specifier: workspace:*
         version: link:../engine
       ffmpeg-static:
@@ -213,19 +213,19 @@ importers:
 
   packages/studio-server:
     dependencies:
-      '@framecraft/contract':
+      '@editnce/contract':
         specifier: workspace:*
         version: link:../contract
-      '@framecraft/engine':
+      '@editnce/engine':
         specifier: workspace:*
         version: link:../engine
-      '@framecraft/lint':
+      '@editnce/lint':
         specifier: workspace:*
         version: link:../lint
-      '@framecraft/producer':
+      '@editnce/producer':
         specifier: workspace:*
         version: link:../producer
-      '@framecraft/runtime':
+      '@editnce/runtime':
         specifier: workspace:*
         version: link:../runtime
       parse5:
@@ -2725,7 +2725,7 @@ snapshots:
       - '@types/node'
       - canvas
 
-  '@hyperframes/inspector@0.9.22(yauzl@3.4.0)':
+  '@hyperframes/inspector@0.9.22(@types/node@22.20.5)(yauzl@3.4.0)':
     dependencies:
       '@hyperframes/core': 0.9.22(@types/node@22.20.5)
       '@hyperframes/parsers': 0.9.22
@@ -2737,6 +2737,7 @@ snapshots:
       postcss: 8.5.32
       puppeteer-core: 25.16.0(yauzl@3.4.0)
     transitivePeerDependencies:
+      - '@types/node'
       - bufferutil
       - canvas
       - proxy-agent
@@ -2768,13 +2769,12 @@ snapshots:
     transitivePeerDependencies:
       - canvas
 
-  '@hyperframes/sdk@0.9.22(@types/node@22.20.5)':
+  '@hyperframes/sdk@0.9.22':
     dependencies:
       '@hyperframes/core': 0.9.22(@types/node@22.20.5)
       '@hyperframes/parsers': 0.9.22
       linkedom: 0.18.15
     transitivePeerDependencies:
-      - '@types/node'
       - canvas
 
   '@hyperframes/studio-server@0.9.22(@types/node@22.20.5)':

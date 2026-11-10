@@ -1,4 +1,4 @@
-# Framecraft render worker (12 §cloud / 13 §docker)
+# Editnce render worker (12 §cloud / 13 §docker)
 # Deterministic image: pinned node + pinned chrome-headless-shell + pinned ffmpeg.
 FROM node:22-bookworm-slim AS base
 
@@ -11,11 +11,11 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 
 # Pinned chrome-headless-shell for HeadlessExperimental.beginFrame
 ARG CHROME_BUILD=141.0.7390.54
-RUN npx -y @puppeteer/browsers install chrome-headless-shell@${CHROME_BUILD} --path /opt/framecraft/chrome
+RUN npx -y @puppeteer/browsers install chrome-headless-shell@${CHROME_BUILD} --path /opt/editnce/chrome
 
-ENV FRAMECRAFT_CHROME_BUILD=${CHROME_BUILD} \
-    FRAMECRAFT_HOME=/opt/framecraft \
-    HOME=/opt/framecraft
+ENV EDITNCE_CHROME_BUILD=${CHROME_BUILD} \
+    EDITNCE_HOME=/opt/editnce \
+    HOME=/opt/editnce
 
 WORKDIR /app
 COPY package.json pnpm-workspace.yaml turbo.json tsconfig.base.json biome.json ./
@@ -27,4 +27,4 @@ RUN corepack enable && corepack prepare pnpm@9.15.0 --activate \
 
 EXPOSE 8788
 # Render server mode: POST /render {projectDir, composition, out, fps, quality, workers}
-CMD ["node", "packages/cli/bin/framecraft.mjs", "studio", "--port", "8788", "/work"]
+CMD ["node", "packages/cli/bin/editnce.mjs", "studio", "--port", "8788", "/work"]

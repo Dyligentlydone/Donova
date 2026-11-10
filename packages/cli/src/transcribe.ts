@@ -1,10 +1,10 @@
 import { writeFile } from "node:fs/promises";
 import { dirname, join, resolve } from "node:path";
-import { DEFAULT_WHISPER_MODEL, transcribe as runTranscribe } from "@framecraft/media";
+import { DEFAULT_WHISPER_MODEL, transcribe as runTranscribe } from "@editnce/media";
 import { CliError, ERR } from "./errors.js";
 
 /**
- * `framecraft transcribe <media>` → transcript.json next to the media (17 §3.2).
+ * `editnce transcribe <media>` → transcript.json next to the media (17 §3.2).
  */
 export async function transcribeCmd(opts: {
   media: string;

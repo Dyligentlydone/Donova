@@ -1,10 +1,10 @@
-# 02 — Browser Runtime (`@framecraft/runtime`)
+# 02 — Browser Runtime (`@editnce/runtime`)
 
-The runtime is a single IIFE (`dist/framecraft.runtime.iife.js`, target ES2020, no
+The runtime is a single IIFE (`dist/editnce.runtime.iife.js`, target ES2020, no
 dependencies at runtime) injected into every composition page — in Studio/player preview
 **and** in the producer. It is the single source of truth for "what does time `t` look like".
 
-Build also emits `dist/framecraft.runtime.mjs` (for tests) and
+Build also emits `dist/editnce.runtime.mjs` (for tests) and
 `dist/runtime.manifest.json` `{ version, sha256, artifacts }`. The producer verifies the
 sha256 before every render.
 
@@ -68,7 +68,7 @@ window.__fc = {
      text; external: set src and await load). Set `__fc._currentInstance` during execution
      so `getVariables()` returns the right values.
    - Await any `__fc.buildReady[*]` promises registered by the instance.
-4. **Compile timing** with `@framecraft/contract` browser build. Media durations come from
+4. **Compile timing** with `@editnce/contract` browser build. Media durations come from
    `loadedmetadata` (preview) or from `__FC_CONFIG__.probe` (render; producer injects
    probed durations so no media is loaded in render mode).
 5. **Wait for timelines**: each composition must register `window.__timelines[id]` unless
@@ -127,7 +127,7 @@ an integration fixture):
 | `lottie` | `window.lottie` / `bodymovin`, or `<lottie-player>` | Authors register `window.__fc.lottie(name, anim)` or adapter finds `lottie.getRegisteredAnimations()`; seek: `anim.goToAndStop(localT * anim.frameRate, true)`. |
 | `animejs` | `window.anime` | Authors register instances on `window.__fc.anime(instance)`; seek: `instance.seek(localT * 1000)` (v3) / `instance.seek(localT*1000)` v4; pause on init. |
 | `three` | `window.THREE` | Authors call `window.__fc.three({ renderer, scene, camera, update(t) })`; seek: `update(localT)` then `renderer.render(scene, camera)`. Set `preserveDrawingBuffer: true` lint hint. |
-| `motion` | any `[data-fc-motion]` element | At boot: parse each element's JSON (01 §6b), apply text splitting, then `el.animate(keyframes, { duration, easing, fill: "both" })` per keyframe segment and immediately `pause()` it. On seek: set `anim.currentTime = (localT_of_element_clip - segmentStart) * 1000` (clamped). Re-parse when Studio sends `apply-patch` for that element. No GSAP involved. |
+| `motion` | any `[data-ec-motion]` element | At boot: parse each element's JSON (01 §6b), apply text splitting, then `el.animate(keyframes, { duration, easing, fill: "both" })` per keyframe segment and immediately `pause()` it. On seek: set `anim.currentTime = (localT_of_element_clip - segmentStart) * 1000` (clamped). Re-parse when Studio sends `apply-patch` for that element. No GSAP involved. |
 | `custom` | `onSeek` registrations | `await cb(localT)` for each registration, in registration order. |
 | `canvas2d` | (covered by custom) | — |
 
@@ -150,7 +150,7 @@ an integration fixture):
 
 ### 6.2 Render mode
 - The producer compiles every `<video>` into a frame host (see 04-PRODUCER §3.5):
-  `<img data-fc-video-frame data-fc-video-id="talk" ...same id/class/style>`.
+  `<img data-ec-video-frame data-ec-video-id="talk" ...same id/class/style>`.
   The runtime, on `renderSeek`, computes the frame index for each active video
   (`floor((mediaTime) * videoExtractFps + 1e-6)`) and sets `img.src` to
   `/__fc/frames/<videoId>/<index>.jpg`, then awaits `img.decode()`. (The engine may
@@ -169,13 +169,13 @@ an integration fixture):
 
 ## 8. Parent bridge (postMessage)
 
-Host → runtime (`{ source: "fc-parent", type: "control", action, ... }`):
+Host → runtime (`{ source: "ec-parent", type: "control", action, ... }`):
 `play`, `pause`, `seek {time}`, `set-muted {muted}`, `set-volume {volume}`,
 `set-playback-rate {rate}`, `set-loop {start, end}`, `enable-pick-mode`,
 `disable-pick-mode`, `highlight {elementId}`, `reload-styles {css}`,
 `apply-variables {values}`.
 
-Runtime → host (`{ source: "fc-runtime", type, ... }`):
+Runtime → host (`{ source: "ec-runtime", type, ... }`):
 - `ready` (on every load) — host replays mute/volume/rate state.
 - `state` `{ currentTime, frame, playing, ended, duration }` — throttled to every rAF while playing, immediate on seek.
 - `timeline` `{ clips: ClipManifestEntry[], duration, assetsReady }` — on load and after any timing change.

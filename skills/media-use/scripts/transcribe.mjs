@@ -26,7 +26,7 @@ import { resolveNpxInvocation } from "./lib/npx-sync.mjs";
 //
 // Parakeet v3 covers English + 25 European languages. For other languages, or
 // when parakeet-mlx is not installed, it falls back to whisper.cpp via
-// `framecraft transcribe` (99 languages; the CLI resolves/builds whisper.cpp
+// `editnce transcribe` (99 languages; the CLI resolves/builds whisper.cpp
 // on first use — it is not bundled). `--engine` forces one.
 
 const { values: args } = parseArgs({
@@ -49,7 +49,7 @@ Usage:
 
 Parakeet (default) beats whisper.cpp on accuracy + speed for English/European
 languages; whisper.cpp (99 languages) is the fallback. Install Parakeet once:
-  framecraft models install parakeet   (macOS, Windows, Linux with glibc 2.32+)
+  editnce models install parakeet   (macOS, Windows, Linux with glibc 2.32+)
   uv venv ~/.venvs/parakeet && VIRTUAL_ENV=~/.venvs/parakeet uv pip install parakeet-mlx   (Apple Silicon)`);
   process.exit(0);
 }
@@ -149,12 +149,12 @@ function runCli(cliEngine) {
         .slice(-3)
         .join("\n");
       throw new Error(
-        `framecraft transcribe failed (exit ${e.status ?? e.code})${tail ? `:\n${tail}` : ""}`,
+        `editnce transcribe failed (exit ${e.status ?? e.code})${tail ? `:\n${tail}` : ""}`,
       );
     }
     const produced = join(workDir, "transcript.json");
     if (!existsSync(produced))
-      throw new Error("framecraft transcribe produced no transcript.json");
+      throw new Error("editnce transcribe produced no transcript.json");
     const tmp = `${outPath}.tmp-${process.pid}`;
     copyFileSync(produced, tmp);
     renameSync(tmp, outPath); // atomic publish
@@ -182,7 +182,7 @@ function runCli(cliEngine) {
 try {
   const parakeetBin = resolveParakeet();
   const asked = args.engine === "parakeet" || args.engine === "whisper" ? args.engine : "auto";
-  // Without parakeet-mlx, the CLI's own Parakeet (any OS, `framecraft models install parakeet`).
+  // Without parakeet-mlx, the CLI's own Parakeet (any OS, `editnce models install parakeet`).
   let engine = "parakeet";
   if (asked !== "whisper" && parakeetBin) runParakeet(parakeetBin);
   else engine = runCli(asked);

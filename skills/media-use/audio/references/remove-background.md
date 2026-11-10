@@ -3,13 +3,13 @@
 Make a transparent overlay (typical: a talking head over an arbitrary scene). Uses `u2net_human_seg` (Apache-2.0).
 
 ```bash
-framecraft remove-background subject.mp4 -o transparent.webm          # default: VP9 + alpha
-framecraft remove-background subject.mp4 -o transparent.mov           # ProRes 4444 (editing)
-framecraft remove-background portrait.jpg -o cutout.png               # single-image cutout
-framecraft remove-background subject.mp4 -o subject.webm \
+editnce remove-background subject.mp4 -o transparent.webm          # default: VP9 + alpha
+editnce remove-background subject.mp4 -o transparent.mov           # ProRes 4444 (editing)
+editnce remove-background portrait.jpg -o cutout.png               # single-image cutout
+editnce remove-background subject.mp4 -o subject.webm \
   --background-output plate.webm                                           # both layers, one pass
-framecraft remove-background subject.mp4 -o transparent.webm --device cpu
-framecraft remove-background --info                                   # detected providers
+editnce remove-background subject.mp4 -o transparent.webm --device cpu
+editnce remove-background --info                                   # detected providers
 ```
 
 ## Output Format

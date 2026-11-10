@@ -3,7 +3,7 @@ import { createRequire } from "node:module";
 import { dirname, join } from "node:path";
 
 /**
- * Shared delegate to the bundled `hyperframes` CLI (Apache-2.0). Framecraft
+ * Shared delegate to the bundled `hyperframes` CLI (Apache-2.0). Editnce
  * projects satisfy the HyperFrames composition contract, so their local
  * tooling (check/timeline/beats/audio/capture/diff/measure/…) runs on our
  * projects natively. Telemetry is disabled for the child process; HeyGen

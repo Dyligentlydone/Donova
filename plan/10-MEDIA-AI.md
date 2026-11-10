@@ -1,10 +1,10 @@
-# 10 — Media & AI Services (`@framecraft/media`)
+# 10 — Media & AI Services (`@editnce/media`)
 
 All functions are usable from CLI, studio-server (as jobs), and agent tools. Each provider
 sits behind an interface so local/free and paid cloud options are interchangeable.
 
 ## 1. Media utilities
-- `probe(path)` — ffprobe JSON → normalized `MediaProbe { kind, duration, width, height, rotation, fps, hasAudio, audioChannels, sampleRate, codec, pixFmt, hdr, bitrate }`. Cache by path+mtime+size in `~/.cache/framecraft/probe.json`.
+- `probe(path)` — ffprobe JSON → normalized `MediaProbe { kind, duration, width, height, rotation, fps, hasAudio, audioChannels, sampleRate, codec, pixFmt, hdr, bitrate }`. Cache by path+mtime+size in `~/.cache/editnce/probe.json`.
 - `thumbnail(path, t, width)`, `filmstrip(path, count, height)` (sprite via `tile` filter), `waveformPeaks(path, peaksPerSecond)` (decode `-ac 1 -ar 8000 -f s16le` → min/max buckets).
 - `transcodeProxy(path)` — for preview of heavy formats (ProRes, HEVC 10-bit, >4K): ffmpeg → H.264 1080p proxy `assets/.proxies/<hash>.mp4`; Studio preview uses proxy (runtime `proxySrc` mapping), render uses original.
 - `normalizeLoudness(in, out, lufs)` two-pass loudnorm.
@@ -20,7 +20,7 @@ interface Transcript {
 }
 ```
 Local provider (default): whisper.cpp.
-- `media/whisper/install.ts`: download prebuilt `whisper-cli` per platform (or build from source on Linux via cmake if no binary), and models `ggml-{tiny,base,small,medium,large-v3}.bin` from the official Hugging Face repo (`ggerganov/whisper.cpp`), verify sha256, store in `~/.cache/framecraft/whisper/`.
+- `media/whisper/install.ts`: download prebuilt `whisper-cli` per platform (or build from source on Linux via cmake if no binary), and models `ggml-{tiny,base,small,medium,large-v3}.bin` from the official Hugging Face repo (`ggerganov/whisper.cpp`), verify sha256, store in `~/.cache/editnce/whisper/`.
 - Pipeline: ffmpeg → 16 kHz mono WAV → `whisper-cli -m model -f in.wav -oj -ojf -ml 1 -sow -l auto` (full JSON with token timestamps) → merge tokens into words (tokens starting with space begin a new word; strip special tokens) → `transcript.json`. (Flags change between whisper.cpp releases: pin a release, and verify flags against `whisper-cli --help` for that release in a test.)
 - Default model `small` (good balance); `base` on low-memory machines.
 - Optional cloud providers: OpenAI, Deepgram, AssemblyAI (word timestamps + diarization).

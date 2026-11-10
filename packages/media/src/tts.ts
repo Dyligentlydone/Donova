@@ -83,7 +83,7 @@ export async function tts(opts: {
       break;
     case "edge":
       throw new Error(
-        "edge provider not bundled yet — install edge-tts and set FRAMECRAFT_TTS_EDGE, or use --provider say",
+        "edge provider not bundled yet — install edge-tts and set EDITNCE_TTS_EDGE, or use --provider say",
       );
     case "kokoro":
       throw new Error("kokoro provider not bundled yet — needs a python env; use --provider say on macOS");

@@ -1,7 +1,7 @@
 {
-  "$id": "https://framecraft.dev/schemas/project.schema.json",
+  "$id": "https://editnce.dev/schemas/project.schema.json",
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "title": "Framecraft project (framecraft.json)",
+  "title": "Editnce project (editnce.json)",
   "type": "object",
   "properties": {
     "id": { "type": "string" },

@@ -1,7 +1,7 @@
 # Resolve — command, flags, reuse, adopt, inventory
 
 ```bash
-framecraft media-use resolve --type <type> --intent "<description>" --project <dir>
+editnce media-use resolve --type <type> --intent "<description>" --project <dir>
 ```
 
 Returns one line: `resolved <id> → <path> (<type>, <metadata>)`
@@ -18,38 +18,38 @@ A weak match is still returned, with a `media-use: low-confidence match` line on
 | `icon`  | Icons, symbols                   | HeyGen asset search (type=icon)                              |
 | `logo`  | Official brand marks             | theSVG → GitHub org avatar → domain favicon                  |
 | `voice` | TTS voiceover                    | HeyGen TTS free-usage path; optional local Kokoro            |
-| `grade` | Framecraft color-grading blocks | Core preset → look index params/CDN LUT → deterministic cube |
+| `grade` | Editnce color-grading blocks | Core preset → look index params/CDN LUT → deterministic cube |
 | `lut`   | Reusable `.cube` LUT files       | Look index params/CDN LUT → deterministic cube               |
 
 ## Examples
 
 ```bash
 # Background music
-framecraft media-use resolve --type bgm --intent "upbeat tech launch" --project .
+editnce media-use resolve --type bgm --intent "upbeat tech launch" --project .
 # → resolved bgm_001 → .media/audio/bgm/bgm_001.mp3 (bgm, 25s)
 
 # Sound effect
-framecraft media-use resolve --type sfx --intent "whoosh" --project .
+editnce media-use resolve --type sfx --intent "whoosh" --project .
 # → resolved sfx_001 → .media/audio/sfx/sfx_001.mp3 (sfx, 0.57s)
 
 # Image
-framecraft media-use resolve --type image --intent "gradient tech background" --project .
+editnce media-use resolve --type image --intent "gradient tech background" --project .
 # → resolved image_001 → .media/images/image_001.jpg (image)
 
 # Icon
-framecraft media-use resolve --type icon --intent "rocket" --project .
+editnce media-use resolve --type icon --intent "rocket" --project .
 # → resolved icon_001 → .media/images/icon_001.png (icon, transparent)
 
 # Brand logo (official mark — never redrawn by hand)
-framecraft media-use resolve --type logo --entity linkedin --intent "LinkedIn logo" --project .
+editnce media-use resolve --type logo --entity linkedin --intent "LinkedIn logo" --project .
 # → resolved logo_001 → .media/images/logo_001.svg (logo, official mark)
 
 # Color grade block
-framecraft media-use resolve --type grade --intent "warm daylight" --project . --json
+editnce media-use resolve --type grade --intent "warm daylight" --project . --json
 # → {"ok":true,"preset":"warm-daylight","grading":{"preset":"warm-daylight","intensity":1},...}
 
 # LUT file
-framecraft media-use resolve --type lut --intent "teal orange blockbuster" --project .
+editnce media-use resolve --type lut --intent "teal orange blockbuster" --project .
 # → resolved lut_001 → .media/luts/lut_001.cube (lut)
 ```
 
@@ -78,7 +78,7 @@ framecraft media-use resolve --type lut --intent "teal orange blockbuster" --pro
 Before resolving bgm/sfx/image/icon/logo/grade/lut, **check what already exists and reuse it when it fits.** media-use does not semantically match for you — you are the judge. It surfaces candidates; you decide.
 
 ```bash
-framecraft media-use resolve --type bgm --intent "upbeat tech launch" --candidates --project .
+editnce media-use resolve --type bgm --intent "upbeat tech launch" --candidates --project .
 #   [project] upbeat tech launch (25s, heygen.audio.sounds)
 #           .media/audio/bgm/bgm_001.wav
 #   [global]  energetic tech intro (22s, heygen.audio.sounds)
@@ -120,10 +120,10 @@ tracks today.
 
 ## Adopt existing projects
 
-Most Framecraft projects already have assets in `assets/`. media-use adopts them:
+Most Editnce projects already have assets in `assets/`. media-use adopts them:
 
 ```bash
-framecraft media-use resolve --adopt --project .
+editnce media-use resolve --adopt --project .
 # → adopted 9 assets from assets/
 #   bgm_001 → assets/bgm/mango-fizz.mp3 (bgm, 146.6s)
 #   image_001 → assets/images/avatar.jpg (image, 400×400)

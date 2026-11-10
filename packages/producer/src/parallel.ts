@@ -1,7 +1,7 @@
 import { mkdir, writeFile } from "node:fs/promises";
 import { join } from "node:path";
-import type { CompositionSpec, RenderPlan } from "@framecraft/contract";
-import { encodeChunkToFile, openFrameSource, runFfmpeg } from "@framecraft/engine";
+import type { CompositionSpec, RenderPlan } from "@editnce/contract";
+import { encodeChunkToFile, openFrameSource, runFfmpeg } from "@editnce/engine";
 
 /**
  * Parallel rendering (03 §7, 04 §5).

@@ -2595,7 +2595,7 @@
         "text",
         "footage"
       ],
-      "description": "One-word kinetic captions generated from transcript+cuts. Install, then run `framecraft captions` to generate the track."
+      "description": "One-word kinetic captions generated from transcript+cuts. Install, then run `editnce captions` to generate the track."
     },
     {
       "name": "world-map",
@@ -5886,63 +5886,63 @@
       "type": "example",
       "title": "Decision Tree",
       "description": "Animated flowchart with branching paths",
-      "install": "framecraft init --template decision-tree"
+      "install": "editnce init --template decision-tree"
     },
     {
       "name": "kinetic-type",
       "type": "example",
       "title": "Kinetic Type",
       "description": "Bold kinetic typography promo",
-      "install": "framecraft init --template kinetic-type"
+      "install": "editnce init --template kinetic-type"
     },
     {
       "name": "nyt-graph",
       "type": "example",
       "title": "NYT Graph",
       "description": "Animated data chart in print editorial style",
-      "install": "framecraft init --template nyt-graph"
+      "install": "editnce init --template nyt-graph"
     },
     {
       "name": "path-traced-3d",
       "type": "example",
       "title": "Path-Traced 3D",
       "description": "Three.js scene with a fast raster preview and an opt-in path-traced export",
-      "install": "framecraft init --template path-traced-3d"
+      "install": "editnce init --template path-traced-3d"
     },
     {
       "name": "play-mode",
       "type": "example",
       "title": "Play Mode",
       "description": "Playful elastic animations",
-      "install": "framecraft init --template play-mode"
+      "install": "editnce init --template play-mode"
     },
     {
       "name": "product-promo",
       "type": "example",
       "title": "Product Promo",
       "description": "Multi-scene product showcase with SVG assets",
-      "install": "framecraft init --template product-promo"
+      "install": "editnce init --template product-promo"
     },
     {
       "name": "swiss-grid",
       "type": "example",
       "title": "Swiss Grid",
       "description": "Structured grid layout",
-      "install": "framecraft init --template swiss-grid"
+      "install": "editnce init --template swiss-grid"
     },
     {
       "name": "vignelli",
       "type": "example",
       "title": "Vignelli",
       "description": "Bold typography with red accents",
-      "install": "framecraft init --template vignelli"
+      "install": "editnce init --template vignelli"
     },
     {
       "name": "warm-grain",
       "type": "example",
       "title": "Warm Grain",
       "description": "Cream aesthetic with grain texture",
-      "install": "framecraft init --template warm-grain"
+      "install": "editnce init --template warm-grain"
     }
   ]
 }

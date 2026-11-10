@@ -11,7 +11,7 @@ import { fileURLToPath } from "node:url";
  * overlay and writes them into the project for the agent to consume, and
  * bridges Studio chat to a locally configured agent CLI.
  *
- * `fc studio` launches hyperframes' own preview server, whose routes we can't
+ * `editnce studio` launches hyperframes' own preview server, whose routes we can't
  * extend, so this runs as a tiny detached server on studioPort+1000 bound to
  * localhost.
  *
@@ -20,16 +20,17 @@ import { fileURLToPath } from "node:url";
  *   POST /annotate                  persist annotations/*.json + *.png
  *   GET  /agent/health              { agent: bool, name, cmd } — bridge configured?
  *   GET  /agent/list                known agents + detected/setup state (chat picker)
- *   POST /agent/select {name}       switch the active agent (persists to framecraft.json)
- *   POST /agent/setup {name,key?,url?,model?}  configure an API provider (~/.framecraft/agents.json)
+ *   POST /agent/select {name}       switch the active agent (persists to editnce.json)
+ *   POST /agent/setup {name,key?,url?,model?}  configure an API provider (~/.editnce/agents.json)
  *   POST /agent/chat {message, annotation?} → { jobId } (503 when no bridge)
  *   GET  /agent/jobs/:id/stream     SSE of the agent run
  *   POST /stop                      shutdown
  *
  * Agent resolution (first hit wins):
  *   1. POST /agent/select session override
- *   2. framecraft.json "agent":  "auto" | "<preset>" | { cmd } | { url, model }
- *   3. env: FC_AGENT (preset name or raw cmd) → FC_AGENT_CMD (raw cmd)
+ *   2. editnce.json "agent":  "auto" | "<preset>" | { cmd } | { url, model }
+ *   3. env: EDITNCE_AGENT (preset name or raw cmd) → EDITNCE_AGENT_CMD (raw cmd)
+ *      — legacy FC_* env vars still honored
  *   4. first preset whose binary is on PATH (claude, codex, gemini, …)
  *
  * `{prompt}` in a cmd substitutes the prompt as an arg; otherwise the prompt is
@@ -125,7 +126,7 @@ const AGENT_PRESETS: { name: string; label: string; bin: string; cmd: string; in
 /**
  * API providers — any OpenAI-compatible /chat/completions endpoint. Configured
  * through the chat picker's setup form (POST /agent/setup); key/model/url live
- * in ~/.framecraft/agents.json, never in the project. Runs the tool-call loop
+ * in ~/.editnce/agents.json, never in the project. Runs the tool-call loop
  * so these agents can edit files, not just chat.
  */
 const API_PRESETS: { name: string; label: string; url: string; model: string; needsKey: boolean }[] = [
@@ -169,11 +170,15 @@ const API_PRESETS: { name: string; label: string; url: string; model: string; ne
 
 /** User-level agent secrets/config — outside the project so keys never get committed. */
 function agentStorePath(): string {
-  return join(homedir(), ".framecraft", "agents.json");
+  return join(homedir(), ".editnce", "agents.json");
 }
 function readAgentStore(): Record<string, { key?: string; url?: string; model?: string }> {
   try {
     return JSON.parse(readFileSync(agentStorePath(), "utf8"));
+  } catch {}
+  // legacy path from the framecraft branding — read once, migrated on next write
+  try {
+    return JSON.parse(readFileSync(join(homedir(), ".framecraft", "agents.json"), "utf8"));
   } catch {
     return {};
   }
@@ -184,6 +189,14 @@ function writeAgentStore(store: Record<string, { key?: string; url?: string; mod
 }
 
 let sessionAgent: string | null = null;
+
+/** EDITNCE_* env vars preferred; FC_* (framecraft era) still honored. */
+function agentEnv(suffix: string): string | undefined {
+  return process.env[`EDITNCE_${suffix}`] ?? process.env[`FC_${suffix}`];
+}
+function agentKeyEnv(): string | undefined {
+  return agentEnv("AGENT_KEY_ENV");
+}
 
 function whichBin(bin: string): boolean {
   try {
@@ -199,10 +212,12 @@ interface AgentConfig {
 }
 
 function readAgentConfig(projectDir: string): AgentConfig["agent"] {
-  try {
-    const cfg = join(projectDir, "framecraft.json");
-    if (existsSync(cfg)) return (JSON.parse(readFileSync(cfg, "utf8")) as AgentConfig).agent;
-  } catch {}
+  for (const name of ["editnce.json", "framecraft.json"]) {
+    try {
+      const cfg = join(projectDir, name);
+      if (existsSync(cfg)) return (JSON.parse(readFileSync(cfg, "utf8")) as AgentConfig).agent;
+    } catch {}
+  }
   return undefined;
 }
 
@@ -212,8 +227,7 @@ function apiPreset(name: string): AgentSpec | null {
   const saved = readAgentStore()[name] ?? {};
   const url = saved.url ?? p.url;
   const model = saved.model ?? p.model;
-  const key =
-    saved.key ?? (process.env.FC_AGENT_KEY_ENV ? process.env[process.env.FC_AGENT_KEY_ENV] : undefined);
+  const key = saved.key ?? (agentKeyEnv() ? process.env[agentKeyEnv() as string] : undefined);
   if (!url || !model) return { name: p.name, label: p.label, kind: "http", url, model, key, edits: true };
   return { name: p.name, label: p.label, kind: "http", url, model, key, edits: true };
 }
@@ -247,18 +261,19 @@ function resolveAgent(projectDir: string): AgentSpec | null {
       };
     }
   }
-  const env = process.env.FC_AGENT ?? process.env.FC_AGENT_CMD;
+  const env = agentEnv("AGENT") ?? agentEnv("AGENT_CMD");
   if (env) return pick(env);
-  if (process.env.FC_AGENT_URL) {
-    const key = process.env.FC_AGENT_KEY_ENV ? process.env[process.env.FC_AGENT_KEY_ENV] : undefined;
+  const envUrl = agentEnv("AGENT_URL");
+  if (envUrl) {
+    const keyEnv = agentKeyEnv();
     return {
       name: "endpoint",
-      label: `${process.env.FC_AGENT_MODEL ?? "model"} @ ${process.env.FC_AGENT_URL}`,
+      label: `${agentEnv("AGENT_MODEL") ?? "model"} @ ${envUrl}`,
       kind: "http",
-      url: process.env.FC_AGENT_URL,
-      model: process.env.FC_AGENT_MODEL,
-      key,
-      keyEnv: process.env.FC_AGENT_KEY_ENV,
+      url: envUrl,
+      model: agentEnv("AGENT_MODEL"),
+      key: keyEnv ? process.env[keyEnv] : undefined,
+      keyEnv,
       edits: true,
     };
   }
@@ -356,7 +371,7 @@ const jobs = new Map<
 function buildPrompt(projectDir: string, body: ChatBody): string {
   let prompt = [
     `You are editing the video composition in the current directory (${projectDir}).`,
-    `It is a HyperFrames/Framecraft HTML composition: timed elements carry data-start/data-duration, visuals carry class="clip", motion lives in a paused GSAP root timeline on window.__timelines. Only deterministic edits.`,
+    `It is a HyperFrames/Editnce HTML composition: timed elements carry data-start/data-duration, visuals carry class="clip", motion lives in a paused GSAP root timeline on window.__timelines. Only deterministic edits.`,
     "The user just sent this request from the Studio dashboard:",
     "",
     body.message ?? "",
@@ -462,7 +477,7 @@ const AGENT_TOOLS = [
     type: "function",
     function: {
       name: "run_command",
-      description: "Run a shell command in the project dir (e.g. npx framecraft check, ffmpeg probes)",
+      description: "Run a shell command in the project dir (e.g. npx editnce check, ffmpeg probes)",
       parameters: { type: "object", properties: { cmd: { type: "string" } }, required: ["cmd"] },
     },
   },
@@ -680,7 +695,7 @@ function handle(projectDir: string, req: IncomingMessage, res: ServerResponse): 
         const spec = name ? preset(name) : null;
         sessionAgent = spec ? (spec.name as string) : null;
         // persist so the choice survives studio restarts
-        const cfgPath = join(projectDir, "framecraft.json");
+        const cfgPath = join(projectDir, "editnce.json");
         let cfg: Record<string, unknown> = {};
         try {
           if (existsSync(cfgPath)) cfg = JSON.parse(readFileSync(cfgPath, "utf8")) as Record<string, unknown>;

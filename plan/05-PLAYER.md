@@ -1,13 +1,13 @@
-# 05 — Player (`@framecraft/player`)
+# 05 — Player (`@editnce/player`)
 
 An embeddable web component that previews a composition in real time. Used by Studio,
 share pages, the catalog site, and docs. Ships as ESM + a global IIFE
-(`framecraft-player.global.js`).
+(`editnce-player.global.js`).
 
 ## 1. Usage
 
 ```html
-<script src="https://cdn.framecraft.dev/player@1/framecraft-player.global.js"></script>
+<script src="https://cdn.editnce.dev/player@1/editnce-player.global.js"></script>
 <fc-player src="/projects/demo/index.html" controls autoplay muted loop
            poster="/projects/demo/poster.jpg" style="width:540px;aspect-ratio:9/16"></fc-player>
 ```

@@ -86,7 +86,7 @@ test("optedOut reads the shared config from HYPERFRAMES_CONFIG_DIR when it is se
   }
 });
 
-test("an opt-out in ~/.framecraft holds until HYPERFRAMES_CONFIG_DIR has its own config", () => {
+test("an opt-out in ~/.editnce holds until HYPERFRAMES_CONFIG_DIR has its own config", () => {
   writeConfig(JSON.stringify({ telemetryEnabled: false }));
   process.env.HYPERFRAMES_CONFIG_DIR = join(home, "moved");
   try {

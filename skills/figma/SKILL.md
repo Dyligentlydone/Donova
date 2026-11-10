@@ -1,12 +1,12 @@
 ---
 name: figma
-description: Bring Figma into a Framecraft video - rendered assets, brand tokens, components, storyboard frames as reconstructed motion (frames read as states, not slides), shaders and connector-assisted motion. Use when the person pastes a figma.com link or asks to use a Figma design, frame, logo or brand.
+description: Bring Figma into an Editnce video - rendered assets, brand tokens, components, storyboard frames as reconstructed motion (frames read as states, not slides), shaders and connector-assisted motion. Use when the person pastes a figma.com link or asks to use a Figma design, frame, logo or brand.
 ---
 
-**Plugin installs:** Inside a Framecraft plugin, follow [plugin execution rules](../framecraft/SKILL.md).
+**Plugin installs:** Inside an Editnce plugin, follow [plugin execution rules](../editnce/SKILL.md).
 
 
-# Figma → Framecraft
+# Figma → Editnce
 
 Every import happens at build time and freezes a local file with its source recorded under `.media/`, so renders never call Figma and re-running a command re-imports only what changed. Assets, tokens and components go over REST with a token; motion and shader data need a Figma connector, or a native export from the person.
 
@@ -23,9 +23,9 @@ Every import happens at build time and freezes a local file with its source reco
 
 ## Commands
 
-- A layer, logo or image: `framecraft figma asset '<url or fileKey:nodeId>' [more refs] --format svg|png --scale 2 --description "<what it is>" [--entity "<brand mark>"]`. SVG for vectors and logos, PNG at 2x for raster. Several nodes of one file in one call render in a single request; `--entity` lets `/media-use` find a brand mark later.
-- Brand colours and type: `framecraft figma tokens <fileKey>`. Run it before `component` and paste the printed entries into `data-composition-variables`. Without Enterprise it falls back to published styles. A connector can supply variables there instead: cache its raw response in `.media/figma-cache/` and write the bindings to `.media/figma-bindings.jsonl` (`{kind:"binding", figmaId, sourceFileKey, compositionVariableId:"figma:<name>", version}`).
-- A frame as editable HTML at exact geometry: `framecraft figma component '<url or fileKey:nodeId>'`, packaged under `compositions/components/<name>/`. A fill bound to an imported token comes out as `var(--slug, #literal)`, so one variable re-brands every import; an unknown token stays a literal marked `data-figma-unresolved`: import that library's tokens and re-import. Ask once which file a library is; never match by hex.
+- A layer, logo or image: `editnce figma asset '<url or fileKey:nodeId>' [more refs] --format svg|png --scale 2 --description "<what it is>" [--entity "<brand mark>"]`. SVG for vectors and logos, PNG at 2x for raster. Several nodes of one file in one call render in a single request; `--entity` lets `/media-use` find a brand mark later.
+- Brand colours and type: `editnce figma tokens <fileKey>`. Run it before `component` and paste the printed entries into `data-composition-variables`. Without Enterprise it falls back to published styles. A connector can supply variables there instead: cache its raw response in `.media/figma-cache/` and write the bindings to `.media/figma-bindings.jsonl` (`{kind:"binding", figmaId, sourceFileKey, compositionVariableId:"figma:<name>", version}`).
+- A frame as editable HTML at exact geometry: `editnce figma component '<url or fileKey:nodeId>'`, packaged under `compositions/components/<name>/`. A fill bound to an imported token comes out as `var(--slug, #literal)`, so one variable re-brands every import; an unknown token stays a literal marked `data-figma-unresolved`: import that library's tokens and re-import. Ask once which file a library is; never match by hex.
 - Check hero components against Figma's pixels (`figma asset <same node> --format png`). Text drift is the usual cause; report drift you can't fix instead of hand-tweaking the import.
 
 ## Motion (connector)

@@ -17,7 +17,7 @@ import { dirname, join, resolve } from "node:path";
 
 export const HEYGEN_BASE = "https://api.heygen.com/v3";
 
-// The v3 base every request goes to: $HEYGEN_API_BASE when a host app names its own gateway (Framecraft Desktop
+// The v3 base every request goes to: $HEYGEN_API_BASE when a host app names its own gateway (Editnce Desktop
 // forwards it to HeyGen with the API key saved in its Settings), else HeyGen's public API. Plain HTTP carries the key
 // in the clear, so it needs $HEYGEN_ALLOW_HTTP=1, the heygen CLI's own rule.
 export function heygenBase() {
@@ -192,7 +192,7 @@ export function heygenAuthHeaders() {
       "HeyGen OAuth token expired — run `hyperframes auth refresh` (or `hyperframes auth login`)",
     );
   throw new Error(
-    "no Framecraft credentials — set $HEYGEN_API_KEY, or run `hyperframes auth login` (writes ~/.hyperframes/credentials)",
+    "no Editnce credentials — set $HEYGEN_API_KEY, or run `hyperframes auth login` (writes ~/.hyperframes/credentials)",
   );
 }
 
@@ -223,16 +223,16 @@ function errorCode(body) {
   }
 }
 
-// One line the agent relays as written when the Framecraft plan can't pay: no plan, out of credits, or a
+// One line the agent relays as written when the Editnce plan can't pay: no plan, out of credits, or a
 // sign-in the plan doesn't cover yet. Null for every other failure.
 export function billingRefusal(e) {
   const code = e?.body ? errorCode(e.body) : null;
   if (code === "hf_subscription_required")
-    return "This needs a Framecraft plan. Run `hyperframes billing subscribe --skill media-use`: it opens the page and waits.";
+    return "This needs an Editnce plan. Run `hyperframes billing subscribe --skill media-use`: it opens the page and waits.";
   if (code === "hf_usage_exhausted")
-    return "Out of Framecraft credits. Run `hyperframes billing add-credits --skill media-use`: it opens the page and waits.";
+    return "Out of Editnce credits. Run `hyperframes billing add-credits --skill media-use`: it opens the page and waits.";
   if (code === "api_key_required")
-    return "This HeyGen feature isn't available with this sign-in yet. Nothing was charged. Use a HeyGen API key, or wait for Framecraft billing in the CLI.";
+    return "This HeyGen feature isn't available with this sign-in yet. Nothing was charged. Use a HeyGen API key, or wait for Editnce billing in the CLI.";
   return null;
 }
 

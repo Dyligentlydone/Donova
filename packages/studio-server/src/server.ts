@@ -5,11 +5,11 @@ import { type Server, createServer } from "node:http";
 import { extname, join, normalize, resolve, sep } from "node:path";
 import { fileURLToPath } from "node:url";
 import { promisify } from "node:util";
-import { parseCompositionHtml } from "@framecraft/contract";
-import { startFileServer } from "@framecraft/engine";
-import { lintHtml } from "@framecraft/lint";
-import { render } from "@framecraft/producer";
-import { getGsapSource, getRuntimeSource } from "@framecraft/runtime";
+import { parseCompositionHtml } from "@editnce/contract";
+import { startFileServer } from "@editnce/engine";
+import { lintHtml } from "@editnce/lint";
+import { render } from "@editnce/producer";
+import { getGsapSource, getRuntimeSource } from "@editnce/runtime";
 import * as parse5 from "parse5";
 import { Agent } from "./agent.js";
 
@@ -156,11 +156,11 @@ export async function startStudioServer(
   ];
   const uiDir = uiCandidates.find((d) => existsSync(join(d, "index.html"))) ?? uiCandidates[0] ?? "";
 
-  // --- Agent (MV6). Commands run through the framecraft bin so Studio reuses
+  // --- Agent (MV6). Commands run through the editnce bin so Studio reuses
   // the exact CLI surface; renderDraft goes through the in-process renderer.
   const execFileP = promisify(execFile);
   const cliBin =
-    process.env.FRAMECRAFT_CLI ?? fileURLToPath(new URL("../../cli/bin/framecraft.mjs", import.meta.url));
+    process.env.EDITNCE_CLI ?? fileURLToPath(new URL("../../cli/bin/editnce.mjs", import.meta.url));
 
   const runCmd = async (cmd: string, args: Record<string, unknown>): Promise<unknown> => {
     if (cmd === "renderDraft") {

@@ -1,7 +1,7 @@
 import { createReadStream, existsSync, statSync } from "node:fs";
 import { type Server, createServer } from "node:http";
 import { extname, join, normalize, resolve, sep } from "node:path";
-import { getGsapSource } from "@framecraft/runtime";
+import { getGsapSource } from "@editnce/runtime";
 
 const MIME: Record<string, string> = {
   ".html": "text/html; charset=utf-8",
@@ -72,9 +72,9 @@ export async function startFileServer(root: string): Promise<FileServer> {
         return;
       }
       if (!existsSync(file) || !statSync(file).isFile()) {
-        // .framecraft/ is internal render cache — absence is a normal state
+        // .editnce/ is internal render cache — absence is a normal state
         // (check/preview run without it) and must not noise the console.
-        res.writeHead(path.startsWith(`${sep}.framecraft`) ? 204 : 404).end();
+        res.writeHead(path.startsWith(`${sep}.editnce`) ? 204 : 404).end();
         return;
       }
       const size = statSync(file).size;

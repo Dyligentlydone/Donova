@@ -1,10 +1,10 @@
 # STATUS — what exists today (read before building)
 
-Last updated: 2026-11-07 (alpha-video frame extraction fixed — see §-7; Studio rebranded to "donova" — see §-5). Update this file whenever you finish an MV task.
+Last updated: 2026-11-07 (alpha-video frame extraction fixed — see §-7; Studio rebranded to "editnce" — see §-5). Update this file whenever you finish an MV task.
 
 ## -7b. Cutout webms need dense keyframes (live-preview seekability)
 
-`fc remove-background` encoded VP9-alpha with libvpx's default GOP → the 119-frame
+`ec remove-background` encoded VP9-alpha with libvpx's default GOP → the 119-frame
 cutout had **one keyframe**. Chrome can't seek mid-GOP on VP9-alpha: `currentTime`
 updates but the decoder shows frame 0 frozen → Studio preview rendered a ghost
 person (cutout stuck at its first frame while the base video played on). Both
@@ -30,14 +30,14 @@ Verified: `flower-him.webm` cutout renders as a transparent person layer; coral 
 behind him occludes correctly in the final MP4 (t=8.7: his head masks mid-text).
 Watch out: alpha footage → PNG extraction is ~10x the bytes of JPG (116 frames ≈ 1.5GB).
 
-Gotcha for agent/scaffold hygiene: a stray `fc init`/`scaffold` run in the repo root
+Gotcha for agent/scaffold hygiene: a stray `ec init`/`scaffold` run in the repo root
 will overwrite this repo's own AGENTS.md with the project template (happened once —
 restored from HEAD). Always pass `--dir` explicitly.
 
 ## -6. Speed ramps + video transforms — verified end-to-end (flower-catch test)
 
 First real vibe-edit (`/Users/dyl/hf-test/@dylwill/projects/flower-catch`): 3-segment razor +
-retime + zoom. `data-speed="0.7"` on the catch segment + `data-fc-motion` scale keyframes on each
+retime + zoom. `data-speed="0.7"` on the catch segment + `data-ec-motion` scale keyframes on each
 `video.clip`. Rendered 2160x3840@30 — punch-in lands on the catch, slowed audio syncs.
 
 Three latent bugs found + fixed along the way:
@@ -58,26 +58,26 @@ clips). Without it their preview played our slowed segment's media 1:1 then cut 
 clip's media-start. All readers now accept `data-speed ?? data-playback-rate` (bidirectional —
 HF-retimed clips render correctly under our engine too) and emitters/agents should write both.
 Verified in their player iframe: `__player.seek(6.3)` → vid-1 at media 6.0, playbackRate 0.7 — exact
-match with render math. Zoom authored as registered `__timelines` GSAP (not `data-fc-motion`) so it
+match with render math. Zoom authored as registered `__timelines` GSAP (not `data-ec-motion`) so it
 seeks in both engines; gsap served from local `assets/gsap.min.js`.
 
-## -5. Studio rebrand (donova) — v3 patcher, de-HeyGen surface pass
+## -5. Studio rebrand (editnce) — v3 patcher, de-HeyGen surface pass
 
-`packages/cli/src/rebrand.ts` patches the installed hyperframes Studio bundle on every `fc studio`
-launch (versioned `donova-rebrand-v3` marker, re-patches when the patcher changes): injects a script
+`packages/cli/src/rebrand.ts` patches the installed hyperframes Studio bundle on every `ec studio`
+launch (versioned `editnce-rebrand-v3` marker, re-patches when the patcher changes): injects a script
 into `dist/studio/index.html` that
 
 - replaces the SVG wordmark (`svg[aria-label="Hyperframes"]` — compiled JSX paths, not text) with a
-  styled lowercase **donova** span
-- retitles the page to "Donova Studio" and overwrites `favicon.svg` with a "d" mark
+  styled lowercase **editnce** span
+- retitles the page to "Editnce Studio" and overwrites `favicon.svg` with a "d" mark
 - **removes HeyGen surfaces entirely**: the "Open in desktop app" dropdown button, its menu items,
   and the `aria-label="Get the desktop app"` trigger are `remove()`d — not hidden
-- rewrites any remaining `HeyGen`/`HyperFrames` rendered text to `Donova` via a TreeWalker text-node
+- rewrites any remaining `HeyGen`/`HyperFrames` rendered text to `Editnce` via a TreeWalker text-node
   pass (covers dialogs/toasts/menus rendered later; skips script/style/code/pre)
 
 A MutationObserver re-scrubs added nodes; each added node is checked **itself and** its descendants
 (v2 bug: React mounts controls as direct additions — a descendants-only scan misses them). Verified
-headlessly at localhost:3005: top bar reads "donova | fc-e2e", zero HeyGen text nodes, "Open in
+headlessly at localhost:3005: top bar reads "editnce | ec-e2e", zero HeyGen text nodes, "Open in
 desktop app" absent, Window menu holds only panel toggles, **Export kept** (it's a local render
 button, not HeyGen). Why a DOM patcher instead of bundle surgery: the wordmark is minified React JSX,
 not a string; the injected script survives any bundle shape and self-heals after package reinstall.
@@ -88,26 +88,26 @@ wire our agent into "Describe a change") supersedes it.
 
 **Commands — batch 2 delegates** (same `hf.ts` passthrough): `lint`, `info`, `compositions`, `docs`,
 `browser`, `clean`, `lambda`, `cloudrun`, `compare-sheet` (HF `compare`). Deprecated-upstream `inspect`
-and `validate` deliberately skipped — `gate` covers them. `fc clean` verified real (freed 2.3 GB of
+and `validate` deliberately skipped — `gate` covers them. `ec clean` verified real (freed 2.3 GB of
 HF cache); `lambda`/`cloudrun` expose deploy + `sites create` for renders on the *user's own* AWS/GCP.
 
 **Starter examples** — 9 HyperFrames example projects ported to `registry/examples/`:
 `product-promo`, `swiss-grid`, `vignelli`, `warm-grain`, `kinetic-type`, `nyt-graph`, `path-traced-3d`,
-`play-mode`, `decision-tree`. `fc init --template <name>` copies one + derives `framecraft.json` from
+`play-mode`, `decision-tree`. `ec init --template <name>` copies one + derives `editnce.json` from
 its `registry-item.json` dimensions. Catalog lists them as `type: "example"` (472 items total).
-Verified: `fc init fc-promo --template product-promo` → `hyperframes lint` 0/0.
+Verified: `ec init ec-promo --template product-promo` → `hyperframes lint` 0/0.
 
-**Skills — batch 2** (5 more, refs remapped `hyperframes`→`framecraft`, gated commands kept marked):
-`changelog-video` (VO step now `fc tts` + `fc transcribe` word-align; gate call → `fc gate
---caption-zone`), `slideshow` (keeps `hyperframes-slideshow+json` contract strings — `fc present` and
-the upstream player element detect those literal names), `remotion-to-framecraft` (renamed),
-`figma`, `media-use` (flipped to **local-first**: `fc tts`/`remove-background`/`media-treatment` are
+**Skills — batch 2** (5 more, refs remapped `hyperframes`→`editnce`, gated commands kept marked):
+`changelog-video` (VO step now `ec tts` + `ec transcribe` word-align; gate call → `ec gate
+--caption-zone`), `slideshow` (keeps `hyperframes-slideshow+json` contract strings — `ec present` and
+the upstream player element detect those literal names), `remotion-to-editnce` (renamed),
+`figma`, `media-use` (flipped to **local-first**: `ec tts`/`remove-background`/`media-treatment` are
 the default column; HeyGen sign-in optional). Still skipped (Pro-gated): `reverse-any-video`,
 `style-sampling`.
 
-**SDK** — `@hyperframes/sdk@0.9.20` added as a dep and re-exported via `framecraft/cli` `sdk.ts`:
+**SDK** — `@hyperframes/sdk@0.9.20` added as a dep and re-exported via `editnce/cli` `sdk.ts`:
 `openComposition(html)` gives find/patch/timing/history ops on our files natively (verified: 319
-element handles on fc-e2e). Agents can now do structured composition edits, not just CLI calls.
+element handles on ec-e2e). Agents can now do structured composition edits, not just CLI calls.
 
 **Adapters — audited, not needed for parity:** every ported block wraps its engine (three.js, d3,
 lottie, shaders) inside a registered `__timelines` GSAP timeline, so our universal timeline seek
@@ -116,7 +116,7 @@ covers all 463 items without per-engine adapters.
 **Remaining real gaps (all need item-3+ work, not plugs):**
 - Studio vendoring/rebrand + wiring OUR agent into Studio's mutation routes (item 3)
 - `<hyperframes-slideshow>` element — lives in `@hyperframes/player`'s slideshow export; our
-  `framecraft-player` doesn't ship a slideshow wrapper yet (decks still run via `fc present`)
+  `editnce-player` doesn't ship a slideshow wrapper yet (decks still run via `ec present`)
 - `share`/hosted publish — HeyGen backend; ours would need our own share infra
 - HeyGen `cloud` render — gated; `lambda`/`cloudrun` to user-owned clouds now covers self-hosting
 - `media-use` resolve verb — HeyGen catalog/gen needs auth; local-tool column fully works
@@ -127,7 +127,7 @@ Since conformance makes our projects valid HF projects, their *local* CLI comman
 natively. `packages/cli/src/hf.ts` provides `runHyperframes()` (bin resolve, telemetry off, exit-code
 preservation); each command is a citty delegate forwarding `rawArgs` verbatim:
 
-| `fc` command | → `hyperframes` | Gives us |
+| `ec` command | → `hyperframes` | Gives us |
 |---|---|---|
 | `gate` | `check` | Deep gate: lint + runtime + layout + contrast + audio + readability |
 | `capture` | `capture` | Website → captured footage (product-launch workflow) |
@@ -142,12 +142,12 @@ preservation); each command is a citty delegate forwarding `rawArgs` verbatim:
 | `grade-compare` | `grade-compare` | Labeled grade comparison PNG |
 | `benchmark` | `benchmark` | Render speed/size sweeps |
 | `present` | `present` | Slideshow presenter mode |
-| `timeline --lanes` | `timeline` | Visual lane timeline (bare `fc timeline` stays our JSON clip list) |
+| `timeline --lanes` | `timeline` | Visual lane timeline (bare `ec timeline` stays our JSON clip list) |
 
-**Verified live on /tmp/fc-e2e:** `gate` (Check passed, catches `line_unread` readability warnings),
+**Verified live on /tmp/ec-e2e:** `gate` (Check passed, catches `line_unread` readability warnings),
 `audio` (per-clip onsets/hits/LUFS/voice-classification), `beats`, `history`, `keyframes`, `timeline
 --lanes`, `present`, `benchmark`; `diff`/`measure`/`capture`/`media-treatment`/`normalize-audio`/
-`grade-compare` verified via usage-error forwarding. **Caveat:** citty intercepts `fc <cmd> --help` —
+`grade-compare` verified via usage-error forwarding. **Caveat:** citty intercepts `ec <cmd> --help` —
 upstream flag help lives at `hyperframes <cmd> --help` (bin is a dep, `npx hyperframes` works).
 
 **Skipped:** `inspect` (deprecated upstream → `gate` covers it), `cloud`/`publish`/`open`/`catch-up`/
@@ -160,18 +160,18 @@ for later embed/transition work).
 
 **Caption readability fix folded in:** `captions.ts` now extends each caption's hold toward
 `0.5s + 0.3s/word` (HF `line_unread` rule), capped at the next caption's start so holds extend into
-speech gaps without overlapping. Fast-speech sequences can't physically hold — `fc gate` still warns
+speech gaps without overlapping. Fast-speech sequences can't physically hold — `ec gate` still warns
 there; `--mode phrase` is the real fix for dense delivery.
 
 ## -2. HyperFrames conformance + registry/skills port
 
-**Framecraft projects are now valid HyperFrames projects.** `hyperframes lint` reports **0 errors, 0
-warnings** on fresh `init` and `--footage` scaffold output; the migrated fc-e2e project reports 0 errors
+**Editnce projects are now valid HyperFrames projects.** `hyperframes lint` reports **0 errors, 0
+warnings** on fresh `init` and `--footage` scaffold output; the migrated ec-e2e project reports 0 errors
 and 1 opinionated warning (`composition_file_too_large` — inlined word captions).
 
 **Format conformance (item 1 of the port plan):**
 - Roots emit `id="root"`, `data-composition-id`, `data-width`/`data-height`, `data-fps`, plus
-  `data-no-timeline` (we animate via `data-fc-motion`, not a registered GSAP timeline — the flag saves
+  `data-no-timeline` (we animate via `data-ec-motion`, not a registered GSAP timeline — the flag saves
   their producer a 45s poll).
 - `data-composition-src` hosts carry `data-composition-id` + `id` (see `add` hint, agent auto-wire).
 - Scaffolded `<video>`s are hoisted `.clip` elements with own `id="vid-N"`, `data-start`, `data-duration`,
@@ -185,7 +185,7 @@ and 1 opinionated warning (`composition_file_too_large` — inlined word caption
   html/body width/height stripped), `<script>`s execute, `window.__timelines` registrations are
   *namespaced per host* and seeked at **local** time (host-relative), not global time.
 - Verified: a real HF block (`lt-dark-card` — standalone HTML + CDN GSAP + `__timelines`) renders and
-  animates under our engine and inside a real `fc render` mp4.
+  animates under our engine and inside a real `ec render` mp4.
 - `renderSeek` seeks `scopedTimelines` at `t - clipStart`; `__playerReady` is declared only after
   `renderSeek(0)` completes.
 - Timed-element visibility now restores the *authored* `display` value (flex/grid survive), not `""`.
@@ -203,7 +203,7 @@ mock-UI avatars in e.g. comment/thread blocks kept). Apache-2.0 attribution in `
 
 **Skills port:** `captions-overlay`, `cut-the-curve`, `motion-doctrine`, `oversized-cursor`, `seam-craft`
 in `skills/` (HeyGen-Pro-gated `reverse-any-video`/`style-sampling` skipped — no proprietary backend).
-`copyPrompt.ts` + `framecraft-core`/`framecraft-registry` skills document the host/root contract.
+`copyPrompt.ts` + `editnce-core`/`editnce-registry` skills document the host/root contract.
 
 **Emitter touchpoints:** `init.ts`, `scaffold.ts` (media), `captions.ts` (ids + root-duration clamp),
 `cli.ts` add hint, `agent.ts` auto-wire.
@@ -214,17 +214,17 @@ components' install targets vs blocks not exhaustively tested; Studio still show
 
 ## -1. HyperFrames Studio integration (architecture decision)
 
-**Decision: Framecraft adopts HyperFrames Studio (Apache-2.0) as the editing surface** instead of growing
-`@framecraft/studio-server`'s ~300-line UI. Framecraft keeps the differentiators: the footage-first
+**Decision: Editnce adopts HyperFrames Studio (Apache-2.0) as the editing surface** instead of growing
+`@editnce/studio-server`'s ~300-line UI. Editnce keeps the differentiators: the footage-first
 pipeline (`transcribe → cuts → scaffold → captions → render`), the in-app agent concept, `--prompt` vocab
 stitching, Parakeet engine, clean defaults, self-owned SFX.
 
-**Verified 2026-11-07:** `hyperframes preview /tmp/fc-e2e` boots on a Framecraft project with zero
+**Verified 2026-11-07:** `hyperframes preview /tmp/ec-e2e` boots on an Editnce project with zero
 adaptation — preview renders footage+captions, timeline shows thumbnails/waveforms, playback+seek+caption
 sync all work headlessly. Their project contract only requires `index.html`; our attrs are already compatible.
 
-**What was plugged in:** `hyperframes@0.9.20` is now a dep of `@framecraft/cli`.
-`framecraft studio [dir]` → delegates to `hyperframes preview --background` (telemetry off via
+**What was plugged in:** `hyperframes@0.9.20` is now a dep of `@editnce/cli`.
+`editnce studio [dir]` → delegates to `hyperframes preview --background` (telemetry off via
 `HYPERFRAMES_NO_TELEMETRY=1` + `DO_NOT_TRACK=1`). Flags: `--port`, `--stop`, `--no-open`, `--local` (legacy
 studio). Files: `packages/cli/src/studio.ts`, `cli.ts` studioCmd.
 
@@ -232,7 +232,7 @@ studio). Files: `packages/cli/src/studio.ts`, `cli.ts` studioCmd.
 
 **Not wired yet (HeyGen-coupled, needs shims/strip later):** their in-Studio agent ("Describe a change"),
 Export button, desktop-app handoff, Capture panel, auth/billing surfaces. Telemetry is env-disabled when
-spawned through `framecraft studio`.
+spawned through `editnce studio`.
 
 **License notes:** HyperFrames is Apache-2.0 (verified in source + package.json). Vendoring/forking later is
 legal with NOTICE preservation. Their Studio UI shows HeyGen branding until we vendor+rebrand.
@@ -255,7 +255,7 @@ foundation to harden, not as finished tasks.
    `<script src="/__fc-runtime.js">` injected into served HTML. Verified: iframe boots the runtime
    (`__playerReady`/`__fc` true under headless chrome). Files: `server.ts` (+`/project` proxy,
    `/__fc-runtime.js` route, `getRuntimeSource` import), `studio-server/package.json` (+runtime dep).
-2. **`data-fc-motion` timing**: anim `t` is now relative to `el.closest("[data-start]")`
+2. **`data-ec-motion` timing**: anim `t` is now relative to `el.closest("[data-start]")`
    (`runtime/src/browser.ts` `buildMotionAnims`). Verified: stat-card at 19.5–22.5s renders "41.8s /
    clean cuts / dead air removed" in a 20.6s snapshot; caption pops play at their clip.
 3. **Rotated footage**: `probe` returns `rotation` (display-matrix/tags); `init`/`scaffold` swap w/h
@@ -269,7 +269,7 @@ foundation to harden, not as finished tasks.
    result is a valid alpha ProRes.)
 6. **`compare`**: parses stderr on success too — identical files → `average:inf` → psnr null-in-JSON is
    *correct* (Infinity isn't JSON); different files return real dB.
-7. **MCP**: `framecraft_check`/`framecraft_snapshot` signatures fixed; server exits on stdin EOF.
+7. **MCP**: `editnce_check`/`editnce_snapshot` signatures fixed; server exits on stdin EOF.
    Verified: tools/call check + snapshot return results over stdio.
 8. **Agent write guard**: `write_file` refuses `assets/`, `media/`, and media extensions.
 
@@ -290,7 +290,7 @@ foundation to harden, not as finished tasks.
 - Audio mix ends with `alimiter=limit=0.95`.
 - h264 encoder adds `-vf format=yuv420p` for non-alpha (was yuvj420p full-range mislabel).
 - Render cleans up: video-only tmp, `render-*` work dirs, audio-mix.aac (keeps frames/video-map cache).
-- Registry: `block.json` `vars` regenerated from actual `--fc-*`/`data-fc-var` usage (dead vars
+- Registry: `block.json` `vars` regenerated from actual `--ec-*`/`data-ec-var` usage (dead vars
   removed, missing declared); `caption-strip` got `top:auto` (was stretched by `.clip{inset:0}` CSS).
 
 ### Still open (deferred, not blocking)
@@ -299,21 +299,21 @@ foundation to harden, not as finished tasks.
 - **Anthropic chat path untested** — no `ANTHROPIC_API_KEY` on this machine; the loop is implemented
   but needs a live key to verify.
 - **Studio timeline lanes**: clips still render one-per-row (no lane packing). Cosmetic.
-- **`clip-past-duration` warnings** (16 on fc-e2e): some generated caption clips extend ~0.5s past
+- **`clip-past-duration` warnings** (16 on ec-e2e): some generated caption clips extend ~0.5s past
   the 41.84s plan duration. Harmless but should be clamped in `captions`.
 - **Block defaults are centered**: stat/card blocks cover the face at default position. Agents/users
-  should position them; consider a `--fc-y` offset convention later.
-- **Sub-comp scaling semantics**: inner `data-fc-motion` times scale to the host clip duration — by
+  should position them; consider a `--ec-y` offset convention later.
+- **Sub-comp scaling semantics**: inner `data-ec-motion` times scale to the host clip duration — by
   design, but document it in block authoring notes.
-- **`framecraft check` warnings** don't distinguish block-sourced vs user clips in messages.
+- **`editnce check` warnings** don't distinguish block-sourced vs user clips in messages.
 - **Error codes**: most non-validation failures still return `E_INTERNAL` (unknown block, tts
   provider, missing file). citty's missing-positional-arg error bypasses `--json` (prints help text).
 - **Missing `data-composition-src` targets** surface only as a browser 404 in `check`; no static
   fs-existence lint rule yet.
 - **`remove-background` video path** is untested (image path verified); the Studio
   "Remove background" inspector button (MV8) is not built; `edge`/`kokoro` TTS providers are stubs.
-- **`eval` draft render** writes `eval-render.mp4` at the project root instead of `.framecraft/`.
-- **No `clean` command** for `.framecraft/frames` cache (~hundreds of MB on real footage).
+- **`eval` draft render** writes `eval-render.mp4` at the project root instead of `.editnce/`.
+- **No `clean` command** for `.editnce/frames` cache (~hundreds of MB on real footage).
 
 ### Verified working (carried over)
 - Real footage E2E on `IMG_4063.MOV` (rotated −90°, 47.8s): `init --footage` → `transcribe` (155 words)
@@ -332,10 +332,10 @@ The earlier write-up of each bug remains below for context; items marked fixed a
 6. **`compare` never returns a PSNR** (always `psnr: null`, even vs a testsrc video). ffmpeg exits 0,
    so the parse in the `catch` never runs and it returns `Infinity` (JSON → null). Parse stderr on success.
    File: `packages/cli/src/compare.ts`.
-7. **MCP `framecraft_check` and `framecraft_snapshot` throw** (`paths[0] must be string`): `mcp.ts`
+7. **MCP `editnce_check` and `editnce_snapshot` throw** (`paths[0] must be string`): `mcp.ts`
    calls `checkProject({dir})` and `snapshotTimes({...})`, but the signatures are
    `checkProject(dir, composition?, opts?)` and `snapshotTimes(dir, composition, times, outDir)`. Also
-   `framecraft mcp` never exits on stdin EOF (`await new Promise(() => {})`): add `stdin.on("end", exit)`.
+   `editnce mcp` never exits on stdin EOF (`await new Promise(() => {})`): add `stdin.on("end", exit)`.
 8. **Agent can overwrite raw footage.** `agent.ts` `write_file` only blocks `media/` and `..`, but
    `init --footage` puts footage in `assets/`. Block any path whose extension is video/audio/image
    or that is referenced as a `<video>/<audio>` src; never allow writes to `assets/` raw files.
@@ -358,21 +358,21 @@ The earlier write-up of each bug remains below for context; items marked fixed a
     click) and leaves files the turn created. Undo the last turn *with changes*; delete created files.
 14. `eval` audio rule reads `probe.audio.codec`, but `probe` returns `hasAudio` → always "no audio
     stream" (false fail on the E2E project that has AAC). Also eval's "draft" render is full-res and
-    serial (92s); pass `scale: 0.5`, `workers: auto`, write to `.framecraft/`, not the project root.
-15. Temp leaks: `*.video-only.tmp.mp4` left next to every output; `.framecraft/render-<ts>/` worker
-    dirs (195 MB on the E2E) never deleted; `.framecraft/frames` (173 MB) has no `clean` command.
+    serial (92s); pass `scale: 0.5`, `workers: auto`, write to `.editnce/`, not the project root.
+15. Temp leaks: `*.video-only.tmp.mp4` left next to every output; `.editnce/render-<ts>/` worker
+    dirs (195 MB on the E2E) never deleted; `.editnce/frames` (173 MB) has no `clean` command.
 16. Registry blocks:
     - `caption-strip` renders as a full-height dark bar in any project whose CSS has
       `.clip{inset:0}` (scaffold emits exactly that). Blocks must set `top:auto`/explicit box, or
       scaffold should scope its rule to `.clip > video`.
     - Declared vars with no effect: `card.pos`, `progress-bar.pos`, `flash.color` (HTML reads
-      `--fc-flash`), `flash.dur`, `zoom-transition.from/to/dur` (JSON motion can't read CSS vars),
-      `fade-title` uses a dict-shaped `vars` with key `--fc-title-color` (schema inconsistent).
+      `--ec-flash`), `flash.dur`, `zoom-transition.from/to/dur` (JSON motion can't read CSS vars),
+      `fade-title` uses a dict-shaped `vars` with key `--ec-title-color` (schema inconsistent).
     - Many CSS vars used but undeclared (e.g. card has 15) — declare them in `block.json`.
     - Sub-comp time scaling stretches a block to the host's duration (a 0.12s `flash` on a 3s host
       lasts 3s). Make scaling opt-in (`data-scale="fit"`) or document host duration = block duration.
     - New blocks' `block.json` lack `type`/`version`/`files` that the original two have.
-17. `framecraft catalog` is referenced 5× in skills but the command doesn't exist (`Unknown command`).
+17. `editnce catalog` is referenced 5× in skills but the command doesn't exist (`Unknown command`).
 18. `--quality draft` alone doesn't downscale (only `--draft`); either make draft imply scale 0.5 or
     document. Out-of-range `--range` gives a raw ffmpeg "End of file" error; validate against duration.
 19. Errors: most failures return `E_INTERNAL` (unknown block, tts provider). Use specific codes.
@@ -391,7 +391,7 @@ The earlier write-up of each bug remains below for context; items marked fixed a
     but for cloud/Lambda inline sub-comps at compile time instead.
 
 ### P2 — hygiene
-26. `pnpm typecheck` fails in `@framecraft/cli`: `captions.ts` `units` typed as `Array<{…}>[]`
+26. `pnpm typecheck` fails in `@editnce/cli`: `captions.ts` `units` typed as `Array<{…}>[]`
     (should be `Array<{…}>`); `mcp.ts` signature errors (#7).
 27. `pnpm lint`: 49 errors, all in new MV3–MV10 files (formatting, import order, `!` assertions,
     template literals). `pnpm format` fixes most; replace `!` with guards.
@@ -412,7 +412,7 @@ The earlier write-up of each bug remains below for context; items marked fixed a
 ### How it was tested (re-run after fixes)
 ```bash
 pnpm build && pnpm typecheck && pnpm lint && pnpm test && pnpm test:golden
-FC="node packages/cli/bin/framecraft.mjs"
+FC="node packages/cli/bin/editnce.mjs"
 $FC init /tmp/e2e --footage ~/hf-test/@dylwill/raw-footage/IMG_4063.MOV --width 1080 --height 1920 --json
 cd /tmp/e2e && $FC transcribe assets/IMG_4063.MOV --json && $FC cuts transcript.json --json \
  && $FC scaffold assets/IMG_4063.MOV --cuts cuts.json --width 1080 --height 1920 --json \
@@ -427,17 +427,17 @@ cd /tmp/e2e && $FC transcribe assets/IMG_4063.MOV --json && $FC cuts transcript.
 
 | Package | State | Notes |
 |---|---|---|
-| `contract` | working | `names.ts` (all names), parse5 parser, timecode parsing, timing compiler (`resolveTimeline`, nested sub-comps, `data-clip-absolute`, speed), `planRender`, `data-fc-motion` parser/validator, JSON schemas in `schemas/`. Exported parse fn is `parseCompositionHtml` (not `parseComposition`). |
-| `runtime` | working | Browser IIFE built to `dist/runtime.global.js`. Root sizing from `data-width/height`, clip visibility + `data-fade-in/out`, GSAP root timeline seek, WAAPI/CSS adapter, `data-fc-motion` adapter (split words/chars, stagger, eases), deterministic video frame overlays from `.framecraft/video-map.json`, media seek, `__renderReady` gate. |
-| `engine` | working | ffmpeg locate/run, Chrome Headless Shell ensure/launch, static file server (Range, `.framecraft/*` misses → 204), capture (beginFrame + screenshot), sacrificial-browser beginFrame probe with cached verdict (`~/.framecraft/probes/`), streaming encoder (h264/h265/vp9/prores, alpha), chunk encoder, video frame pre-extraction (JPG). |
+| `contract` | working | `names.ts` (all names), parse5 parser, timecode parsing, timing compiler (`resolveTimeline`, nested sub-comps, `data-clip-absolute`, speed), `planRender`, `data-ec-motion` parser/validator, JSON schemas in `schemas/`. Exported parse fn is `parseCompositionHtml` (not `parseComposition`). |
+| `runtime` | working | Browser IIFE built to `dist/runtime.global.js`. Root sizing from `data-width/height`, clip visibility + `data-fade-in/out`, GSAP root timeline seek, WAAPI/CSS adapter, `data-ec-motion` adapter (split words/chars, stagger, eases), deterministic video frame overlays from `.editnce/video-map.json`, media seek, `__renderReady` gate. |
+| `engine` | working | ffmpeg locate/run, Chrome Headless Shell ensure/launch, static file server (Range, `.editnce/*` misses → 204), capture (beginFrame + screenshot), sacrificial-browser beginFrame probe with cached verdict (`~/.editnce/probes/`), streaming encoder (h264/h265/vp9/prores, alpha), chunk encoder, video frame pre-extraction (JPG). |
 | `producer` | working | `render()`: parse → plan → extract video frames → serial or parallel capture → audio mix (trim/volume/fades/delay/amix) → mux. Formats: mp4, webm(vp9+opus), mov, gif, png-seq, hls. Parallel = equal contiguous frame ranges, one browser per worker, one retry. |
 | `cli` | working | `init`, `check` (`--json`), `preview`, `render` (`--workers --format --quality --fps --alpha`), `studio`, `snapshot --times`, `compare <a> <b>` (PSNR), `add <block>`. No JSON envelope on most commands; progress uses `\r`. |
 | `lint` | minimal | Small static rule set + summary/format helpers. Far from the ~100 rules in `07`. |
-| `player` | minimal | `<framecraft-player>` web component. |
+| `player` | minimal | `<editnce-player>` web component. |
 | `studio-server` | minimal | Vanilla Node HTTP server + single-file UI `src/ui/index.html` (no Vite/React/dockview). Endpoints: `GET /api/spec`, `GET/PUT /api/file`, `POST /api/mutation` (byte-preserving timing/text edits by timed-element index), `GET /api/lint`, `POST /api/render` + `GET /api/render/:id`, `GET /api/files`, `/studio/*`. UI: canvas iframe, timeline tracks, drag-to-retime, click-to-pick, inspector (start/duration/text), lint panel, render button. |
 
 Other: `registry/` (2 blocks: `fade-title`, `caption-strip`; `catalog.json`),
-`skills/framecraft-core/SKILL.md`, `apps/render-worker/Dockerfile` (untested build),
+`skills/editnce-core/SKILL.md`, `apps/render-worker/Dockerfile` (untested build),
 `fixtures/basic` (GSAP + motion), `fixtures/media` (video + audio), `tests/contract.test.ts`
 (17 tests).
 
@@ -448,10 +448,10 @@ pnpm install
 pnpm build                 # 8/8 packages
 pnpm vitest run            # 17 tests (NOTE: `pnpm test` runs turbo; packages have no test scripts)
 pnpm lint                  # biome
-node packages/cli/bin/framecraft.mjs check fixtures/media
-node packages/cli/bin/framecraft.mjs render fixtures/basic --out /tmp/out.mp4 [--workers 4]
-node packages/cli/bin/framecraft.mjs snapshot fixtures/basic --times 0,0.5,1 --out snaps
-node packages/cli/bin/framecraft.mjs studio fixtures/media --port 8788   # http://127.0.0.1:8788/studio/
+node packages/cli/bin/editnce.mjs check fixtures/media
+node packages/cli/bin/editnce.mjs render fixtures/basic --out /tmp/out.mp4 [--workers 4]
+node packages/cli/bin/editnce.mjs snapshot fixtures/basic --times 0,0.5,1 --out snaps
+node packages/cli/bin/editnce.mjs studio fixtures/media --port 8788   # http://127.0.0.1:8788/studio/
 ```
 `pnpm test:golden` references `vitest.golden.config.ts`, which **does not exist** yet.
 
@@ -478,7 +478,7 @@ Lessons (each was a real bug — do not regress):
 5. **Same-src `<video>` segments**: every media element gets a per-tag `mediaIndex`
    (document order); the video map entry carries `index`, and the runtime matches by
    index, not `video[src=…]` (which would bind all segments to the first).
-6. **Overlay'd videos are not element-seeked** (`data-fc-overlay="1"`); their audio
+6. **Overlay'd videos are not element-seeked** (`data-ec-overlay="1"`); their audio
    comes from the FFmpeg graph. Seeking N hidden MOVs per frame stalled renders.
 7. **Only swap overlay frames inside the overlay's time window.**
 8. **Render plan shards only at scene cuts** (`class="clip"` or media clips). Timed
@@ -504,12 +504,12 @@ Lessons (each was a real bug — do not regress):
 16. **Parakeet engine (`--engine auto|parakeet|whisper`, default auto):**
     NVIDIA parakeet-tdt-0.6b-v3 via `sherpa-onnx-node@1.13.8` — better WER than
     large-v3, ~5-10× faster, 26 languages. Model (int8 ONNX, ~670MB) downloads
-    to `~/.cache/framecraft/parakeet/` with size+sha256 pins at a fixed HF
+    to `~/.cache/editnce/parakeet/` with size+sha256 pins at a fixed HF
     revision. Decode runs in `sherpaWorker.ts` child process (onnxruntime can
     abort uncatchably); audio is silence-cut into ~30s windows, gaps with
     residual energy get re-decoded + spliced (`parakeet.ts`). Whisper remains
     the fallback for unsupported platforms/languages (`--language` swaps `.en`
-    models for multilingual twins). `framecraft models [install parakeet]`
+    models for multilingual twins). `editnce models [install parakeet]`
     lists/prefetches. Verified on IMG_4063: Fiverr correct ×2 with no prompt,
     proper punctuation/casing, zero fragments. Parakeet is CC-BY-4.0 —
     attribution lives in README Notices. Whisper.cpp binary auto-build is NOT
@@ -520,7 +520,7 @@ on this Mac → **11 min 18 s**. Basic fixture (640×360, 2 s) → 4.7 s.
 
 ## 4. Reference project (local only — not in the repo)
 
-`~/hf-test/@dylwill/projects/fc-4063/` — the owner's talking-head clip edited with this
+`~/hf-test/@dylwill/projects/ec-4063/` — the owner's talking-head clip edited with this
 codebase into a 9:16 reel:
 - `transcript.json` (whisper-cli `small.en`, model borrowed from
   `~/.cache/hyperframes/whisper/models/ggml-small.en.bin` — MV1 must download its own),
@@ -540,11 +540,11 @@ user style file. **Never copy its values into the product** (17 §0 rule 1).
   MV6 chat panel may be built in it first, then migrated with T10.2.
 - CLI is built on `citty` with commands in `packages/cli/src/cli.ts`; there is no
   `errors.ts` / JSON envelope yet. → MV0.4 / MV1.
-- `ensureChrome` stores browsers under `~/.framecraft/chrome/` (plan says
-  `~/.cache/framecraft/`). Pick one in `names.ts` and migrate.
-- No `@framecraft/media`, `@framecraft/sdk`, `@framecraft/agent` packages yet.
+- `ensureChrome` stores browsers under `~/.editnce/chrome/` (plan says
+  `~/.cache/editnce/`). Pick one in `names.ts` and migrate.
+- No `@editnce/media`, `@editnce/sdk`, `@editnce/agent` packages yet.
 
 ## 6. Environment of the owner's machine
 
 macOS (Apple silicon), Node 23.9, pnpm 9.15, FFmpeg 9.0.2, `whisper-cli` via Homebrew,
-Chrome Headless Shell 141 and 157 under `~/.framecraft/chrome/`. No Bun.
+Chrome Headless Shell 141 and 157 under `~/.editnce/chrome/`. No Bun.

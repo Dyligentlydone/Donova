@@ -2,7 +2,7 @@ import { createHash } from "node:crypto";
 import { existsSync, mkdirSync } from "node:fs";
 import { homedir } from "node:os";
 import { join } from "node:path";
-import { CACHE_DIR, ENV_PREFIX } from "@framecraft/contract";
+import { CACHE_DIR, ENV_PREFIX, LEGACY } from "@editnce/contract";
 
 /** Deterministic flags (03 §2). Order matters to nothing, but keep stable. */
 export function deterministicFlags(): string[] {
@@ -60,16 +60,24 @@ export interface ChromeInfo {
 let cachedChrome: ChromeInfo | null = null;
 
 function cacheDir(): string {
+  // prefer the framecraft-era cache if it already holds a downloaded browser
+  // (saves a re-download); new installs land under ~/.editnce
+  const legacy = join(homedir(), LEGACY.cacheDir, "chrome");
+  if (existsSync(legacy)) return legacy;
   const d = join(homedir(), CACHE_DIR, "chrome");
   mkdirSync(d, { recursive: true });
   return d;
+}
+
+function envOrLegacy(suffix: string): string | undefined {
+  return process.env[`${ENV_PREFIX}${suffix}`] ?? process.env[`${LEGACY.envPrefix}${suffix}`];
 }
 
 /** Resolve a Chrome executable: env → system Chrome → @puppeteer/browsers install. */
 export async function ensureChrome(opts?: { headlessShell?: boolean }): Promise<ChromeInfo> {
   if (cachedChrome) return cachedChrome;
 
-  const envPath = process.env[`${ENV_PREFIX}CHROME_PATH`];
+  const envPath = envOrLegacy("CHROME_PATH");
   if (envPath && existsSync(envPath)) {
     cachedChrome = { executablePath: envPath, version: "env", headless: "system" };
     return cachedChrome;
@@ -118,7 +126,7 @@ export async function ensureChrome(opts?: { headlessShell?: boolean }): Promise<
   }
 
   // 3) Download a pinned build.
-  const buildId = process.env[`${ENV_PREFIX}CHROME_BUILD`] ?? "stable";
+  const buildId = envOrLegacy("CHROME_BUILD") ?? "stable";
   if (!(await canDownload({ browser: "chrome-headless-shell" as never, buildId, cacheDir: cacheDir() }))) {
     throw new Error(`Cannot download chrome-headless-shell ${buildId}.`);
   }

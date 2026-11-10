@@ -160,12 +160,12 @@ test("synthesizeHeygen reports wav transcode failures", async () => {
 });
 
 test("synthResult names a non-zero subprocess exit", () => {
-  const res = synthResult({ status: 2 }, "/tmp/none.wav", "kokoro (framecraft tts)");
+  const res = synthResult({ status: 2 }, "/tmp/none.wav", "kokoro (editnce tts)");
   assert.equal(res.ok, false);
   assert.match(res.error, /kokoro .* exited with status 2/);
 });
 
-// Kokoro shells out to `framecraft tts`; a fake npx on PATH records the argv
+// Kokoro shells out to `editnce tts`; a fake npx on PATH records the argv
 // synthesizeOne really builds, so a dropped flag fails here. Windows runs npx via
 // node directly, so the stub never resolves there.
 async function kokoroArgv(options) {

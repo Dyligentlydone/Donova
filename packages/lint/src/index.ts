@@ -4,7 +4,7 @@ import {
   type ContractIssue,
   parseCompositionHtml,
   parseMotionAttr,
-} from "@framecraft/contract";
+} from "@editnce/contract";
 
 /**
  * Static lint — 07 §2. Runs purely on parsed HTML; no browser needed.

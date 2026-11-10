@@ -1,7 +1,7 @@
 import { mkdir } from "node:fs/promises";
 import { basename, join } from "node:path";
-import type { ClipSpec, CompositionSpec } from "@framecraft/contract";
-import { runFfmpeg } from "@framecraft/engine";
+import type { ClipSpec, CompositionSpec } from "@editnce/contract";
+import { runFfmpeg } from "@editnce/engine";
 
 /**
  * Audio pipeline (03 §4, 04 §9).

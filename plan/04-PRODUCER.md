@@ -1,4 +1,4 @@
-# 04 — Producer (`@framecraft/producer`)
+# 04 — Producer (`@editnce/producer`)
 
 High-level pipeline: project folder → finished file. Used by CLI, studio-server,
 render-worker, and the SDK. Also runs as an HTTP render server.
@@ -7,7 +7,7 @@ render-worker, and the SDK. Also runs as an HTTP render server.
 
 ```ts
 interface RenderOptions {
-  entry?: string;                 // default from framecraft.json or "index.html"
+  entry?: string;                 // default from editnce.json or "index.html"
   composition?: string;           // render a sub-composition standalone (path)
   output: string;                 // file or directory (png-sequence / hls)
   fps?: number | { num: number; den: number };
@@ -47,7 +47,7 @@ Overall percent weights: compile 2%, probe 2%, extract 10%, capture+encode 80%, 
 ## 2. Pipeline stages
 
 ```
-1 resolve      → read framecraft.json, entry, composition target, apply CLI overrides
+1 resolve      → read editnce.json, entry, composition target, apply CLI overrides
 2 preflight    → ffmpeg present (≥6), chrome ensured, disk space ≥ 2× estimated output + frame cache
 3 lint gate    → run static lint; errors abort (unless --no-lint); warnings attached to result
 4 compile      → build a self-contained render bundle in a temp dir (§3)
@@ -71,7 +71,7 @@ mounts them — do not inline, so behaviour equals preview).
 
 3.2 **Vendor scripts**: rewrite known CDN URLs (gsap, lottie-web, animejs, three) to local
 vendored copies under `/__fc/vendor/` (bundled in producer package, pinned versions). Any
-other remote `<script src>`: download once to cache (`~/.cache/framecraft/remote/`) and
+other remote `<script src>`: download once to cache (`~/.cache/editnce/remote/`) and
 rewrite; fail if offline and not cached (`E_REMOTE_ASSET`).
 
 3.3 **Fonts**: find Google Fonts `<link>`/`@import` → fetch CSS with a modern UA → download

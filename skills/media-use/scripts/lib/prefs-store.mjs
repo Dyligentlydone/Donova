@@ -5,7 +5,7 @@ import { withFileLock } from "./config-lock.mjs";
 import { globalMediaDir } from "./media-home.mjs";
 
 /**
- * Remembered defaults — the lightweight tier of Framecraft user memory.
+ * Remembered defaults — the lightweight tier of Editnce user memory.
  *
  * Two files, same shape as the rest of media-use's storage split:
  * - project `.media/preferences.json` — committed with the repo, so the whole

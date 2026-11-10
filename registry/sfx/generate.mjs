@@ -1,4 +1,4 @@
-// Generates the Framecraft SFX library into registry/sfx/<name>/<name>.wav.
+// Generates the Editnce SFX library into registry/sfx/<name>/<name>.wav.
 // Every sound is synthesized locally with ffmpeg — no external samples, so the
 // whole library is unencumbered and redistributable. Re-run: node generate.mjs
 import { execFileSync } from "node:child_process";
@@ -44,7 +44,7 @@ const SOUNDS = [
 const ffmpeg = process.env.FFMPEG ?? "ffmpeg";
 const manifest = {
   version: 1,
-  license: "Framecraft original (synthesized, free to redistribute)",
+  license: "Editnce original (synthesized, free to redistribute)",
   sounds: [],
 };
 

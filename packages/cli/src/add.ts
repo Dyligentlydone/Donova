@@ -4,7 +4,7 @@ import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
 /**
- * `framecraft add <block>` — install a registry block into the project's
+ * `editnce add <block>` — install a registry block into the project's
  * compositions/ dir as editable source (11 §install).
  */
 export async function addBlock(projectDir: string, name: string): Promise<{ dest: string; files: string[] }> {

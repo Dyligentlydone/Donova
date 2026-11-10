@@ -295,7 +295,7 @@ test("heygenAuthHeaders says to fix an unreadable credentials path, and to log i
     const dir = mkdtempSync(join(tmpdir(), "heygen-cred-"));
     try {
       process.env.HYPERFRAMES_CONFIG_DIR = dir;
-      assert.throws(() => heygenAuthHeaders(), /no Framecraft credentials/);
+      assert.throws(() => heygenAuthHeaders(), /no Editnce credentials/);
       mkdirSync(join(dir, "credentials"));
       assert.equal(heygenCredential(), null);
       assert.throws(
@@ -375,7 +375,7 @@ test("a base that isn't HeyGen's gets no stored or host OAuth credential, only a
       process.env.HEYGEN_ACCESS_TOKEN = "at_host";
       process.env.HEYGEN_API_BASE = "https://proxy.example.com";
       assert.equal(heygenCredential(), null);
-      assert.throws(() => heygenAuthHeaders(), /no Framecraft credentials/);
+      assert.throws(() => heygenAuthHeaders(), /no Editnce credentials/);
       // HeyGen's own hosts keep every credential source.
       process.env.HEYGEN_API_BASE = "https://api-canary.heygen.com";
       assert.equal(heygenAuthMethod(), "oauth");
@@ -385,18 +385,18 @@ test("a base that isn't HeyGen's gets no stored or host OAuth credential, only a
   });
 });
 
-test("a refused Framecraft-plan call becomes one line with the billing command", () => {
+test("a refused Editnce-plan call becomes one line with the billing command", () => {
   const refused = (code) => ({
     status: 402,
     body: JSON.stringify({ error: { code, message: "raw" } }),
   });
   assert.equal(
     heygenMessage(refused("hf_subscription_required")),
-    "This needs a Framecraft plan. Run `hyperframes billing subscribe --skill media-use`: it opens the page and waits.",
+    "This needs an Editnce plan. Run `hyperframes billing subscribe --skill media-use`: it opens the page and waits.",
   );
   assert.equal(
     heygenMessage(refused("hf_usage_exhausted")),
-    "Out of Framecraft credits. Run `hyperframes billing add-credits --skill media-use`: it opens the page and waits.",
+    "Out of Editnce credits. Run `hyperframes billing add-credits --skill media-use`: it opens the page and waits.",
   );
   assert.match(
     heygenMessage({ status: 403, body: JSON.stringify({ error: { code: "api_key_required" } }) }),

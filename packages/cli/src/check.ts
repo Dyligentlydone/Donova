@@ -1,9 +1,9 @@
 import { readFile } from "node:fs/promises";
 import { join, resolve } from "node:path";
-import type { ContractIssue } from "@framecraft/contract";
-import { ensureChrome, startFileServer } from "@framecraft/engine";
-import { formatIssues, lintHtml, summarize } from "@framecraft/lint";
-import { getRuntimeSource } from "@framecraft/runtime";
+import type { ContractIssue } from "@editnce/contract";
+import { ensureChrome, startFileServer } from "@editnce/engine";
+import { formatIssues, lintHtml, summarize } from "@editnce/lint";
+import { getRuntimeSource } from "@editnce/runtime";
 import puppeteer from "puppeteer-core";
 import { type EngineDecision, decideEngine, describeDecision } from "./engineRoute.js";
 
@@ -15,7 +15,7 @@ export interface CheckResult {
 }
 
 /**
- * `framecraft check` — static lint + headless browser gate (07 §4).
+ * `editnce check` — static lint + headless browser gate (07 §4).
  * Browser pass: boot the page, run runtime, seek through the timeline,
  * collect pageerror/console.error + overflow findings.
  */

@@ -1,10 +1,10 @@
 /**
- * <framecraft-player> — embeddable composition player (05).
+ * <editnce-player> — embeddable composition player (05).
  * Hosts the composition in an iframe and drives it through __fc.renderSeek.
  * Playback uses a rAF clock for realtime preview; render stays frame-stepped.
  */
 
-export const PLAYER_TAG = "framecraft-player";
+export const PLAYER_TAG = "editnce-player";
 
 export interface PlayerState {
   ready: boolean;
@@ -24,7 +24,7 @@ template.innerHTML = `
 <iframe part="frame" allow="autoplay"></iframe>
 `;
 
-export class FramecraftPlayer extends HTMLElement {
+export class EditncePlayer extends HTMLElement {
   static observedAttributes = ["src", "autoplay", "loop", "controls"];
   private iframe: HTMLIFrameElement;
   private duration = 0;
@@ -131,5 +131,5 @@ export class FramecraftPlayer extends HTMLElement {
 }
 
 if (!customElements.get(PLAYER_TAG)) {
-  customElements.define(PLAYER_TAG, FramecraftPlayer);
+  customElements.define(PLAYER_TAG, EditncePlayer);
 }

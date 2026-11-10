@@ -1,7 +1,7 @@
 {
-  "$id": "https://framecraft.dev/schemas/motion.schema.json",
+  "$id": "https://editnce.dev/schemas/motion.schema.json",
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "title": "Framecraft declarative motion (data-fc-motion)",
+  "title": "Editnce declarative motion (data-fc-motion)",
   "type": "object",
   "required": ["v", "anims"],
   "properties": {

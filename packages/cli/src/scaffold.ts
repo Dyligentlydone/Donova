@@ -1,13 +1,13 @@
 import { existsSync } from "node:fs";
 import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { basename, join, resolve } from "node:path";
-import { locateFfmpeg, probe } from "@framecraft/engine";
-import { planCuts, scaffoldFootage } from "@framecraft/media";
-import type { CutPlan, Transcript } from "@framecraft/media";
+import { locateFfmpeg, probe } from "@editnce/engine";
+import { planCuts, scaffoldFootage } from "@editnce/media";
+import type { CutPlan, Transcript } from "@editnce/media";
 import { CliError, ERR } from "./errors.js";
 
 /**
- * `framecraft scaffold <media>` — footage → neutral index.html (17 §3.4).
+ * `editnce scaffold <media>` — footage → neutral index.html (17 §3.4).
  * Optionally applies a cuts.json plan; otherwise keeps the whole file.
  */
 export async function scaffoldCmd(opts: {

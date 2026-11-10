@@ -1,4 +1,4 @@
-# Framecraft build plan — index
+# Editnce build plan — index
 
 Start with `../AGENTS.md`, then `STATUS.md`, then `17-VIBE-EDIT.md`, then
 `00-OVERVIEW.md`, then follow `16-BUILD-ORDER.md` (MV track first).

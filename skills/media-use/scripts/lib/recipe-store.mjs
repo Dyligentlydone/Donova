@@ -18,7 +18,7 @@ import { mergedPreferences } from "./prefs-store.mjs";
 const NON_ASCII_SAFE_DIR_COPY = { recursive: true, force: true, filter: () => true };
 
 /**
- * Recipes — the heavyweight tier of Framecraft user memory.
+ * Recipes — the heavyweight tier of Editnce user memory.
  *
  * A recipe is the full confirmed bundle for one video type: the frozen design
  * spec (`frame.md`), the storyboard skeleton (structure with the content

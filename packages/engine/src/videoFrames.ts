@@ -1,7 +1,7 @@
 import { createHash } from "node:crypto";
 import { mkdir, writeFile } from "node:fs/promises";
 import { join } from "node:path";
-import type { CompositionSpec } from "@framecraft/contract";
+import type { CompositionSpec } from "@editnce/contract";
 import { probe, runFfmpeg } from "./ffmpeg.js";
 
 /**
@@ -10,7 +10,7 @@ import { probe, runFfmpeg } from "./ffmpeg.js";
  * Chrome can't seek <video> frame-accurately during capture, so every video
  * clip's needed range is pre-extracted to PNGs at the render fps. At capture
  * time the runtime hides the <video> and swaps an overlaid <img> to the
- * correct frame. Frames land in `<project>/.framecraft/frames/<hash>/` so the
+ * correct frame. Frames land in `<project>/.editnce/frames/<hash>/` so the
  * static file server can reach them.
  */
 
@@ -40,7 +40,7 @@ export interface VideoMap {
   entries: VideoMapEntry[];
 }
 
-const CACHE_DIRNAME = ".framecraft";
+const CACHE_DIRNAME = ".editnce";
 /** Opaque footage → JPG (fast decode/encode, ~10x smaller than PNG), as in
  *  HyperFrames videoFrameExtractor's `auto` format. Alpha footage → PNG. */
 const FRAME_EXT = "jpg";

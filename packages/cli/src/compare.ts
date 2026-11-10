@@ -1,6 +1,6 @@
-import { locateFfmpeg, runFfmpegCapture } from "@framecraft/engine";
+import { locateFfmpeg, runFfmpegCapture } from "@editnce/engine";
 
-/** `framecraft compare` — PSNR between two video files (regression + agent verify). */
+/** `editnce compare` — PSNR between two video files (regression + agent verify). */
 export async function compareVideos(a: string, b: string): Promise<{ psnr: number; raw: string }> {
   const { ffmpeg } = await locateFfmpeg();
   // PSNR logs to stderr; runFfmpegCapture captures stdout — use lavfi and parse stderr via execFile.
