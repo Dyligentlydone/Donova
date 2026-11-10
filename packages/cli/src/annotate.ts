@@ -17,19 +17,27 @@ import { fileURLToPath } from "node:url";
  * Routes:
  *   GET  /health                    sidecar liveness + projectDir
  *   POST /annotate                  persist annotations/*.json + *.png
- *   GET  /agent/health              { agent: bool, cmd } — bridge configured?
+ *   GET  /agent/health              { agent: bool, name, cmd } — bridge configured?
+ *   GET  /agent/list                known agents + detected/active state (chat picker)
+ *   POST /agent/select {name}       switch the active agent (persists to framecraft.json)
  *   POST /agent/chat {message, annotation?} → { jobId } (503 when no bridge)
  *   GET  /agent/jobs/:id/stream     SSE of the agent run
  *   POST /stop                      shutdown
  *
- * Agent command resolution: framecraft.json "agent.cmd" → FC_AGENT_CMD →
- * `claude -p -` when claude is on PATH. `{prompt}` in the cmd substitutes the
- * prompt as an arg; otherwise the prompt is written to the process's stdin.
- * Contract: plan/19-ANNOTATE.md.
+ * Agent resolution (first hit wins):
+ *   1. POST /agent/select session override
+ *   2. framecraft.json "agent":  "auto" | "<preset>" | { cmd } | { url, model }
+ *   3. env: FC_AGENT (preset name or raw cmd) → FC_AGENT_CMD (raw cmd)
+ *   4. first preset whose binary is on PATH (claude, codex, gemini, …)
+ *
+ * `{prompt}` in a cmd substitutes the prompt as an arg; otherwise the prompt is
+ * written to the process's stdin. `{ url, model }` targets any OpenAI-compatible
+ * /chat/completions endpoint (Ollama, LM Studio, OpenRouter, …) — reply-only,
+ * it can't edit files. Contract: plan/19-ANNOTATE.md.
  */
 
 const SIDECAR_PORT_OFFSET = 1000;
-const SIDECAR_VERSION = 3;
+const SIDECAR_VERSION = 4;
 
 export function annotatePort(studioPort: number): number {
   return studioPort + SIDECAR_PORT_OFFSET;
@@ -60,22 +68,124 @@ function slug(s: string): string {
 
 // --- agent bridge -----------------------------------------------------------
 
-function resolveAgentCmd(projectDir: string): string | null {
+interface AgentSpec {
+  name: string; // preset key, "custom", or "endpoint"
+  label: string;
+  kind: "cli" | "http";
+  cmd?: string; // cli — {prompt} substitutes as arg, else stdin
+  url?: string; // http — OpenAI-compatible /chat/completions endpoint
+  model?: string;
+  keyEnv?: string; // env var holding a bearer key (never stored)
+  edits: boolean; // can it modify project files?
+}
+
+/** Headless commands for known agent CLIs. Each takes the prompt via stdin or a {prompt} arg. */
+const AGENT_PRESETS: { name: string; label: string; bin: string; cmd: string }[] = [
+  { name: "claude", label: "Claude Code", bin: "claude", cmd: "claude -p --dangerously-skip-permissions" },
+  {
+    name: "codex",
+    label: "Codex (OpenAI)",
+    bin: "codex",
+    cmd: 'codex exec --dangerously-bypass-approvals-and-sandbox "{prompt}"',
+  },
+  { name: "gemini", label: "Gemini CLI", bin: "gemini", cmd: 'gemini --yolo -p "{prompt}"' },
+  { name: "opencode", label: "OpenCode", bin: "opencode", cmd: 'opencode run "{prompt}"' },
+  { name: "aider", label: "Aider", bin: "aider", cmd: 'aider --yes-always --message "{prompt}"' },
+];
+
+let sessionAgent: string | null = null;
+
+function whichBin(bin: string): boolean {
+  try {
+    execSync(`which ${bin}`, { stdio: "ignore" });
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+interface AgentConfig {
+  agent?: string | { cmd?: string; url?: string; model?: string; keyEnv?: string };
+}
+
+function readAgentConfig(projectDir: string): AgentConfig["agent"] {
   try {
     const cfg = join(projectDir, "framecraft.json");
-    if (existsSync(cfg)) {
-      const parsed = JSON.parse(readFileSync(cfg, "utf8")) as { agent?: { cmd?: string } };
-      if (parsed.agent?.cmd) return parsed.agent.cmd;
+    if (existsSync(cfg)) return (JSON.parse(readFileSync(cfg, "utf8")) as AgentConfig).agent;
+  } catch {}
+  return undefined;
+}
+
+function preset(name: string): AgentSpec | null {
+  const p = AGENT_PRESETS.find((a) => a.name === name);
+  return p ? { name: p.name, label: p.label, kind: "cli", cmd: p.cmd, edits: true } : null;
+}
+
+/** Resolve the configured agent, honoring presets, custom cmds, HTTP endpoints. */
+function resolveAgent(projectDir: string): AgentSpec | null {
+  const pick = (sel: string): AgentSpec | null =>
+    preset(sel) ?? (sel.trim() ? { name: "custom", label: sel, kind: "cli", cmd: sel, edits: true } : null);
+  if (sessionAgent) return pick(sessionAgent);
+  const cfg = readAgentConfig(projectDir);
+  if (typeof cfg === "string" && cfg !== "auto") return pick(cfg);
+  if (cfg && typeof cfg === "object") {
+    if (cfg.cmd) return { name: "custom", label: cfg.cmd, kind: "cli", cmd: cfg.cmd, edits: true };
+    if (cfg.url) {
+      return {
+        name: "endpoint",
+        label: `${cfg.model ?? "model"} @ ${cfg.url}`,
+        kind: "http",
+        url: cfg.url,
+        model: cfg.model,
+        keyEnv: cfg.keyEnv,
+        edits: false,
+      };
     }
-  } catch {}
-  if (process.env.FC_AGENT_CMD) return process.env.FC_AGENT_CMD;
-  try {
-    execSync("which claude", { stdio: "ignore" });
-    // headless: prompt arrives on stdin; skip-permissions so it can edit files
-    // without an interactive approval prompt (the user sent the request).
-    return "claude -p --dangerously-skip-permissions";
-  } catch {}
+  }
+  const env = process.env.FC_AGENT ?? process.env.FC_AGENT_CMD;
+  if (env) return pick(env);
+  if (process.env.FC_AGENT_URL) {
+    return {
+      name: "endpoint",
+      label: `${process.env.FC_AGENT_MODEL ?? "model"} @ ${process.env.FC_AGENT_URL}`,
+      kind: "http",
+      url: process.env.FC_AGENT_URL,
+      model: process.env.FC_AGENT_MODEL,
+      keyEnv: process.env.FC_AGENT_KEY_ENV,
+      edits: false,
+    };
+  }
+  if (cfg !== "auto") {
+    for (const p of AGENT_PRESETS) {
+      if (whichBin(p.bin)) return preset(p.name);
+    }
+  }
   return null;
+}
+
+/** Everything the chat picker needs: presets w/ install state, configured entries, active. */
+function listAgents(
+  projectDir: string,
+): { name: string; label: string; detected: boolean; active: boolean }[] {
+  const active = resolveAgent(projectDir);
+  const out = AGENT_PRESETS.map((p) => ({
+    name: p.name,
+    label: p.label,
+    detected: whichBin(p.bin),
+    active: active?.name === p.name,
+  }));
+  const cfg = readAgentConfig(projectDir);
+  if (cfg && typeof cfg === "object" && cfg.url) {
+    out.push({
+      name: "endpoint",
+      label: `${cfg.model ?? "model"} @ ${cfg.url}`,
+      detected: true,
+      active: active?.kind === "http",
+    });
+  }
+  if (active?.name === "custom")
+    out.push({ name: "custom", label: active.label, detected: true, active: true });
+  return out;
 }
 
 const jobs = new Map<
@@ -101,7 +211,7 @@ function buildPrompt(projectDir: string, body: ChatBody): string {
   return `${prompt}\n\nApply the edit, then report concisely what you changed.`;
 }
 
-function startJob(projectDir: string, cmd: string, prompt: string): string {
+function startJob(projectDir: string, spec: AgentSpec, prompt: string): string {
   const id = `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`;
   const job = {
     lines: [] as string[],
@@ -118,6 +228,20 @@ function startJob(projectDir: string, cmd: string, prompt: string): string {
     job.lines.push(chunk);
     for (const l of job.listeners) l.write(`data: ${JSON.stringify(chunk)}\n\n`);
   };
+  const finish = (code: number | null) => {
+    job.done = true;
+    job.code = code;
+    for (const l of job.listeners) {
+      l.write(`event: done\ndata: ${JSON.stringify({ code })}\n\n`);
+      l.end();
+    }
+    job.listeners = [];
+  };
+  if (spec.kind === "http" && spec.url) {
+    runHttpJob(spec, prompt, broadcast, finish);
+    return id;
+  }
+  const cmd = spec.cmd ?? "";
   if (cmd.includes("{prompt}")) {
     const full = cmd.replaceAll("{prompt}", `'${prompt.replaceAll("'", "'\\''")}'`);
     const proc = spawn(full, { cwd: projectDir, shell: true, stdio: ["ignore", "pipe", "pipe"] });
@@ -131,17 +255,43 @@ function startJob(projectDir: string, cmd: string, prompt: string): string {
   function wire(proc: ReturnType<typeof spawn>): void {
     proc.stdout?.on("data", (d: Buffer) => broadcast(d.toString()));
     proc.stderr?.on("data", (d: Buffer) => broadcast(d.toString()));
-    proc.on("close", (code) => {
-      job.done = true;
-      job.code = code;
-      for (const l of job.listeners) {
-        l.write(`event: done\ndata: ${JSON.stringify({ code })}\n\n`);
-        l.end();
-      }
-      job.listeners = [];
-    });
+    proc.on("close", finish);
   }
   return id;
+}
+
+/** Reply-only agent over any OpenAI-compatible /chat/completions endpoint. */
+function runHttpJob(
+  spec: AgentSpec,
+  prompt: string,
+  broadcast: (chunk: string) => void,
+  finish: (code: number | null) => void,
+): void {
+  const key = spec.keyEnv ? process.env[spec.keyEnv] : undefined;
+  const headers: Record<string, string> = { "content-type": "application/json" };
+  if (key) headers.authorization = `Bearer ${key}`;
+  fetch(spec.url as string, {
+    method: "POST",
+    headers,
+    body: JSON.stringify({ model: spec.model ?? "default", messages: [{ role: "user", content: prompt }] }),
+  })
+    .then(async (r) => {
+      const j = (await r.json()) as {
+        choices?: { message?: { content?: string } }[];
+        error?: { message?: string };
+      };
+      if (!r.ok) {
+        broadcast(`error ${r.status}: ${j.error?.message ?? JSON.stringify(j).slice(0, 400)}`);
+        finish(1);
+        return;
+      }
+      broadcast(j.choices?.[0]?.message?.content ?? "(empty reply)");
+      finish(0);
+    })
+    .catch((err) => {
+      broadcast(`endpoint unreachable: ${String(err)}`);
+      finish(1);
+    });
 }
 
 // --- request handling -------------------------------------------------------
@@ -182,9 +332,50 @@ function handle(projectDir: string, req: IncomingMessage, res: ServerResponse): 
     return;
   }
   if (req.method === "GET" && req.url === "/agent/health") {
-    const cmd = resolveAgentCmd(projectDir);
+    const spec = resolveAgent(projectDir);
     res.writeHead(200, { "content-type": "application/json" });
-    res.end(JSON.stringify({ ok: true, agent: Boolean(cmd), cmd }));
+    res.end(
+      JSON.stringify({
+        ok: true,
+        agent: Boolean(spec),
+        name: spec?.name ?? null,
+        cmd: spec?.cmd ?? spec?.url ?? null,
+        edits: spec?.edits ?? false,
+      }),
+    );
+    return;
+  }
+  if (req.method === "GET" && req.url === "/agent/list") {
+    res.writeHead(200, { "content-type": "application/json" });
+    res.end(JSON.stringify({ ok: true, agents: listAgents(projectDir) }));
+    return;
+  }
+  if (req.method === "POST" && req.url === "/agent/select") {
+    let raw = "";
+    req.on("data", (c) => {
+      raw += c;
+    });
+    req.on("end", () => {
+      try {
+        const { name } = JSON.parse(raw) as { name?: string };
+        const spec = name ? preset(name) : null;
+        sessionAgent = spec ? (spec.name as string) : null;
+        // persist so the choice survives studio restarts
+        const cfgPath = join(projectDir, "framecraft.json");
+        let cfg: Record<string, unknown> = {};
+        try {
+          if (existsSync(cfgPath)) cfg = JSON.parse(readFileSync(cfgPath, "utf8")) as Record<string, unknown>;
+        } catch {}
+        cfg.agent = spec ? spec.name : undefined;
+        writeFileSync(cfgPath, JSON.stringify(cfg, null, 2));
+        const sel = resolveAgent(projectDir);
+        res.writeHead(200, { "content-type": "application/json" });
+        res.end(JSON.stringify({ ok: true, agent: sel?.name ?? null, cmd: sel?.cmd ?? sel?.url ?? null }));
+      } catch (err) {
+        res.writeHead(400, { "content-type": "application/json" });
+        res.end(JSON.stringify({ ok: false, error: String(err) }));
+      }
+    });
     return;
   }
   const streamMatch = req.url?.match(/^\/agent\/jobs\/([a-z0-9-]+)\/stream$/)?.[1];
@@ -219,15 +410,17 @@ function handle(projectDir: string, req: IncomingMessage, res: ServerResponse): 
     req.on("end", () => {
       try {
         const body = JSON.parse(raw) as ChatBody;
-        const cmd = resolveAgentCmd(projectDir);
-        if (!cmd) {
+        const spec = resolveAgent(projectDir);
+        if (!spec) {
           res.writeHead(503, { "content-type": "application/json" });
           res.end(JSON.stringify({ ok: false, error: "no-agent" }));
           return;
         }
-        const jobId = startJob(projectDir, cmd, buildPrompt(projectDir, body));
+        const jobId = startJob(projectDir, spec, buildPrompt(projectDir, body));
         res.writeHead(200, { "content-type": "application/json" });
-        res.end(JSON.stringify({ ok: true, jobId, cmd }));
+        res.end(
+          JSON.stringify({ ok: true, jobId, cmd: spec.cmd ?? spec.url, name: spec.name, edits: spec.edits }),
+        );
       } catch (err) {
         res.writeHead(400, { "content-type": "application/json" });
         res.end(JSON.stringify({ ok: false, error: String(err) }));

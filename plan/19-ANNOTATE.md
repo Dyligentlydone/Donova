@@ -51,17 +51,34 @@ baked in, so you can *see* what the user pointed at.
 
 ## Agent bridge (`/agent/*`)
 
-- `GET /agent/health` → `{agent, cmd}`. Command resolution order:
-  `framecraft.json` `agent.cmd` → `FC_AGENT_CMD` env → `claude -p -` when
-  `claude` is on PATH → no bridge (503 → file-drop fallback).
-- `POST /agent/chat {message, annotation?}` → `{jobId}` — spawns the cmd
-  in the project dir (prompt via `{prompt}` arg substitution or stdin),
-  broadcasts stdout/stderr to SSE listeners.
+- `GET /agent/health` → `{agent, name, cmd, edits}`.
+- `GET /agent/list` → `{agents: [{name, label, detected, active}]}` — feeds
+  the chat panel's agent picker.
+- `POST /agent/select {name}` → switches the active agent (preset name),
+  persists the choice as `"agent": "<name>"` in `framecraft.json`.
+- Agent resolution order: session select → `framecraft.json` `agent` →
+  `FC_AGENT` env → `FC_AGENT_CMD` env → `FC_AGENT_URL`/`FC_AGENT_MODEL` →
+  first detected preset on PATH → no bridge (503 → file-drop fallback).
+- `framecraft.json` `agent` accepts:
+  - `"auto"` — force auto-detect (default when absent)
+  - `"<preset>"` — `claude` | `codex` | `gemini` | `opencode` | `aider`
+  - `{ "cmd": "any cli --flags {prompt}" }` — custom agent command;
+    `{prompt}` substitutes as an arg, otherwise the prompt goes to stdin
+  - `{ "url": "http://…/v1/chat/completions", "model": "…", "keyEnv": "…" }` —
+    any OpenAI-compatible endpoint (Ollama, LM Studio, OpenRouter, …).
+    Reply-only (`edits:false`) — it can discuss the edit but can't modify
+    files; `keyEnv` names an env var holding the bearer key.
+- `POST /agent/chat {message, annotation?}` → `{jobId, name, cmd, edits}` —
+  runs the resolved agent in the project dir, broadcasts output to SSE
+  listeners. Preset headless cmds: `claude -p --dangerously-skip-permissions`,
+  `codex exec --dangerously-bypass-approvals-and-sandbox "{prompt}"`,
+  `gemini --yolo -p "{prompt}"`, `opencode run "{prompt}"`,
+  `aider --yes-always --message "{prompt}"`.
 - `GET /agent/jobs/:id/stream` → SSE replay + live chunks + `done` event.
 - `GET /file?p=annotations/x.png` → thumbnail service for chat cards.
-- Chat panel (`donova-rebrand-chat-v1` inject): collapsible agent window;
-  the annotate overlay's "Send to agent" routes through `window.__fcChat`
-  when present — the annotation attaches as a card + the run streams
-  live in-thread.
+- Chat panel (`donova-rebrand-chat-v1` inject): collapsible agent window
+  with an agent-picker dropdown in the header; the annotate overlay's
+  "Send to agent" routes through `window.__fcChat` — the annotation
+  attaches as a card + the run streams live in-thread.
 - Same contract will be implemented by `apps/api` for hosted mode
   (plan/12) — UI is backend-agnostic.

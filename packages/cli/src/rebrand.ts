@@ -317,9 +317,9 @@ const ANNOTATE = `<script>
 
 /**
  * Agent chat — collapsible panel wired to the sidecar's /agent/* bridge.
- * Local mode: spawns the configured agent cmd (framecraft.json agent.cmd →
- * FC_AGENT_CMD → `claude -p -`), streams stdout over SSE into the thread.
- * No bridge → file-drop annotations still work; chat shows the config hint.
+ * Agent picker dropdown lists detected CLIs (claude/codex/gemini/opencode/
+ * aider) plus any configured OpenAI-compatible endpoint; selection persists
+ * to framecraft.json. No bridge → file-drop annotations still work.
  * Exposes window.__fcChat for the annotate overlay's "Send to agent" path.
  */
 const CHAT = `<script>
@@ -347,7 +347,11 @@ const CHAT = `<script>
     var p=document.createElement('div');p.id=PID;
     p.setAttribute('style','position:fixed;right:20px;bottom:64px;width:340px;height:400px;z-index:2147483000;background:#0b0e14f2;border:1px solid #ffffff22;border-radius:12px;display:none;flex-direction:column;overflow:hidden;font:12px system-ui,sans-serif;color:#e8ecf1');
     var hd=el('div','display:flex;align-items:center;gap:8px;padding:8px 10px;border-bottom:1px solid #ffffff14;font:700 12px system-ui,sans-serif');
-    hd.appendChild(el('span','flex:1','agent'));
+    var sel=document.createElement('select');sel.id='fc-agent-sel';
+    sel.setAttribute('style','flex:1;min-width:0;background:#0009;color:#e8ecf1;border:1px solid #ffffff22;border-radius:6px;padding:3px 6px;font:11px system-ui,sans-serif;outline:none;cursor:pointer');
+    sel.addEventListener('change',function(){pick(sel.value)});
+    sel.addEventListener('click',function(e){e.stopPropagation()});
+    hd.appendChild(sel);
     var st=el('span','font:10px system-ui,sans-serif;color:#8892a0');st.id='fc-chat-status';st.textContent='…';hd.appendChild(st);
     var x=el('button','background:none;border:none;color:#8892a0;cursor:pointer;font:14px system-ui,sans-serif','×');
     x.onclick=function(){p.style.display='none';};
@@ -363,9 +367,30 @@ const CHAT = `<script>
     row.appendChild(inp);row.appendChild(sb);p.appendChild(row);
     document.body.appendChild(p);
   }
-  function open(){build();document.getElementById(PID).style.display='flex';}
+  function open(){build();document.getElementById(PID).style.display='flex';health();}
   function health(cb){
-    fetch(base+'/agent/health').then(function(r){return r.json()}).then(function(j){agent=j.agent?j.cmd:null;status(agent?('agent: '+agent.slice(0,28)):'no agent bridge');cb&&cb()}).catch(function(){status('sidecar down — restart fc studio');});
+    fetch(base+'/agent/list').then(function(r){return r.json()}).then(function(j){
+      var sel=document.getElementById('fc-agent-sel'),found=null;
+      if(sel){sel.innerHTML='';(j.agents||[]).forEach(function(a){
+        var o=document.createElement('option');o.value=a.name;
+        o.textContent=a.label+(a.detected?'':' — not installed');
+        if(a.active){o.selected=true;found=a;}
+        sel.appendChild(o);
+      });
+      if(!sel.options.length){var o=document.createElement('option');o.textContent='no agents found';sel.appendChild(o);}}
+      agent=found?found.name:null;
+      status(found?'ready':'no agent');
+      cb&&cb();
+    }).catch(function(){status('sidecar down');});
+  }
+  function pick(name){
+    status('switching…');
+    fetch(base+'/agent/select',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({name:name})})
+      .then(function(r){return r.json()}).then(function(j){
+        agent=j.agent;status(j.agent?('agent: '+j.agent):'no agent');
+        if(j.agent)sys('agent → '+j.agent+(j.cmd?(' ('+j.cmd.slice(0,40)+(j.cmd.length>40?'…':'')+')'):''));
+        else sys('no agent — set "agent" in framecraft.json or FC_AGENT');
+      }).catch(function(){status('sidecar down')});
   }
   function go(msg,annotation){
     if(!msg)return;
@@ -379,8 +404,8 @@ const CHAT = `<script>
     fetch(base+'/agent/chat',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({message:msg,annotation:annotation||null})})
       .then(function(r){return r.json()})
       .then(function(j){
-        if(!j.ok){sys(j.error==='no-agent'?'no agent configured — set "agent.cmd" in framecraft.json or FC_AGENT_CMD':('error: '+j.error));return;}
-        sys('running via '+j.cmd+' …');
+        if(!j.ok){sys(j.error==='no-agent'?'no agent — pick one in the dropdown or set "agent" in framecraft.json / FC_AGENT':('error: '+j.error));return;}
+        sys('running via '+(j.name||j.cmd)+(j.edits===false?' (reply only — cannot edit files)':'')+' …');
         var out=bubble('',false);
         if(es)es.close();
         es=new EventSource(base+'/agent/jobs/'+j.jobId+'/stream');
