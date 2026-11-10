@@ -52,22 +52,32 @@ baked in, so you can *see* what the user pointed at.
 ## Agent bridge (`/agent/*`)
 
 - `GET /agent/health` → `{agent, name, cmd, edits}`.
-- `GET /agent/list` → `{agents: [{name, label, detected, active}]}` — feeds
-  the chat panel's agent picker.
+- `GET /agent/list` → `{agents: [{name, label, kind, detected, active,
+  needsKey?, needsModel?, needsUrl?, install?}]}` — feeds the chat panel's
+  agent picker. `kind` is `cli` (needs the binary on PATH) or `api`
+  (OpenAI-compatible endpoint, configured via the setup form).
 - `POST /agent/select {name}` → switches the active agent (preset name),
   persists the choice as `"agent": "<name>"` in `framecraft.json`.
+- `POST /agent/setup {name, key?, url?, model?}` → configures an API
+  provider; stored in `~/.framecraft/agents.json` (mode 600) — keys never
+  touch the project or logs.
 - Agent resolution order: session select → `framecraft.json` `agent` →
   `FC_AGENT` env → `FC_AGENT_CMD` env → `FC_AGENT_URL`/`FC_AGENT_MODEL` →
-  first detected preset on PATH → no bridge (503 → file-drop fallback).
+  first detected preset (CLI on PATH, then configured API provider) →
+  no bridge (503 → file-drop fallback).
 - `framecraft.json` `agent` accepts:
   - `"auto"` — force auto-detect (default when absent)
-  - `"<preset>"` — `claude` | `codex` | `gemini` | `opencode` | `aider`
+  - `"<preset>"` — `claude` | `codex` | `gemini` | `opencode` | `aider` |
+    `openai` | `gemini-api` | `openrouter` | `ollama` | `lmstudio` | `custom-api`
   - `{ "cmd": "any cli --flags {prompt}" }` — custom agent command;
     `{prompt}` substitutes as an arg, otherwise the prompt goes to stdin
   - `{ "url": "http://…/v1/chat/completions", "model": "…", "keyEnv": "…" }` —
-    any OpenAI-compatible endpoint (Ollama, LM Studio, OpenRouter, …).
-    Reply-only (`edits:false`) — it can discuss the edit but can't modify
-    files; `keyEnv` names an env var holding the bearer key.
+    any OpenAI-compatible endpoint; `keyEnv` names an env var holding the
+    bearer key.
+- API agents run a **tool-call loop** (`read_file`, `write_file`,
+  `list_files`, `run_command`, project-scoped, ≤15 rounds) so they edit
+  the composition like a CLI agent — not reply-only. Tool calls stream
+  as `› tool_name path` lines.
 - `POST /agent/chat {message, annotation?}` → `{jobId, name, cmd, edits}` —
   runs the resolved agent in the project dir, broadcasts output to SSE
   listeners. Preset headless cmds: `claude -p --dangerously-skip-permissions`,
@@ -77,8 +87,10 @@ baked in, so you can *see* what the user pointed at.
 - `GET /agent/jobs/:id/stream` → SSE replay + live chunks + `done` event.
 - `GET /file?p=annotations/x.png` → thumbnail service for chat cards.
 - Chat panel (`donova-rebrand-chat-v1` inject): collapsible agent window
-  with an agent-picker dropdown in the header; the annotate overlay's
-  "Send to agent" routes through `window.__fcChat` — the annotation
-  attaches as a card + the run streams live in-thread.
+  with an agent-picker dropdown; picking an unconfigured API provider opens
+  an inline setup form (key/model/url fields as needed → save & use), and
+  picking an uninstalled CLI prints its install command. The annotate
+  overlay's "Send to agent" routes through `window.__fcChat` — the
+  annotation attaches as a card + the run streams live in-thread.
 - Same contract will be implemented by `apps/api` for hosted mode
   (plan/12) — UI is backend-agnostic.

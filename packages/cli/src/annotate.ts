@@ -2,7 +2,8 @@ import { execSync, spawn } from "node:child_process";
 import { appendFileSync, existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { type IncomingMessage, type Server, type ServerResponse, createServer } from "node:http";
 import { get } from "node:http";
-import { join } from "node:path";
+import { homedir } from "node:os";
+import { join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
 /**
@@ -18,8 +19,9 @@ import { fileURLToPath } from "node:url";
  *   GET  /health                    sidecar liveness + projectDir
  *   POST /annotate                  persist annotations/*.json + *.png
  *   GET  /agent/health              { agent: bool, name, cmd } — bridge configured?
- *   GET  /agent/list                known agents + detected/active state (chat picker)
+ *   GET  /agent/list                known agents + detected/setup state (chat picker)
  *   POST /agent/select {name}       switch the active agent (persists to framecraft.json)
+ *   POST /agent/setup {name,key?,url?,model?}  configure an API provider (~/.framecraft/agents.json)
  *   POST /agent/chat {message, annotation?} → { jobId } (503 when no bridge)
  *   GET  /agent/jobs/:id/stream     SSE of the agent run
  *   POST /stop                      shutdown
@@ -31,13 +33,14 @@ import { fileURLToPath } from "node:url";
  *   4. first preset whose binary is on PATH (claude, codex, gemini, …)
  *
  * `{prompt}` in a cmd substitutes the prompt as an arg; otherwise the prompt is
- * written to the process's stdin. `{ url, model }` targets any OpenAI-compatible
- * /chat/completions endpoint (Ollama, LM Studio, OpenRouter, …) — reply-only,
- * it can't edit files. Contract: plan/19-ANNOTATE.md.
+ * written to the process's stdin. `{ url, model }` (or an API preset selected in
+ * the chat picker) targets any OpenAI-compatible /chat/completions endpoint —
+ * Ollama, LM Studio, OpenRouter, OpenAI, … — and runs a tool-call loop so it can
+ * edit files like a CLI agent. Contract: plan/19-ANNOTATE.md.
  */
 
 const SIDECAR_PORT_OFFSET = 1000;
-const SIDECAR_VERSION = 4;
+const SIDECAR_VERSION = 5;
 
 export function annotatePort(studioPort: number): number {
   return studioPort + SIDECAR_PORT_OFFSET;
@@ -75,23 +78,110 @@ interface AgentSpec {
   cmd?: string; // cli — {prompt} substitutes as arg, else stdin
   url?: string; // http — OpenAI-compatible /chat/completions endpoint
   model?: string;
+  key?: string; // resolved bearer token (never returned to clients)
   keyEnv?: string; // env var holding a bearer key (never stored)
   edits: boolean; // can it modify project files?
 }
 
 /** Headless commands for known agent CLIs. Each takes the prompt via stdin or a {prompt} arg. */
-const AGENT_PRESETS: { name: string; label: string; bin: string; cmd: string }[] = [
-  { name: "claude", label: "Claude Code", bin: "claude", cmd: "claude -p --dangerously-skip-permissions" },
+const AGENT_PRESETS: { name: string; label: string; bin: string; cmd: string; install?: string }[] = [
+  {
+    name: "claude",
+    label: "Claude Code",
+    bin: "claude",
+    cmd: "claude -p --dangerously-skip-permissions",
+    install: "npm i -g @anthropic-ai/claude-code",
+  },
   {
     name: "codex",
     label: "Codex (OpenAI)",
     bin: "codex",
     cmd: 'codex exec --dangerously-bypass-approvals-and-sandbox "{prompt}"',
+    install: "npm i -g @openai/codex",
   },
-  { name: "gemini", label: "Gemini CLI", bin: "gemini", cmd: 'gemini --yolo -p "{prompt}"' },
-  { name: "opencode", label: "OpenCode", bin: "opencode", cmd: 'opencode run "{prompt}"' },
-  { name: "aider", label: "Aider", bin: "aider", cmd: 'aider --yes-always --message "{prompt}"' },
+  {
+    name: "gemini",
+    label: "Gemini CLI",
+    bin: "gemini",
+    cmd: 'gemini --yolo -p "{prompt}"',
+    install: "npm i -g @google/gemini-cli",
+  },
+  {
+    name: "opencode",
+    label: "OpenCode",
+    bin: "opencode",
+    cmd: 'opencode run "{prompt}"',
+    install: "npm i -g opencode-ai",
+  },
+  {
+    name: "aider",
+    label: "Aider",
+    bin: "aider",
+    cmd: 'aider --yes-always --message "{prompt}"',
+    install: "pip install aider-chat",
+  },
 ];
+
+/**
+ * API providers — any OpenAI-compatible /chat/completions endpoint. Configured
+ * through the chat picker's setup form (POST /agent/setup); key/model/url live
+ * in ~/.framecraft/agents.json, never in the project. Runs the tool-call loop
+ * so these agents can edit files, not just chat.
+ */
+const API_PRESETS: { name: string; label: string; url: string; model: string; needsKey: boolean }[] = [
+  {
+    name: "openai",
+    label: "OpenAI (API key)",
+    url: "https://api.openai.com/v1/chat/completions",
+    model: "gpt-5",
+    needsKey: true,
+  },
+  {
+    name: "gemini-api",
+    label: "Gemini (API key)",
+    url: "https://generativelanguage.googleapis.com/v1beta/openai/chat/completions",
+    model: "gemini-2.5-pro",
+    needsKey: true,
+  },
+  {
+    name: "openrouter",
+    label: "OpenRouter",
+    url: "https://openrouter.ai/api/v1/chat/completions",
+    model: "",
+    needsKey: true,
+  },
+  {
+    name: "ollama",
+    label: "Ollama (local)",
+    url: "http://localhost:11434/v1/chat/completions",
+    model: "",
+    needsKey: false,
+  },
+  {
+    name: "lmstudio",
+    label: "LM Studio (local)",
+    url: "http://localhost:1234/v1/chat/completions",
+    model: "",
+    needsKey: false,
+  },
+  { name: "custom-api", label: "Custom endpoint…", url: "", model: "", needsKey: false },
+];
+
+/** User-level agent secrets/config — outside the project so keys never get committed. */
+function agentStorePath(): string {
+  return join(homedir(), ".framecraft", "agents.json");
+}
+function readAgentStore(): Record<string, { key?: string; url?: string; model?: string }> {
+  try {
+    return JSON.parse(readFileSync(agentStorePath(), "utf8"));
+  } catch {
+    return {};
+  }
+}
+function writeAgentStore(store: Record<string, { key?: string; url?: string; model?: string }>): void {
+  mkdirSync(join(agentStorePath(), ".."), { recursive: true });
+  writeFileSync(agentStorePath(), JSON.stringify(store, null, 2), { mode: 0o600 });
+}
 
 let sessionAgent: string | null = null;
 
@@ -116,9 +206,22 @@ function readAgentConfig(projectDir: string): AgentConfig["agent"] {
   return undefined;
 }
 
+function apiPreset(name: string): AgentSpec | null {
+  const p = API_PRESETS.find((a) => a.name === name);
+  if (!p) return null;
+  const saved = readAgentStore()[name] ?? {};
+  const url = saved.url ?? p.url;
+  const model = saved.model ?? p.model;
+  const key =
+    saved.key ?? (process.env.FC_AGENT_KEY_ENV ? process.env[process.env.FC_AGENT_KEY_ENV] : undefined);
+  if (!url || !model) return { name: p.name, label: p.label, kind: "http", url, model, key, edits: true };
+  return { name: p.name, label: p.label, kind: "http", url, model, key, edits: true };
+}
+
 function preset(name: string): AgentSpec | null {
   const p = AGENT_PRESETS.find((a) => a.name === name);
-  return p ? { name: p.name, label: p.label, kind: "cli", cmd: p.cmd, edits: true } : null;
+  if (p) return { name: p.name, label: p.label, kind: "cli", cmd: p.cmd, edits: true };
+  return apiPreset(name);
 }
 
 /** Resolve the configured agent, honoring presets, custom cmds, HTTP endpoints. */
@@ -131,60 +234,117 @@ function resolveAgent(projectDir: string): AgentSpec | null {
   if (cfg && typeof cfg === "object") {
     if (cfg.cmd) return { name: "custom", label: cfg.cmd, kind: "cli", cmd: cfg.cmd, edits: true };
     if (cfg.url) {
+      const key = cfg.keyEnv ? process.env[cfg.keyEnv] : undefined;
       return {
         name: "endpoint",
         label: `${cfg.model ?? "model"} @ ${cfg.url}`,
         kind: "http",
         url: cfg.url,
         model: cfg.model,
+        key,
         keyEnv: cfg.keyEnv,
-        edits: false,
+        edits: true,
       };
     }
   }
   const env = process.env.FC_AGENT ?? process.env.FC_AGENT_CMD;
   if (env) return pick(env);
   if (process.env.FC_AGENT_URL) {
+    const key = process.env.FC_AGENT_KEY_ENV ? process.env[process.env.FC_AGENT_KEY_ENV] : undefined;
     return {
       name: "endpoint",
       label: `${process.env.FC_AGENT_MODEL ?? "model"} @ ${process.env.FC_AGENT_URL}`,
       kind: "http",
       url: process.env.FC_AGENT_URL,
       model: process.env.FC_AGENT_MODEL,
+      key,
       keyEnv: process.env.FC_AGENT_KEY_ENV,
-      edits: false,
+      edits: true,
     };
   }
   if (cfg !== "auto") {
     for (const p of AGENT_PRESETS) {
       if (whichBin(p.bin)) return preset(p.name);
     }
+    const store = readAgentStore();
+    for (const p of API_PRESETS) {
+      const saved = store[p.name];
+      if (saved && (saved.url ?? p.url) && (saved.model ?? p.model)) return apiPreset(p.name);
+    }
   }
   return null;
 }
 
-/** Everything the chat picker needs: presets w/ install state, configured entries, active. */
-function listAgents(
-  projectDir: string,
-): { name: string; label: string; detected: boolean; active: boolean }[] {
+/** What the picker needs to render per entry: install/config state + which setup fields apply. */
+interface ListedAgent {
+  name: string;
+  label: string;
+  kind: "cli" | "api";
+  detected: boolean;
+  active: boolean;
+  needsKey?: boolean;
+  needsModel?: boolean;
+  needsUrl?: boolean;
+  install?: string;
+}
+
+function apiConfigured(name: string): {
+  configured: boolean;
+  needsKey: boolean;
+  needsModel: boolean;
+  needsUrl: boolean;
+} {
+  const p = API_PRESETS.find((a) => a.name === name);
+  if (!p) return { configured: false, needsKey: false, needsModel: false, needsUrl: false };
+  const saved = readAgentStore()[name] ?? {};
+  const hasUrl = Boolean(saved.url ?? p.url);
+  const hasModel = Boolean(saved.model ?? p.model);
+  const hasKey = Boolean(saved.key);
+  return {
+    configured: hasUrl && hasModel && (!p.needsKey || hasKey),
+    needsKey: p.needsKey && !hasKey,
+    needsModel: !hasModel,
+    needsUrl: !hasUrl,
+  };
+}
+
+/** Everything the chat picker needs: presets w/ install/setup state, configured entries, active. */
+function listAgents(projectDir: string): ListedAgent[] {
   const active = resolveAgent(projectDir);
-  const out = AGENT_PRESETS.map((p) => ({
+  const out: ListedAgent[] = AGENT_PRESETS.map((p) => ({
     name: p.name,
     label: p.label,
+    kind: "cli",
     detected: whichBin(p.bin),
     active: active?.name === p.name,
+    install: p.install,
   }));
+  for (const p of API_PRESETS) {
+    const c = apiConfigured(p.name);
+    out.push({
+      name: p.name,
+      label: p.label,
+      kind: "api",
+      detected: c.configured,
+      active: active?.name === p.name,
+      needsKey: c.needsKey,
+      needsModel: c.needsModel,
+      needsUrl: c.needsUrl,
+    });
+  }
   const cfg = readAgentConfig(projectDir);
   if (cfg && typeof cfg === "object" && cfg.url) {
     out.push({
       name: "endpoint",
       label: `${cfg.model ?? "model"} @ ${cfg.url}`,
+      kind: "api",
       detected: true,
-      active: active?.kind === "http",
+      active: active?.name === "endpoint",
     });
   }
-  if (active?.name === "custom")
-    out.push({ name: "custom", label: active.label, detected: true, active: true });
+  if (active?.name === "custom") {
+    out.push({ name: "custom", label: active.label, kind: "cli", detected: true, active: true });
+  }
   return out;
 }
 
@@ -238,7 +398,7 @@ function startJob(projectDir: string, spec: AgentSpec, prompt: string): string {
     job.listeners = [];
   };
   if (spec.kind === "http" && spec.url) {
-    runHttpJob(spec, prompt, broadcast, finish);
+    runHttpJob(projectDir, spec, prompt, broadcast, finish);
     return id;
   }
   const cmd = spec.cmd ?? "";
@@ -260,24 +420,129 @@ function startJob(projectDir: string, spec: AgentSpec, prompt: string): string {
   return id;
 }
 
-/** Reply-only agent over any OpenAI-compatible /chat/completions endpoint. */
-function runHttpJob(
+// --- API agent: OpenAI-compatible endpoint + tool-call loop ------------------
+
+const AGENT_TOOLS = [
+  {
+    type: "function",
+    function: {
+      name: "read_file",
+      description: "Read a file inside the project directory",
+      parameters: {
+        type: "object",
+        properties: { path: { type: "string", description: "project-relative path" } },
+        required: ["path"],
+      },
+    },
+  },
+  {
+    type: "function",
+    function: {
+      name: "write_file",
+      description: "Write/overwrite a file inside the project directory",
+      parameters: {
+        type: "object",
+        properties: {
+          path: { type: "string" },
+          content: { type: "string", description: "full new file contents" },
+        },
+        required: ["path", "content"],
+      },
+    },
+  },
+  {
+    type: "function",
+    function: {
+      name: "list_files",
+      description: "List files in a project directory (default: project root)",
+      parameters: { type: "object", properties: { path: { type: "string" } } },
+    },
+  },
+  {
+    type: "function",
+    function: {
+      name: "run_command",
+      description: "Run a shell command in the project dir (e.g. npx framecraft check, ffmpeg probes)",
+      parameters: { type: "object", properties: { cmd: { type: "string" } }, required: ["cmd"] },
+    },
+  },
+];
+
+function safePath(projectDir: string, p: string): string | null {
+  const full = resolve(projectDir, p);
+  return full.startsWith(resolve(projectDir)) ? full : null;
+}
+
+function runTool(projectDir: string, name: string, args: Record<string, unknown>): string {
+  try {
+    if (name === "read_file") {
+      const full = safePath(projectDir, String(args.path ?? ""));
+      if (!full || !existsSync(full)) return "error: no such file";
+      return readFileSync(full, "utf8").slice(0, 12000);
+    }
+    if (name === "write_file") {
+      const full = safePath(projectDir, String(args.path ?? ""));
+      if (!full) return "error: path outside project";
+      mkdirSync(join(full, ".."), { recursive: true });
+      writeFileSync(full, String(args.content ?? ""));
+      return "ok";
+    }
+    if (name === "list_files") {
+      const full = safePath(projectDir, String(args.path ?? "."));
+      if (!full) return "error: path outside project";
+      return execSync(`ls -la ${JSON.stringify(full)}`, { encoding: "utf8" }).slice(0, 6000);
+    }
+    if (name === "run_command") {
+      return execSync(String(args.cmd ?? ""), {
+        cwd: projectDir,
+        encoding: "utf8",
+        timeout: 60_000,
+        stdio: ["ignore", "pipe", "pipe"],
+      }).slice(0, 8000);
+    }
+    return `error: unknown tool ${name}`;
+  } catch (err) {
+    return `error: ${String(err).slice(0, 2000)}`;
+  }
+}
+
+interface ChatMessage {
+  role: string;
+  content?: string | null;
+  tool_calls?: { id: string; function: { name: string; arguments: string } }[];
+  tool_call_id?: string;
+}
+
+/**
+ * Agent over any OpenAI-compatible /chat/completions endpoint, with a
+ * read/write/list/run tool loop so it can actually edit the composition —
+ * not just reply. Streams progress lines ("› write_file index.html").
+ */
+async function runHttpJob(
+  projectDir: string,
   spec: AgentSpec,
   prompt: string,
   broadcast: (chunk: string) => void,
   finish: (code: number | null) => void,
-): void {
-  const key = spec.keyEnv ? process.env[spec.keyEnv] : undefined;
+): Promise<void> {
   const headers: Record<string, string> = { "content-type": "application/json" };
-  if (key) headers.authorization = `Bearer ${key}`;
-  fetch(spec.url as string, {
-    method: "POST",
-    headers,
-    body: JSON.stringify({ model: spec.model ?? "default", messages: [{ role: "user", content: prompt }] }),
-  })
-    .then(async (r) => {
+  if (spec.key) headers.authorization = `Bearer ${spec.key}`;
+  const messages: ChatMessage[] = [{ role: "user", content: prompt }];
+  for (let round = 0; round < 15; round++) {
+    let msg: ChatMessage | undefined;
+    try {
+      const r = await fetch(spec.url as string, {
+        method: "POST",
+        headers,
+        body: JSON.stringify({
+          model: spec.model ?? "default",
+          messages,
+          tools: AGENT_TOOLS,
+          tool_choice: "auto",
+        }),
+      });
       const j = (await r.json()) as {
-        choices?: { message?: { content?: string } }[];
+        choices?: { message?: ChatMessage }[];
         error?: { message?: string };
       };
       if (!r.ok) {
@@ -285,13 +550,36 @@ function runHttpJob(
         finish(1);
         return;
       }
-      broadcast(j.choices?.[0]?.message?.content ?? "(empty reply)");
-      finish(0);
-    })
-    .catch((err) => {
+      msg = j.choices?.[0]?.message;
+    } catch (err) {
       broadcast(`endpoint unreachable: ${String(err)}`);
       finish(1);
-    });
+      return;
+    }
+    if (!msg) {
+      broadcast("(empty reply)");
+      finish(0);
+      return;
+    }
+    messages.push(msg);
+    if (msg.tool_calls?.length) {
+      for (const call of msg.tool_calls) {
+        let args: Record<string, unknown> = {};
+        try {
+          args = JSON.parse(call.function.arguments || "{}") as Record<string, unknown>;
+        } catch {}
+        broadcast(`› ${call.function.name} ${String(args.path ?? args.cmd ?? "").slice(0, 80)}\n`);
+        const result = runTool(projectDir, call.function.name, args);
+        messages.push({ role: "tool", tool_call_id: call.id, content: result });
+      }
+      continue;
+    }
+    broadcast(msg.content ?? "(done)");
+    finish(0);
+    return;
+  }
+  broadcast("(stopped: tool-call limit reached)");
+  finish(1);
 }
 
 // --- request handling -------------------------------------------------------
@@ -348,6 +636,37 @@ function handle(projectDir: string, req: IncomingMessage, res: ServerResponse): 
   if (req.method === "GET" && req.url === "/agent/list") {
     res.writeHead(200, { "content-type": "application/json" });
     res.end(JSON.stringify({ ok: true, agents: listAgents(projectDir) }));
+    return;
+  }
+  if (req.method === "POST" && req.url === "/agent/setup") {
+    let raw = "";
+    req.on("data", (c) => {
+      raw += c;
+    });
+    req.on("end", () => {
+      try {
+        const body = JSON.parse(raw) as { name?: string; key?: string; url?: string; model?: string };
+        const p = API_PRESETS.find((a) => a.name === body.name);
+        if (!p) {
+          res.writeHead(400, { "content-type": "application/json" });
+          res.end(JSON.stringify({ ok: false, error: "unknown api provider" }));
+          return;
+        }
+        const store = readAgentStore();
+        const prev = store[p.name] ?? {};
+        store[p.name] = {
+          key: body.key !== undefined ? body.key : prev.key,
+          url: body.url !== undefined ? body.url : prev.url,
+          model: body.model !== undefined ? body.model : prev.model,
+        };
+        writeAgentStore(store);
+        res.writeHead(200, { "content-type": "application/json" });
+        res.end(JSON.stringify({ ok: true, configured: apiConfigured(p.name).configured }));
+      } catch (err) {
+        res.writeHead(400, { "content-type": "application/json" });
+        res.end(JSON.stringify({ ok: false, error: String(err) }));
+      }
+    });
     return;
   }
   if (req.method === "POST" && req.url === "/agent/select") {

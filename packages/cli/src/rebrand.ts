@@ -326,7 +326,7 @@ const CHAT = `<script>
 // donova-rebrand-chat-v1
 (function(){
   var PID='fc-chat',TID='fc-chat-pill',port=(+location.port||80)+1000,base='http://127.0.0.1:'+port;
-  var es=null,agent=null;
+  var es=null,agent=null,agentList=[];
   function el(t,css,txt){var e=document.createElement(t);e.setAttribute('style',css);if(txt!=null)e.textContent=txt;return e;}
   function msgs(){return document.getElementById('fc-chat-msgs');}
   function scroll(){var m=msgs();if(m)m.scrollTop=m.scrollHeight;}
@@ -349,13 +349,14 @@ const CHAT = `<script>
     var hd=el('div','display:flex;align-items:center;gap:8px;padding:8px 10px;border-bottom:1px solid #ffffff14;font:700 12px system-ui,sans-serif');
     var sel=document.createElement('select');sel.id='fc-agent-sel';
     sel.setAttribute('style','flex:1;min-width:0;background:#0009;color:#e8ecf1;border:1px solid #ffffff22;border-radius:6px;padding:3px 6px;font:11px system-ui,sans-serif;outline:none;cursor:pointer');
-    sel.addEventListener('change',function(){pick(sel.value)});
+    sel.addEventListener('change',function(){onPick(sel.value)});
     sel.addEventListener('click',function(e){e.stopPropagation()});
     hd.appendChild(sel);
     var st=el('span','font:10px system-ui,sans-serif;color:#8892a0');st.id='fc-chat-status';st.textContent='…';hd.appendChild(st);
     var x=el('button','background:none;border:none;color:#8892a0;cursor:pointer;font:14px system-ui,sans-serif','×');
     x.onclick=function(){p.style.display='none';};
     hd.appendChild(x);p.appendChild(hd);
+    var su=el('div','display:none;padding:8px 10px;border-bottom:1px solid #ffffff14;flex-direction:column;gap:6px');su.id='fc-agent-setup';p.appendChild(su);
     var m=el('div','flex:1;overflow-y:auto;padding:8px 10px;display:flex;flex-direction:column');m.id='fc-chat-msgs';p.appendChild(m);
     var row=el('div','display:flex;gap:6px;padding:8px;border-top:1px solid #ffffff14');
     var inp=document.createElement('input');inp.id='fc-chat-in';
@@ -370,10 +371,11 @@ const CHAT = `<script>
   function open(){build();document.getElementById(PID).style.display='flex';health();}
   function health(cb){
     fetch(base+'/agent/list').then(function(r){return r.json()}).then(function(j){
+      agentList=j.agents||[];
       var sel=document.getElementById('fc-agent-sel'),found=null;
-      if(sel){sel.innerHTML='';(j.agents||[]).forEach(function(a){
+      if(sel){sel.innerHTML='';agentList.forEach(function(a){
         var o=document.createElement('option');o.value=a.name;
-        o.textContent=a.label+(a.detected?'':' — not installed');
+        o.textContent=a.label+(a.detected?'':(a.kind==='api'?' — needs setup':' — not installed'));
         if(a.active){o.selected=true;found=a;}
         sel.appendChild(o);
       });
@@ -383,6 +385,14 @@ const CHAT = `<script>
       cb&&cb();
     }).catch(function(){status('sidecar down');});
   }
+  function findAgent(name){for(var i=0;i<agentList.length;i++)if(agentList[i].name===name)return agentList[i];return null;}
+  function onPick(name){
+    var a=findAgent(name);
+    if(a&&a.kind==='api'&&!a.detected){showSetup(a);return;}
+    hideSetup();
+    if(a&&a.kind==='cli'&&!a.detected&&a.install)sys(name+' not installed — run: '+a.install);
+    pick(name);
+  }
   function pick(name){
     status('switching…');
     fetch(base+'/agent/select',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({name:name})})
@@ -391,6 +401,39 @@ const CHAT = `<script>
         if(j.agent)sys('agent → '+j.agent+(j.cmd?(' ('+j.cmd.slice(0,40)+(j.cmd.length>40?'…':'')+')'):''));
         else sys('no agent — set "agent" in framecraft.json or FC_AGENT');
       }).catch(function(){status('sidecar down')});
+  }
+  function hideSetup(){var s=document.getElementById('fc-agent-setup');if(s)s.style.display='none';}
+  function showSetup(a){
+    var su=document.getElementById('fc-agent-setup');if(!su)return;
+    su.innerHTML='';su.style.display='flex';
+    su.appendChild(el('div','font:600 11px system-ui,sans-serif;color:#5df0a0','set up '+a.label));
+    function field(ph,secret){
+      var i=document.createElement('input');i.placeholder=ph;
+      if(secret)i.type='password';
+      i.setAttribute('style','padding:5px 9px;border-radius:6px;border:1px solid #ffffff22;background:#0009;color:#e8ecf1;font:11px system-ui,sans-serif;outline:none;width:100%;box-sizing:border-box');
+      i.addEventListener('keydown',function(e){e.stopPropagation()});
+      su.appendChild(i);return i;
+    }
+    var keyIn=a.needsKey?field('API key',true):null;
+    var modIn=a.needsModel?field('model (e.g. gpt-5, llama3.2)'):null;
+    var urlIn=a.needsUrl?field('endpoint URL (…/v1/chat/completions)'):null;
+    var row=el('div','display:flex;gap:6px;justify-content:flex-end');
+    var cancel=el('button','padding:4px 10px;border-radius:6px;border:1px solid #ffffff22;background:none;color:#8892a0;font:11px system-ui,sans-serif;cursor:pointer','cancel');
+    cancel.onclick=function(){hideSetup();health();};
+    var save=el('button','padding:4px 12px;border-radius:6px;border:none;background:#5df0a0;color:#0b0e14;font:700 11px system-ui,sans-serif;cursor:pointer','save & use');
+    save.onclick=function(){
+      var body={name:a.name};
+      if(keyIn&&keyIn.value)body.key=keyIn.value;
+      if(modIn&&modIn.value)body.model=modIn.value;
+      if(urlIn&&urlIn.value)body.url=urlIn.value;
+      status('saving…');
+      fetch(base+'/agent/setup',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify(body)})
+        .then(function(r){return r.json()}).then(function(j){
+          if(j.ok&&j.configured){hideSetup();sys('saved — '+a.label+' ready');pick(a.name);}
+          else{sys(j.ok?'saved, but still incomplete — fill every field':('error: '+j.error));health();}
+        }).catch(function(){status('sidecar down')});
+    };
+    row.appendChild(cancel);row.appendChild(save);su.appendChild(row);
   }
   function go(msg,annotation){
     if(!msg)return;
