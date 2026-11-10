@@ -297,7 +297,12 @@ const ANNOTATE = `<script>
     var port=(+location.port||80)+1000;
     fetch('http://127.0.0.1:'+port+'/annotate',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({t:t,comp:comp?{w:+comp.getAttribute('data-width'),h:+comp.getAttribute('data-height')}:null,marks:marks.map(function(m){return {type:m.tool,color:m.color,from:m.pts[0],to:m.to,pts:m.pts.length>2?m.pts:undefined}}),note:note,png:png})})
       .then(function(r){return r.json()})
-      .then(function(j){toast(j.ok?('saved '+j.file+' — tell your agent'):('save failed: '+(j.error||'?')));if(j.ok)closeAll();})
+      .then(function(j){
+        if(!j.ok){toast('save failed: '+(j.error||'?'));return;}
+        closeAll();
+        if(window.__fcChat){window.__fcChat.send(note,j.file);}
+        else toast('saved '+j.file+' — tell your agent');
+      })
       .catch(function(){toast('sidecar not running — restart fc studio')});
   }
   function toast(msg){
@@ -310,12 +315,101 @@ const ANNOTATE = `<script>
 })();
 </script>`;
 
+/**
+ * Agent chat — collapsible panel wired to the sidecar's /agent/* bridge.
+ * Local mode: spawns the configured agent cmd (framecraft.json agent.cmd →
+ * FC_AGENT_CMD → `claude -p -`), streams stdout over SSE into the thread.
+ * No bridge → file-drop annotations still work; chat shows the config hint.
+ * Exposes window.__fcChat for the annotate overlay's "Send to agent" path.
+ */
+const CHAT = `<script>
+// donova-rebrand-chat-v1
+(function(){
+  var PID='fc-chat',TID='fc-chat-pill',port=(+location.port||80)+1000,base='http://127.0.0.1:'+port;
+  var es=null,agent=null;
+  function el(t,css,txt){var e=document.createElement(t);e.setAttribute('style',css);if(txt!=null)e.textContent=txt;return e;}
+  function msgs(){return document.getElementById('fc-chat-msgs');}
+  function scroll(){var m=msgs();if(m)m.scrollTop=m.scrollHeight;}
+  function bubble(txt,mine){
+    var m=msgs();if(!m)return null;
+    var b=el('div','max-width:88%;margin:4px 0;padding:7px 10px;border-radius:9px;font:12px/1.45 system-ui,sans-serif;white-space:pre-wrap;word-break:break-word;'+(mine?'align-self:flex-end;background:#5df0a022;border:1px solid #5df0a055;color:#c9f7dd':'align-self:flex-start;background:#ffffff10;border:1px solid #ffffff22;color:#e8ecf1'));
+    b.textContent=txt;m.appendChild(b);scroll();return b;
+  }
+  function sys(txt){var m=msgs();if(!m)return;var b=el('div','font:10px system-ui,sans-serif;color:#8892a0;margin:4px 0;text-align:center');b.textContent=txt;m.appendChild(b);scroll();}
+  function status(txt){var s=document.getElementById('fc-chat-status');if(s)s.textContent=txt;}
+  function thumb(file){
+    var i=document.createElement('img');i.src=base+'/file?p='+encodeURIComponent(file.replace(/\\.json$/,'.png'));
+    i.setAttribute('style','display:block;max-width:100%;border-radius:6px;margin-top:6px;border:1px solid #ffffff22');
+    return i;
+  }
+  function build(){
+    if(document.getElementById(PID))return;
+    var p=document.createElement('div');p.id=PID;
+    p.setAttribute('style','position:fixed;right:20px;bottom:64px;width:340px;height:400px;z-index:2147483000;background:#0b0e14f2;border:1px solid #ffffff22;border-radius:12px;display:none;flex-direction:column;overflow:hidden;font:12px system-ui,sans-serif;color:#e8ecf1');
+    var hd=el('div','display:flex;align-items:center;gap:8px;padding:8px 10px;border-bottom:1px solid #ffffff14;font:700 12px system-ui,sans-serif');
+    hd.appendChild(el('span','flex:1','agent'));
+    var st=el('span','font:10px system-ui,sans-serif;color:#8892a0');st.id='fc-chat-status';st.textContent='…';hd.appendChild(st);
+    var x=el('button','background:none;border:none;color:#8892a0;cursor:pointer;font:14px system-ui,sans-serif','×');
+    x.onclick=function(){p.style.display='none';};
+    hd.appendChild(x);p.appendChild(hd);
+    var m=el('div','flex:1;overflow-y:auto;padding:8px 10px;display:flex;flex-direction:column');m.id='fc-chat-msgs';p.appendChild(m);
+    var row=el('div','display:flex;gap:6px;padding:8px;border-top:1px solid #ffffff14');
+    var inp=document.createElement('input');inp.id='fc-chat-in';
+    inp.placeholder='tell the agent what to change…';
+    inp.setAttribute('style','flex:1;padding:6px 10px;border-radius:7px;border:1px solid #ffffff22;background:#0009;color:#e8ecf1;font:12px system-ui,sans-serif;outline:none');
+    inp.addEventListener('keydown',function(e){e.stopPropagation();if(e.key==='Enter'){e.preventDefault();go(inp.value);inp.value='';}});
+    var sb=el('button','padding:6px 12px;border-radius:7px;border:none;background:#5df0a0;color:#0b0e14;font:700 12px system-ui,sans-serif;cursor:pointer','send');
+    sb.onclick=function(){go(inp.value);inp.value='';};
+    row.appendChild(inp);row.appendChild(sb);p.appendChild(row);
+    document.body.appendChild(p);
+  }
+  function open(){build();document.getElementById(PID).style.display='flex';}
+  function health(cb){
+    fetch(base+'/agent/health').then(function(r){return r.json()}).then(function(j){agent=j.agent?j.cmd:null;status(agent?('agent: '+agent.slice(0,28)):'no agent bridge');cb&&cb()}).catch(function(){status('sidecar down — restart fc studio');});
+  }
+  function go(msg,annotation){
+    if(!msg)return;
+    open();
+    var b=bubble(msg,true);
+    if(annotation&&b)b.appendChild(thumb(annotation));
+    if(agent===null){health(function(){send(msg,annotation)});return;}
+    send(msg,annotation);
+  }
+  function send(msg,annotation){
+    fetch(base+'/agent/chat',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({message:msg,annotation:annotation||null})})
+      .then(function(r){return r.json()})
+      .then(function(j){
+        if(!j.ok){sys(j.error==='no-agent'?'no agent configured — set "agent.cmd" in framecraft.json or FC_AGENT_CMD':('error: '+j.error));return;}
+        sys('running via '+j.cmd+' …');
+        var out=bubble('',false);
+        if(es)es.close();
+        es=new EventSource(base+'/agent/jobs/'+j.jobId+'/stream');
+        es.onmessage=function(e){try{out.textContent+=JSON.parse(e.data)}catch(x){out.textContent+=e.data}scroll();};
+        es.addEventListener('done',function(){es.close();es=null;sys('done');});
+        es.onerror=function(){if(es){es.close();es=null;}sys('stream ended');};
+      }).catch(function(){sys('sidecar not reachable — restart fc studio')});
+  }
+  function mount(){
+    if(!document.body)return;
+    if(!document.getElementById(TID)){
+      var t=el('button','position:fixed;right:20px;bottom:20px;z-index:2147483000;padding:8px 14px;border-radius:8px;border:1px solid #5df0a055;background:#0b0e14e6;color:#5df0a0;font:600 13px system-ui,sans-serif;cursor:pointer','agent');
+      t.id=TID;t.title='chat with the agent';
+      t.onclick=function(){open()};
+      document.body.appendChild(t);
+    }
+  }
+  window.__fcChat={send:function(msg,ann){go(msg,ann||null)},open:open};
+  new MutationObserver(mount).observe(document.documentElement,{childList:true,subtree:true});
+  mount();health();
+})();
+</script>`;
+
 const OLD_SCRIPT_RE = /<script>\s*\/\/ donova-rebrand[^\n]*[\s\S]*?<\/script>/g;
 
 // Marker hashes the injected payloads so ANY change to PATCHER/ANNOTATE
 // re-patches the bundle — a bumped-by-hand version string kept letting stale
 // scripts survive across edits.
-const MARKER = `donova-rebrand-${createHash("sha1").update(`${PATCHER}${ANNOTATE}`).digest("hex").slice(0, 10)}`;
+const MARKER = `donova-rebrand-${createHash("sha1").update(`${PATCHER}${ANNOTATE}${CHAT}`).digest("hex").slice(0, 10)}`;
 
 function studioUiDir(): string | null {
   try {
@@ -339,7 +433,7 @@ export function rebrandStudioUi(): boolean {
       const branded = html
         .replace(OLD_SCRIPT_RE, "")
         .replace(/<title>[^<]*<\/title>/, "<title>Donova Studio</title>")
-        .replace("</body>", `${PATCHER}\n${ANNOTATE}\n<!-- ${MARKER} -->\n</body>`);
+        .replace("</body>", `${PATCHER}\n${ANNOTATE}\n${CHAT}\n<!-- ${MARKER} -->\n</body>`);
       writeFileSync(indexPath, branded);
     }
   }

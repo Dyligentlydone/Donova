@@ -43,6 +43,25 @@ baked in, so you can *see* what the user pointed at.
   coords. Frame PNG = base `<video>` frame + strokes reprojected onto video
   pixels. Tools: pen, circle, arrow, rect; 4 colors; undo/clear/Esc.
 - Sidecar: `ensureAnnotateServer()` spawns a detached node process per
-  project+port, idempotent via `/health`. `fc studio --stop` also stops it.
-- The annotation overlay never touches their React tree — fixed-position
-  button + canvas, so Studio updates can't break it.
+  project+port, idempotent via `/health` (versioned — stale sidecars get a
+  `/stop` then respawn). `fc studio --stop` also stops it.
+- The annotation overlay never touches their React tree — the Annotate tab
+  is a Dockview clone with capture-phase event swallowing, the draw canvas
+  is scoped to the comp rect, and the chat panel is fixed-position.
+
+## Agent bridge (`/agent/*`)
+
+- `GET /agent/health` → `{agent, cmd}`. Command resolution order:
+  `framecraft.json` `agent.cmd` → `FC_AGENT_CMD` env → `claude -p -` when
+  `claude` is on PATH → no bridge (503 → file-drop fallback).
+- `POST /agent/chat {message, annotation?}` → `{jobId}` — spawns the cmd
+  in the project dir (prompt via `{prompt}` arg substitution or stdin),
+  broadcasts stdout/stderr to SSE listeners.
+- `GET /agent/jobs/:id/stream` → SSE replay + live chunks + `done` event.
+- `GET /file?p=annotations/x.png` → thumbnail service for chat cards.
+- Chat panel (`donova-rebrand-chat-v1` inject): collapsible agent window;
+  the annotate overlay's "Send to agent" routes through `window.__fcChat`
+  when present — the annotation attaches as a card + the run streams
+  live in-thread.
+- Same contract will be implemented by `apps/api` for hosted mode
+  (plan/12) — UI is backend-agnostic.
