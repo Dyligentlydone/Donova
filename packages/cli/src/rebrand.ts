@@ -203,6 +203,15 @@ const ANNOTATE = `<script>
     }
     pill('undo',function(){marks.pop();paint();});
     pill('clear',function(){marks=[];paint();});
+    var note=document.createElement('input');
+    note.placeholder='describe the edit — e.g. "zoom in on this"';
+    note.setAttribute('style','width:220px;padding:4px 10px;border-radius:6px;border:1px solid #5df0a055;background:#0009;color:#e8ecf1;font:12px system-ui;outline:none');
+    note.addEventListener('keydown',function(e){
+      e.stopPropagation();
+      if(e.key==='Enter'){e.preventDefault();submit(ifr);}
+      if(e.key==='Escape'){e.preventDefault();note.blur();}
+    });
+    bar.appendChild(note);
     var send=document.createElement('button');send.textContent='Send to agent';
     send.setAttribute('style','padding:4px 12px;border-radius:6px;border:none;background:#5df0a0;color:#0b0e14;cursor:pointer;font:700 12px system-ui');
     send.onclick=function(){submit(ifr);};
@@ -216,7 +225,7 @@ const ANNOTATE = `<script>
     cv.addEventListener('pointermove',function(e){if(!drawing)return;var p=toComp(e);if(cur.tool==='pen')cur.pts.push(p);else cur.to=p;paint();});
     cv.addEventListener('pointerup',function(){if(!drawing)return;drawing=false;marks.push(cur);cur=null;paint();});
     addEventListener('keydown',esc);
-    function esc(e){if(e.key==='Escape')close();}
+    function esc(e){if(e.key==='Escape'&&document.activeElement&&document.activeElement.tagName!=='INPUT')close();}
     window.__fcAnnotatePaint=paint;
     function paint(){
       ctx.clearRect(r.x,r.y,r.w,r.h);
@@ -249,8 +258,8 @@ const ANNOTATE = `<script>
     ov.__close=close;
   }
   function submit(ifr){
-    var note=window.prompt('What should the agent do here?');
-    if(note==null)return;
+    var ni=document.querySelector('#'+OV_ID+' input');
+    var note=ni&&ni.value.trim()?ni.value.trim():'see drawing';
     var d=ifr.contentDocument;
     var comp=d.querySelector('[data-width]');
     var t=null;
@@ -288,7 +297,7 @@ const ANNOTATE = `<script>
     var port=(+location.port||80)+1000;
     fetch('http://127.0.0.1:'+port+'/annotate',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({t:t,comp:comp?{w:+comp.getAttribute('data-width'),h:+comp.getAttribute('data-height')}:null,marks:marks.map(function(m){return {type:m.tool,color:m.color,from:m.pts[0],to:m.to,pts:m.pts.length>2?m.pts:undefined}}),note:note,png:png})})
       .then(function(r){return r.json()})
-      .then(function(j){toast(j.ok?('saved '+j.file+' — tell your agent'):('save failed: '+(j.error||'?')))})
+      .then(function(j){toast(j.ok?('saved '+j.file+' — tell your agent'):('save failed: '+(j.error||'?')));if(j.ok)closeAll();})
       .catch(function(){toast('sidecar not running — restart fc studio')});
   }
   function toast(msg){
