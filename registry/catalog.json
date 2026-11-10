@@ -2595,7 +2595,7 @@
         "text",
         "footage"
       ],
-      "description": "One-word kinetic captions generated from transcript+cuts. Install, then run `editnce captions` to generate the track."
+      "description": "One-word kinetic captions generated from transcript+cuts. Install, then run `donova captions` to generate the track."
     },
     {
       "name": "world-map",
@@ -5886,63 +5886,63 @@
       "type": "example",
       "title": "Decision Tree",
       "description": "Animated flowchart with branching paths",
-      "install": "editnce init --template decision-tree"
+      "install": "donova init --template decision-tree"
     },
     {
       "name": "kinetic-type",
       "type": "example",
       "title": "Kinetic Type",
       "description": "Bold kinetic typography promo",
-      "install": "editnce init --template kinetic-type"
+      "install": "donova init --template kinetic-type"
     },
     {
       "name": "nyt-graph",
       "type": "example",
       "title": "NYT Graph",
       "description": "Animated data chart in print editorial style",
-      "install": "editnce init --template nyt-graph"
+      "install": "donova init --template nyt-graph"
     },
     {
       "name": "path-traced-3d",
       "type": "example",
       "title": "Path-Traced 3D",
       "description": "Three.js scene with a fast raster preview and an opt-in path-traced export",
-      "install": "editnce init --template path-traced-3d"
+      "install": "donova init --template path-traced-3d"
     },
     {
       "name": "play-mode",
       "type": "example",
       "title": "Play Mode",
       "description": "Playful elastic animations",
-      "install": "editnce init --template play-mode"
+      "install": "donova init --template play-mode"
     },
     {
       "name": "product-promo",
       "type": "example",
       "title": "Product Promo",
       "description": "Multi-scene product showcase with SVG assets",
-      "install": "editnce init --template product-promo"
+      "install": "donova init --template product-promo"
     },
     {
       "name": "swiss-grid",
       "type": "example",
       "title": "Swiss Grid",
       "description": "Structured grid layout",
-      "install": "editnce init --template swiss-grid"
+      "install": "donova init --template swiss-grid"
     },
     {
       "name": "vignelli",
       "type": "example",
       "title": "Vignelli",
       "description": "Bold typography with red accents",
-      "install": "editnce init --template vignelli"
+      "install": "donova init --template vignelli"
     },
     {
       "name": "warm-grain",
       "type": "example",
       "title": "Warm Grain",
       "description": "Cream aesthetic with grain texture",
-      "install": "editnce init --template warm-grain"
+      "install": "donova init --template warm-grain"
     }
   ]
 }

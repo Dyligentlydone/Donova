@@ -1,7 +1,7 @@
 import { readFile } from "node:fs/promises";
 import { writeFile } from "node:fs/promises";
 import { dirname, join, resolve } from "node:path";
-import { parseCompositionHtml } from "@editnce/contract";
+import { parseCompositionHtml } from "@donova/contract";
 import {
   CaptureSession,
   ensureChrome,
@@ -9,13 +9,13 @@ import {
   prepareVideoFrames,
   runFfmpeg,
   startFileServer,
-} from "@editnce/engine";
-import { getRuntimeSource } from "@editnce/runtime";
+} from "@donova/engine";
+import { getRuntimeSource } from "@donova/runtime";
 import puppeteer from "puppeteer-core";
 
 /**
- * `editnce snapshot` — capture specific times as PNGs (agent tool: lets an
- * agent LOOK at frames). `editnce compare` — PSNR between two videos/frames.
+ * `donova snapshot` — capture specific times as PNGs (agent tool: lets an
+ * agent LOOK at frames). `donova compare` — PSNR between two videos/frames.
  */
 export async function snapshotTimes(
   projectDir: string,
@@ -28,7 +28,7 @@ export async function snapshotTimes(
   const { spec } = parseCompositionHtml(html, { isRoot: true, path: composition });
   const fps = spec.fps ?? 30;
 
-  // Compositions with <video> need frame overlays (.editnce/video-map.json)
+  // Compositions with <video> need frame overlays (.donova/video-map.json)
   // or snapshots show the raw element — often black at early times.
   const { ffmpeg, ffprobe } = await locateFfmpeg();
   if (/<video[\s>]/i.test(html)) {
@@ -75,7 +75,7 @@ export async function snapshotTimes(
 }
 
 /**
- * `editnce snapshot --contact-sheet` — tile snapshots into one labeled image
+ * `donova snapshot --contact-sheet` — tile snapshots into one labeled image
  * (17 §3.5). Each tile gets a `t=X.XXs` burn-in so an agent can read times
  * from a single image instead of N separate files.
  */

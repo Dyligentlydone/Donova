@@ -10,9 +10,9 @@ import { styleCmd } from "./style.js";
 import { transcribeCmd } from "./transcribe.js";
 
 /**
- * `editnce mcp` — a minimal MCP server over stdio (JSON-RPC 2.0, newline-
+ * `donova mcp` — a minimal MCP server over stdio (JSON-RPC 2.0, newline-
  * framed). Exposes the agent toolset so Claude Code, Cursor, or any MCP client
- * can drive Editnce without shelling out (17 §studio, MV5).
+ * can drive Donova without shelling out (17 §studio, MV5).
  *
  * Tools mirror the CLI commands; every one returns a JSON text result.
  */
@@ -32,28 +32,28 @@ const req = (_name: string, props: Record<string, unknown>, required: string[]) 
 
 const TOOLS: Tool[] = [
   {
-    name: "editnce_check",
-    description: "Validate an Editnce project (contract + runtime errors, layout, contrast)",
-    inputSchema: req("editnce_check", {}, []),
+    name: "donova_check",
+    description: "Validate an Donova project (contract + runtime errors, layout, contrast)",
+    inputSchema: req("donova_check", {}, []),
     run: (a) => checkProject((a.dir as string) ?? "."),
   },
   {
-    name: "editnce_probe",
+    name: "donova_probe",
     description: "Probe a media file (codec, duration, dimensions, audio)",
-    inputSchema: req("editnce_probe", { media: { type: "string" } }, ["media"]),
+    inputSchema: req("donova_probe", { media: { type: "string" } }, ["media"]),
     run: (a) => probeCmd(String(a.media)),
   },
   {
-    name: "editnce_timeline",
+    name: "donova_timeline",
     description: "Resolved clip list with computed timings",
-    inputSchema: req("editnce_timeline", {}, []),
+    inputSchema: req("donova_timeline", {}, []),
     run: (a) => timelineCmd((a.dir as string) ?? "."),
   },
   {
-    name: "editnce_snapshot",
+    name: "donova_snapshot",
     description: "Capture PNG frames at given times (visual verification)",
     inputSchema: req(
-      "editnce_snapshot",
+      "donova_snapshot",
       { times: { type: "array", items: { type: "number" } }, out: { type: "string" } },
       ["times"],
     ),
@@ -66,10 +66,10 @@ const TOOLS: Tool[] = [
       ),
   },
   {
-    name: "editnce_transcribe",
+    name: "donova_transcribe",
     description: "Whisper transcription with word timings (downloads model on first use)",
     inputSchema: req(
-      "editnce_transcribe",
+      "donova_transcribe",
       {
         media: { type: "string" },
         out: { type: "string" },
@@ -91,10 +91,10 @@ const TOOLS: Tool[] = [
       }),
   },
   {
-    name: "editnce_cuts",
+    name: "donova_cuts",
     description: "Transcript → dead-air cut plan",
     inputSchema: req(
-      "editnce_cuts",
+      "donova_cuts",
       {
         transcript: { type: "string" },
         threshold: { type: "number" },
@@ -112,10 +112,10 @@ const TOOLS: Tool[] = [
       }),
   },
   {
-    name: "editnce_scaffold",
+    name: "donova_scaffold",
     description: "Footage → neutral index.html (optionally applying a cut plan)",
     inputSchema: req(
-      "editnce_scaffold",
+      "donova_scaffold",
       { media: { type: "string" }, cuts: { type: "string" }, transcript: { type: "string" } },
       ["media"],
     ),
@@ -128,10 +128,10 @@ const TOOLS: Tool[] = [
       }),
   },
   {
-    name: "editnce_captions",
+    name: "donova_captions",
     description: "Generate a caption track in index.html from a transcript",
     inputSchema: req(
-      "editnce_captions",
+      "donova_captions",
       {
         transcript: { type: "string" },
         cuts: { type: "string" },
@@ -150,23 +150,23 @@ const TOOLS: Tool[] = [
       }),
   },
   {
-    name: "editnce_add",
+    name: "donova_add",
     description: "Install a registry block or SFX into the project",
-    inputSchema: req("editnce_add", { name: { type: "string" } }, ["name"]),
+    inputSchema: req("donova_add", { name: { type: "string" } }, ["name"]),
     run: (a) => addBlock((a.dir as string) ?? ".", String(a.name)),
   },
   {
-    name: "editnce_style",
+    name: "donova_style",
     description: "Style file ops: init | show | path",
-    inputSchema: req("editnce_style", { action: { type: "string", enum: ["init", "show", "path"] } }, [
+    inputSchema: req("donova_style", { action: { type: "string", enum: ["init", "show", "path"] } }, [
       "action",
     ]),
     run: (a) => styleCmd({ action: a.action as "init" | "show" | "path", dir: (a.dir as string) ?? "." }),
   },
   {
-    name: "editnce_doctor",
+    name: "donova_doctor",
     description: "Environment check (node, ffmpeg, chrome, disk, model)",
-    inputSchema: req("editnce_doctor", {}, []),
+    inputSchema: req("donova_doctor", {}, []),
     run: (a) => doctor({ projectDir: a.dir as string | undefined }),
   },
 ];
@@ -208,7 +208,7 @@ process.stdin.on("data", async (chunk) => {
           ok(id, {
             protocolVersion: "2024-11-05",
             capabilities: { tools: {} },
-            serverInfo: { name: "editnce", version: "0.1.0" },
+            serverInfo: { name: "donova", version: "0.1.0" },
           });
           break;
         case "notifications/initialized":

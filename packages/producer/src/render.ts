@@ -1,7 +1,7 @@
 import { readFile, readdir } from "node:fs/promises";
 import { join, resolve } from "node:path";
-import { parseCompositionHtml, planRender, resolveTimeline } from "@editnce/contract";
-import { locateFfmpeg, prepareVideoFrames, renderVideoOnly, startFileServer } from "@editnce/engine";
+import { parseCompositionHtml, planRender, resolveTimeline } from "@donova/contract";
+import { locateFfmpeg, prepareVideoFrames, renderVideoOnly, startFileServer } from "@donova/engine";
 import { mixAudio, muxAudio, tracksFromClips } from "./audio.js";
 
 export interface RenderOpts {
@@ -95,7 +95,7 @@ export async function render(opts: RenderOpts): Promise<RenderResult> {
 
     if (workers > 1) {
       const { renderParallel } = await import("./parallel.js");
-      const workDir = join(projectDir, ".editnce", `render-${Date.now()}`);
+      const workDir = join(projectDir, ".donova", `render-${Date.now()}`);
       const videoPath = await stage("capture+encode", () =>
         renderParallel({
           ffmpeg,
@@ -152,7 +152,7 @@ export async function render(opts: RenderOpts): Promise<RenderResult> {
     const jobs = tracksFromClips(spec);
     const mixed = jobs.length
       ? await stage("audio-mix", () =>
-          mixAudio(ffmpeg, projectDir, jobs, join(projectDir, ".editnce", "audio-mix.aac")),
+          mixAudio(ffmpeg, projectDir, jobs, join(projectDir, ".donova", "audio-mix.aac")),
         )
       : null;
 
@@ -160,7 +160,7 @@ export async function render(opts: RenderOpts): Promise<RenderResult> {
     // derived from the video-only master.
     const fmt = opts.format ?? "mp4";
     if (fmt === "gif") {
-      const { runFfmpeg } = await import("@editnce/engine");
+      const { runFfmpeg } = await import("@donova/engine");
       await runFfmpeg(ffmpeg, [
         "-i",
         videoOnly,
@@ -171,12 +171,12 @@ export async function render(opts: RenderOpts): Promise<RenderResult> {
         opts.out,
       ]);
     } else if (fmt === "png-seq") {
-      const { runFfmpeg } = await import("@editnce/engine");
+      const { runFfmpeg } = await import("@donova/engine");
       const { mkdir } = await import("node:fs/promises");
       await mkdir(opts.out, { recursive: true });
       await runFfmpeg(ffmpeg, ["-i", videoOnly, join(opts.out, "f%06d.png")]);
     } else if (fmt === "hls") {
-      const { runFfmpeg } = await import("@editnce/engine");
+      const { runFfmpeg } = await import("@donova/engine");
       const { mkdir } = await import("node:fs/promises");
       const { dirname } = await import("node:path");
       await mkdir(dirname(opts.out), { recursive: true });
@@ -209,7 +209,7 @@ export async function render(opts: RenderOpts): Promise<RenderResult> {
     {
       const { rm } = await import("node:fs/promises");
       await rm(videoOnly, { force: true }).catch(() => {});
-      const cacheDir = join(projectDir, ".editnce");
+      const cacheDir = join(projectDir, ".donova");
       for (const e of await readdir(cacheDir).catch(() => [] as string[])) {
         if (e.startsWith("render-")) await rm(join(cacheDir, e), { recursive: true, force: true });
       }

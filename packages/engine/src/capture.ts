@@ -129,7 +129,7 @@ export class CaptureSession {
 
   /** Seek page to time, then capture one frame. */
   async captureFrame(t: number, onFrame: FrameCallback): Promise<void> {
-    const profile = process.env.EDITNCE_PROFILE_CAPTURE === "1";
+    const profile = process.env.DONOVA_PROFILE_CAPTURE === "1";
     const t0 = performance.now();
     // Drive the runtime seek.
     await this.page.evaluate(async (tt: number) => {

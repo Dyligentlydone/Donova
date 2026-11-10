@@ -1,5 +1,5 @@
 {
-  "name": "@editnce/lint",
+  "name": "@donova/lint",
   "version": "0.1.0",
   "private": true,
   "type": "module",
@@ -22,6 +22,6 @@
     "typescript": "5.7.3"
   },
   "dependencies": {
-    "@editnce/contract": "workspace:*"
+    "@donova/contract": "workspace:*"
   }
 }

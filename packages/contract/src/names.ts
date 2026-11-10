@@ -2,11 +2,11 @@
  * Centralized product naming. Any rename touches this file (+ package.json name/bin).
  * Root user-visible rename must additionally update: docs + CLI strings.
  */
-export const PRODUCT = "Editnce" as const;
-export const PRODUCT_SLUG = "editnce" as const;
-export const CLI_NAME = "editnce" as const;
-export const CLI_ALIAS = "ec" as const;
-export const NPM_SCOPE = "@editnce" as const;
+export const PRODUCT = "Donova" as const;
+export const PRODUCT_SLUG = "donova" as const;
+export const CLI_NAME = "donova" as const;
+export const CLI_ALIAS = "do" as const;
+export const NPM_SCOPE = "@donova" as const;
 
 /** Browser globals injected/expected by the runtime. */
 export const G = {
@@ -33,30 +33,30 @@ export const MSG = {
 } as const;
 
 /** Env var prefix. */
-export const ENV_PREFIX = "EDITNCE_" as const;
+export const ENV_PREFIX = "DONOVA_" as const;
 
-/** Local cache dir name under user home (e.g. ~/.editnce). */
-export const CACHE_DIR = ".editnce" as const;
+/** Local cache dir name under user home (e.g. ~/.donova). */
+export const CACHE_DIR = ".donova" as const;
 
 /** Config file names in projects. */
 export const CONFIG_FILES = {
-  json: "editnce.json",
-  ts: "editnce.config.ts",
+  json: "donova.json",
+  ts: "donova.config.ts",
 } as const;
 
 /**
- * Previous branding (framecraft/fc). Still honored on *reads* — env vars,
- * config files, cache dirs — so existing setups don't break; new state is
- * always written under the Editnce names.
+ * Previous branding (framecraft/fc, briefly editnce/ec). Still honored on
+ * *reads* — env vars, config files, cache dirs — so existing setups don't
+ * break; new state is always written under the Donova names.
  */
 export const LEGACY = {
-  envPrefix: "FRAMECRAFT_",
-  agentEnvPrefix: "FC_",
-  cacheDir: ".framecraft",
-  configJson: "framecraft.json",
-  configTs: "framecraft.config.ts",
-  engineName: "framecraft",
-  cliNames: ["framecraft", "fc"],
+  envPrefixes: ["EDITNCE_", "FRAMECRAFT_"],
+  agentEnvPrefixes: ["EDITNCE_", "FC_"],
+  cacheDirs: [".editnce", ".framecraft"],
+  configJsons: ["editnce.json", "framecraft.json"],
+  configTs: ["editnce.config.ts", "framecraft.config.ts"],
+  engineNames: ["editnce", "framecraft"],
+  cliNames: ["editnce", "ec", "framecraft", "fc"],
 } as const;
 
 /** Attribute names. Single source so lint/parser/editor stay in sync. */

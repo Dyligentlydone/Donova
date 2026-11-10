@@ -6,7 +6,7 @@
 
 ## 0. North star
 
-Editnce is a video editor **for other people**. The core experience is
+Donova is a video editor **for other people**. The core experience is
 **vibe editing**: a user drops in raw footage, describes the edit they want in plain
 language, and an AI agent produces it. The user then gives feedback ("cut the pauses",
 "captions bigger", "no black bars"), the agent revises, and it **remembers** those
@@ -71,12 +71,12 @@ second project picks it up automatically.
         └───────────────────────────────────────────────────────────────▶
 ```
 
-Project layout for a footage project (created by `editnce init --footage` or by
+Project layout for a footage project (created by `donova init --footage` or by
 the agent):
 
 ```
 my-reel/
-├── editnce.json          # { "name", "style": "./style.md" | "~/.config/editnce/styles/<n>.md" }
+├── donova.json          # { "name", "style": "./style.md" | "~/.config/donova/styles/<n>.md" }
 ├── style.md                 # user's taste (optional; §5)
 ├── index.html               # the edit (source of truth)
 ├── compositions/            # optional sub-comps (captions.html, cards…)
@@ -84,9 +84,9 @@ my-reel/
 │   ├── raw/                 # original footage, never modified
 │   ├── sfx/                 # installed sound effects (from registry)
 │   └── blocks/…             # installed blocks
-├── transcript.json          # from `editnce transcribe`
-├── cuts.json                # from `editnce cuts`
-└── .editnce/             # cache (frames, history, renders) — gitignored
+├── transcript.json          # from `donova transcribe`
+├── cuts.json                # from `donova cuts`
+└── .donova/             # cache (frames, history, renders) — gitignored
 ```
 
 ---
@@ -101,9 +101,9 @@ reproduce its look. Mechanism → product mapping:
 
 | What build.py did by hand | Becomes (general, style-free) |
 |---|---|
-| Parse whisper JSON → word list | `editnce transcribe` → `transcript.json` (§4.3) |
-| Collapse gaps > 0.35 s into segments, remap word times | `editnce cuts` → `cuts.json` (§4.4) |
-| Emit N `<video>` segments with `data-media-start` | `editnce scaffold footage` (§4.5) |
+| Parse whisper JSON → word list | `donova transcribe` → `transcript.json` (§4.3) |
+| Collapse gaps > 0.35 s into segments, remap word times | `donova cuts` → `cuts.json` (§4.4) |
+| Emit N `<video>` segments with `data-media-start` | `donova scaffold footage` (§4.5) |
 | One `<span>` per word with pop motion | `word-captions` block (§7) |
 | Glass card / pill / alert / stat card | `card`, `pill`, `alert-card`, `stat-card` blocks (§7) |
 | Alternate zoom 1.0/1.12 per segment | skill guidance + `punch-zoom` motion preset (§6, §7) |
@@ -123,7 +123,7 @@ reproduce its look. Mechanism → product mapping:
 | MV2 | Style file support (`style.md`) | §5 |
 | MV3 | Skills for footage editing | §6 |
 | MV4 | Neutral blocks + SFX library | §7 |
-| MV5 | `@editnce/sdk` + MCP server | §8 |
+| MV5 | `@donova/sdk` + MCP server | §8 |
 | MV6 | Studio vibe-edit chat (built-in agent) | §9 |
 | MV7 | Render speed for the feedback loop | §10 |
 | MV8 | Background removal (with model bake-off) | §11 |
@@ -172,7 +172,7 @@ Mirror HyperFrames `packages/cli/AGENTS.md` (read it):
 - `--json`: stdout is exactly one JSON document. Success:
   `{"ok": true, "data": {...}}`. Failure: `{"ok": false, "error": {"code", "message", "hint"?}}`.
 - Exit codes: `0` success, `1` ran and failed, `2` bad usage.
-- Unattended detection (`!process.stdout.isTTY || CI || EDITNCE_AGENT=1` or known
+- Unattended detection (`!process.stdout.isTTY || CI || DONOVA_AGENT=1` or known
   agent env vars): never prompt; a command needing confirmation requires `--yes`.
 - Progress lines on stderr are newline-terminated (not `\r`) when unattended, so
   agents' log capture stays readable. Current `render` writes `\r` — fix.
@@ -182,7 +182,7 @@ Mirror HyperFrames `packages/cli/AGENTS.md` (read it):
 - A contract test runs every registered command with `--json` and bad args and
   asserts the envelope + exit code (like HF `src/cli.agentMode.test.ts`).
 
-### 4.2 `editnce doctor [--json]`
+### 4.2 `donova doctor [--json]`
 
 Checks, each `{id, status: "ok"|"warn"|"fail", detail, fix?}`:
 
@@ -192,20 +192,20 @@ Checks, each `{id, status: "ok"|"warn"|"fail", detail, fix?}`:
 | `ffmpeg` | `ffmpeg -version` | missing fail; < 6 warn | `brew install ffmpeg` / apt / winget per OS |
 | `ffmpeg-codecs` | `ffmpeg -encoders` | missing libx264/aac fail; libvpx-vp9/prores_ks/libopus warn | build with those encoders |
 | `ffprobe` | `ffprobe -version` | missing fail | same as ffmpeg |
-| `chrome` | `ensureChrome({install:false})` | missing warn (auto-installs on first render) | `editnce browser ensure` |
+| `chrome` | `ensureChrome({install:false})` | missing warn (auto-installs on first render) | `donova browser ensure` |
 | `beginframe` | cached probe verdict | false → warn "screenshot capture (slower)" | informational |
-| `whisper` | binary + default model present | missing warn | `editnce transcribe --install` |
+| `whisper` | binary + default model present | missing warn | `donova transcribe --install` |
 | `disk` | free space on cache + project volume | < 5 GB warn, < 1 GB fail | free space |
 | `memory` | `os.totalmem()` | < 8 GB warn | fewer workers |
-| `cache-writable` | write/delete temp file in `~/.cache/editnce` | not writable fail | fix permissions |
-| `project` | if cwd has `index.html`: run lint only | errors → warn | `editnce check` |
+| `cache-writable` | write/delete temp file in `~/.cache/donova` | not writable fail | fix permissions |
+| `project` | if cwd has `index.html`: run lint only | errors → warn | `donova check` |
 
 Exit 1 if any `fail`. Human output: one line per check with ✓/⚠/✗ and the fix.
 Reference: HF `packages/cli/src/commands/doctor.ts`.
 
-### 4.3 `editnce transcribe <media> [--model small.en] [--language auto] [--out transcript.json] [--install] [--json]`
+### 4.3 `donova transcribe <media> [--model small.en] [--language auto] [--out transcript.json] [--install] [--json]`
 
-- **Own install, no borrowing.** Models download to `~/.cache/editnce/whisper/models/`
+- **Own install, no borrowing.** Models download to `~/.cache/donova/whisper/models/`
   from `https://huggingface.co/ggerganov/whisper.cpp/resolve/<PINNED_REVISION>/ggml-<model>.bin`.
   Pin a revision and sha256 per model in code (HF pins
   `5359861c739e955e79d9a303bcbc70fb988958b1` in `packages/cli/src/whisper/manager.ts` —
@@ -244,9 +244,9 @@ Reference: HF `packages/cli/src/commands/doctor.ts`.
 - Acceptance: 10 §9 WER/timing criteria on a fixture; re-running is instant (cache);
   missing binary gives `E_WHISPER_MISSING` with OS-specific hint.
 
-### 4.4 `editnce cuts <transcript.json> [--max-gap 0.35] [--lead 0.08] [--tail 0.07] [--end-pad 0.25] [--fillers] [--keep a-b,…] [--drop a-b,…] [--out cuts.json] [--json]`
+### 4.4 `donova cuts <transcript.json> [--max-gap 0.35] [--lead 0.08] [--tail 0.07] [--end-pad 0.25] [--fillers] [--keep a-b,…] [--drop a-b,…] [--out cuts.json] [--json]`
 
-Pure function in `@editnce/media` (unit-testable, no I/O in the core). Algorithm
+Pure function in `@donova/media` (unit-testable, no I/O in the core). Algorithm
 (this is exactly what produced the reference edit; keep defaults):
 
 1. Start first segment at `max(0, words[0].start - lead)`.
@@ -278,7 +278,7 @@ Words that were removed are omitted from `words` (keep them in `removedWords` fo
 Acceptance (unit): 60 s synthetic transcript with 8 s of gaps → duration within ±0.5 s
 of expected; no word truncated; `compStart` monotonic; idempotent.
 
-### 4.5 `editnce scaffold footage --media <path> [--transcript t.json] [--cuts c.json] [--size 1080x1920|1920x1080|1080x1080] [--fit cover|contain] [--captions none|words|phrases] [--out index.html] [--force]`
+### 4.5 `donova scaffold footage --media <path> [--transcript t.json] [--cuts c.json] [--size 1080x1920|1920x1080|1080x1080] [--fit cover|contain] [--captions none|words|phrases] [--out index.html] [--force]`
 
 Writes a **neutral** starter composition the agent then customizes. Output must pass
 `check` with 0 errors. Structure:
@@ -304,14 +304,14 @@ media. Fps defaults to the source fps rounded to 24/25/30/60.
 
 | Command | Purpose | JSON `data` |
 |---|---|---|
-| `editnce probe <media>` | ffprobe normalized (10 §1) | `MediaProbe` |
-| `editnce timeline [dir]` | compiled clip list | `{duration, fps, clips:[{id, start, end, track, kind, src?, text?}]}` |
-| `editnce snapshot [dir] --times … [--contact-sheet] [--width 360]` | exists; add contact sheet (grid of N evenly spaced frames, labeled with timecode) and `--json` returning file paths | `{frames:[{t, path}], contactSheet?}` |
-| `editnce render … --draft` | half resolution, JPEG q70, auto workers | `{out, frames, seconds, mode}` |
-| `editnce render … --range 10-20` | render a time window (for previewing one beat) | same |
-| `editnce catalog [query] [--type block|component|sfx] [--json]` | search registry | items with name, type, description, tags, vars |
-| `editnce add <name> [dir]` | exists; also handles `sfx/*` (copy into `assets/sfx/`) and prints the wiring snippet | `{installed:[paths], snippet}` |
-| `editnce style init|show|path` | §5 | style file path/content |
+| `donova probe <media>` | ffprobe normalized (10 §1) | `MediaProbe` |
+| `donova timeline [dir]` | compiled clip list | `{duration, fps, clips:[{id, start, end, track, kind, src?, text?}]}` |
+| `donova snapshot [dir] --times … [--contact-sheet] [--width 360]` | exists; add contact sheet (grid of N evenly spaced frames, labeled with timecode) and `--json` returning file paths | `{frames:[{t, path}], contactSheet?}` |
+| `donova render … --draft` | half resolution, JPEG q70, auto workers | `{out, frames, seconds, mode}` |
+| `donova render … --range 10-20` | render a time window (for previewing one beat) | same |
+| `donova catalog [query] [--type block|component|sfx] [--json]` | search registry | items with name, type, description, tags, vars |
+| `donova add <name> [dir]` | exists; also handles `sfx/*` (copy into `assets/sfx/`) and prints the wiring snippet | `{installed:[paths], snippet}` |
+| `donova style init|show|path` | §5 | style file path/content |
 
 Worker auto-sizing for `render` (when `--workers` omitted): `min(cpus/2, floor(totalMemGB*0.5/1.0), 6, ceil(frames/120))`,
 at least 1. Reference HF `packages/engine/src/services/parallelCoordinator.ts`
@@ -326,10 +326,10 @@ it, and the read/write protocol. The agent fills it from the user's words over t
 
 ### 5.1 Location & linking
 - Project-local `style.md`, or a reusable personal style at
-  `~/.config/editnce/styles/<name>.md` referenced from `editnce.json`
-  (`"style": "~/.config/editnce/styles/reels.md"`). Project-local wins if both exist.
-- `editnce style init [--name reels] [--global]` writes the template;
-  `editnce style show [--json]` prints resolved path + content.
+  `~/.config/donova/styles/<name>.md` referenced from `donova.json`
+  (`"style": "~/.config/donova/styles/reels.md"`). Project-local wins if both exist.
+- `donova style init [--name reels] [--global]` writes the template;
+  `donova style show [--json]` prints resolved path + content.
 
 ### 5.2 Template (sections are fixed headings; content is free text)
 ```markdown
@@ -382,13 +382,13 @@ use HyperFrames' skills only as a checklist of topics.
 ### 6.1 Skill set
 | Skill | Purpose |
 |---|---|
-| `editnce` (update existing `skills/editnce-core`) | Router: what Editnce is, contract summary, the vibe-edit loop (§1), hard rules, routing table |
-| `editnce-footage` (**new, most important**) | Editing real footage end-to-end |
-| `editnce-cli` | Every command by job, JSON shapes, error codes → recovery |
-| `editnce-registry` | Search before building; installing/wiring blocks, components, SFX; theming via vars |
-| `editnce-motion` | `data-fc-motion` reference + GSAP-as-code rules for seekable video |
+| `donova` (update existing `skills/donova-core`) | Router: what Donova is, contract summary, the vibe-edit loop (§1), hard rules, routing table |
+| `donova-footage` (**new, most important**) | Editing real footage end-to-end |
+| `donova-cli` | Every command by job, JSON shapes, error codes → recovery |
+| `donova-registry` | Search before building; installing/wiring blocks, components, SFX; theming via vars |
+| `donova-motion` | `data-fc-motion` reference + GSAP-as-code rules for seekable video |
 
-### 6.2 `editnce-footage` — required contents
+### 6.2 `donova-footage` — required contents
 `SKILL.md` (≤ 250 lines) = the procedure; details in `references/`:
 
 1. **Procedure:** resolve style → probe → transcribe → cuts → scaffold (or edit existing)
@@ -435,9 +435,9 @@ Topics checklist from HyperFrames (read, don't copy): `skills/hyperframes/refere
 `.agents/skills/{captions-overlay,motion-doctrine,seam-craft}/SKILL.md`.
 
 ### 6.3 Install
-`editnce skills update` (09 §3) installs into `.claude/skills`, `.agents/skills`,
+`donova skills update` (09 §3) installs into `.claude/skills`, `.agents/skills`,
 `.cursor/skills`, `.codex/skills` of the project, or `~/.claude/skills` etc. with
-`--global`. `editnce init` also writes a project `AGENTS.md` + `CLAUDE.md`
+`--global`. `donova init` also writes a project `AGENTS.md` + `CLAUDE.md`
 (identical) that point the agent at the skills and the style file.
 
 ---
@@ -479,7 +479,7 @@ Topics checklist from HyperFrames (read, don't copy): `skills/hyperframes/refere
 Motion presets (registry type `motion-preset`, see 11 §): `pop-in`, `drop-in`,
 `shake`, `punch-zoom`, `zoom-out-hook`, `word-stagger`.
 
-`editnce add word-captions --from cuts.json` must generate the per-word spans
+`donova add word-captions --from cuts.json` must generate the per-word spans
 (each `<span data-start data-end data-word-id>`) from the cuts file so the agent does
 not hand-write hundreds of spans. Performance note: 150+ timed spans is fine for the
 runtime; the render plan must not shard on them (already fixed — see STATUS §3).
@@ -497,7 +497,7 @@ runtime; the render plan must not shard on them (already fixed — see STATUS §
   `success-chime`, `notification`, `glitch`, `typing-loop`, `camera-shutter`.
   Each: 48 kHz, peak −1 dBFS, trimmed silence, ≤ 2 s (riser ≤ 3 s). Agent-facing
   descriptions say *when* to use each.
-- Install: `editnce add sfx/pop` → copies to `assets/sfx/pop.mp3` and prints
+- Install: `donova add sfx/pop` → copies to `assets/sfx/pop.mp3` and prints
   `<audio src="assets/sfx/pop.mp3" data-audio-offset="T" data-volume="0.4"></audio>`
   wiring guidance (inside a timed holder element with `data-role="audio"`).
 - Studio Assets panel lists SFX with play buttons; drag onto the timeline at the
@@ -505,7 +505,7 @@ runtime; the render plan must not shard on them (already fixed — see STATUS §
 
 ---
 
-## 8. MV5 — `@editnce/sdk` + MCP server
+## 8. MV5 — `@donova/sdk` + MCP server
 
 ### 8.1 SDK (`packages/sdk`)
 One in-process API that CLI commands, studio-server, the built-in agent, and the MCP
@@ -525,7 +525,7 @@ project.history.snapshot(label) / restore(id)              // file-level undo (�
 ```
 Every write returns a lint summary (errors/warnings count + first 10 findings).
 
-### 8.2 MCP server — `editnce mcp [dir]`
+### 8.2 MCP server — `donova mcp [dir]`
 Stdio MCP server exposing the SDK as tools (names: `fc_timeline`, `fc_read`, `fc_write`,
 `fc_edit`, `fc_check`, `fc_snapshot` (returns images), `fc_render`, `fc_transcribe`,
 `fc_cuts`, `fc_scaffold_footage`, `fc_catalog`, `fc_add`, `fc_style_read`,
@@ -549,7 +549,7 @@ this section pins down what is specific to vibe editing and the web app.
 
 ### 9.1 Architecture
 ```
-Studio UI (browser)  ──POST /api/agent/turn──▶ studio-server ──▶ @editnce/agent loop
+Studio UI (browser)  ──POST /api/agent/turn──▶ studio-server ──▶ @donova/agent loop
         ▲                                          │                 │ tools = SDK calls
         └──── SSE /api/agent/stream/:turnId ◀──────┘                 ▼
                      (text deltas, tool events, snapshots)     project files
@@ -561,15 +561,15 @@ Studio UI (browser)  ──POST /api/agent/turn──▶ studio-server ──▶
 - Provider: Anthropic first via `@anthropic-ai/sdk` (pin a release ≥ 7 days old;
   model id configurable, default a current Sonnet-class model). Interface per 09 §4.1
   so OpenAI/local can follow.
-- Key: `ANTHROPIC_API_KEY` env, or `~/.config/editnce/config.json` (`0600`), or the
+- Key: `ANTHROPIC_API_KEY` env, or `~/.config/donova/config.json` (`0600`), or the
   cloud proxy later (12 §6). Missing key → chat panel shows setup instructions, plus
   the "Copy prompt for your agent" fallback (§8.3).
 
 ### 9.2 System prompt assembly (per turn)
-1. `skills/editnce/SKILL.md` + `skills/editnce-footage/SKILL.md` (full) and the
+1. `skills/donova/SKILL.md` + `skills/donova-footage/SKILL.md` (full) and the
    reference file *index* (the agent loads references with `read_skill_reference`).
 2. Resolved `style.md` (full) or "no style file".
-3. Project context: `editnce.json`, composition list, compiled timeline summary
+3. Project context: `donova.json`, composition list, compiled timeline summary
    (≤ 60 clips; else grouped), transcript summary (duration, word count, first 400
    words), cuts summary, current selection (element id + outer HTML ≤ 2 KB), playhead.
 4. Rules: §0 hard rules, the loop (§1), "always check + snapshot before finishing",
@@ -586,7 +586,7 @@ downloads, anything with paid API cost. Draft renders and snapshots are auto-app
 ### 9.4 Undo & safety
 - Before the first write in a turn: `history.snapshot("turn <n>: <first 60 chars of
   user msg>")` copies all project text files (not media) into
-  `.editnce/history/<id>/`. "Undo turn" restores them atomically and reloads.
+  `.donova/history/<id>/`. "Undo turn" restores them atomically and reloads.
 - All paths resolved and checked to be inside the project root.
 - Agent never modifies `assets/raw/`.
 
@@ -620,7 +620,7 @@ too slow for iterative vibe editing.
 
 1. **Measure first.** Add `--profile` to render: per-frame timings for seek,
    overlay image load, ready wait, capture, encode write; summary p50/p95 per stage
-   and per worker; write `.editnce/render-profile.json`. Do not optimize before
+   and per worker; write `.donova/render-profile.json`. Do not optimize before
    this exists.
 2. **Draft mode** (`--draft`): render at 0.5 scale via `deviceScaleFactor` or a
    CSS-scaled viewport, JPEG q70, preset `veryfast`. Target: ≤ 3 min for the reference
@@ -644,7 +644,7 @@ or a documented explanation with numbers.
 
 ## 11. MV8 — Background removal
 
-Command `editnce remove-background <in> -o <out.webm|out.mov|out.png>
+Command `donova remove-background <in> -o <out.webm|out.mov|out.png>
 [--model u2net|modnet] [--quality fast|balanced|best] [--device auto|cpu|coreml|cuda]
 [--background-output plate.webm] [--json]`, plus a Studio inspector button on a
 selected video/image clip (runs as a job with progress, then swaps `src` to the
@@ -666,7 +666,7 @@ output and keeps the original in `assets/raw/`).
    on hair/beard/glasses and flicker (mean absolute mask delta between consecutive
    frames on a static subject). Record results and the choice in `plan/DECISIONS.md`.
    Exclude non-commercial models (RMBG-1.4/2.0) and GPL ones (Robust Video Matting).
-4. Models download on first use to `~/.cache/editnce/models/` with pinned URL +
+4. Models download on first use to `~/.cache/donova/models/` with pinned URL +
    sha256.
 5. Dependencies: `onnxruntime-node`, `sharp` — pin versions published ≥ 7 days ago.
 Acceptance: image fixture IoU ≥ 0.9; video fixture flicker metric below the
@@ -677,7 +677,7 @@ a render.
 
 ## 12. MV9 — TTS
 
-`editnce tts "<text>" [--voice] [--provider kokoro|say|elevenlabs|openai] [-o out.wav] [--json]`
+`donova tts "<text>" [--voice] [--provider kokoro|say|elevenlabs|openai] [-o out.wav] [--json]`
 returning `{path, duration, words}`.
 - Default local provider: **Kokoro-82M** (Apache-2.0), which HyperFrames uses
   (`packages/cli/src/commands/tts.ts`, `packages/cli/src/audio/providers.ts` —
@@ -710,7 +710,7 @@ time; skill changes must not regress the mean. Target ≥ 70% before calling the
 done.
 
 **Track acceptance (all must hold):** §0 "done looks like" scenario passes in Studio
-chat with a real model; the same brief passes via `editnce mcp` from Claude Code;
+chat with a real model; the same brief passes via `donova mcp` from Claude Code;
 no file under `packages/` or `skills/` contains a creator-specific style value (grep
 review); eval mean ≥ 70%.
 

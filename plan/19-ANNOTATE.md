@@ -1,7 +1,7 @@
 # 19 — Frame Annotation ("kinetic frames" equivalent)
 
 Draw on the preview frame, tell the agent what to do. Shipped as a Studio
-overlay (injected by `rebrand.ts`, `editnce-rebrand-annotate-v1`) plus a
+overlay (injected by `rebrand.ts`, `donova-rebrand-annotate-v1`) plus a
 localhost sidecar (`annotate.ts`, studioPort + 1000) that persists marks
 into the project.
 
@@ -44,7 +44,7 @@ baked in, so you can *see* what the user pointed at.
   pixels. Tools: pen, circle, arrow, rect; 4 colors; undo/clear/Esc.
 - Sidecar: `ensureAnnotateServer()` spawns a detached node process per
   project+port, idempotent via `/health` (versioned — stale sidecars get a
-  `/stop` then respawn). `ec studio --stop` also stops it.
+  `/stop` then respawn). `do studio --stop` also stops it.
 - The annotation overlay never touches their React tree — the Annotate tab
   is a Dockview clone with capture-phase event swallowing, the draw canvas
   is scoped to the comp rect, and the chat panel is fixed-position.
@@ -57,15 +57,15 @@ baked in, so you can *see* what the user pointed at.
   agent picker. `kind` is `cli` (needs the binary on PATH) or `api`
   (OpenAI-compatible endpoint, configured via the setup form).
 - `POST /agent/select {name}` → switches the active agent (preset name),
-  persists the choice as `"agent": "<name>"` in `editnce.json`.
+  persists the choice as `"agent": "<name>"` in `donova.json`.
 - `POST /agent/setup {name, key?, url?, model?}` → configures an API
-  provider; stored in `~/.editnce/agents.json` (mode 600) — keys never
+  provider; stored in `~/.donova/agents.json` (mode 600) — keys never
   touch the project or logs.
-- Agent resolution order: session select → `editnce.json` `agent` →
+- Agent resolution order: session select → `donova.json` `agent` →
   `FC_AGENT` env → `FC_AGENT_CMD` env → `FC_AGENT_URL`/`FC_AGENT_MODEL` →
   first detected preset (CLI on PATH, then configured API provider) →
   no bridge (503 → file-drop fallback).
-- `editnce.json` `agent` accepts:
+- `donova.json` `agent` accepts:
   - `"auto"` — force auto-detect (default when absent)
   - `"<preset>"` — `claude` | `codex` | `gemini` | `opencode` | `aider` |
     `openai` | `gemini-api` | `openrouter` | `ollama` | `lmstudio` | `custom-api`
@@ -86,7 +86,7 @@ baked in, so you can *see* what the user pointed at.
   `aider --yes-always --message "{prompt}"`.
 - `GET /agent/jobs/:id/stream` → SSE replay + live chunks + `done` event.
 - `GET /file?p=annotations/x.png` → thumbnail service for chat cards.
-- Chat panel (`editnce-rebrand-chat-v1` inject): collapsible agent window
+- Chat panel (`donova-rebrand-chat-v1` inject): collapsible agent window
   with an agent-picker dropdown; picking an unconfigured API provider opens
   an inline setup form (key/model/url fields as needed → save & use), and
   picking an uninstalled CLI prints its install command. The annotate

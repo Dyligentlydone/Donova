@@ -5,13 +5,13 @@ import { dirname, join } from "node:path";
 
 /**
  * Studio rebrand — strip upstream branding from the installed hyperframes
- * Studio bundle on every `editnce studio` launch. The UI is compiled React JSX
+ * Studio bundle on every `donova studio` launch. The UI is compiled React JSX
  * (vector-path logo, minified strings), so instead of editing the bundle we
  * inject a DOM patcher into the served index.html that:
- *   - swaps the svg[aria-label="Hyperframes"] wordmark for "editnce"
+ *   - swaps the svg[aria-label="Hyperframes"] wordmark for "donova"
  *   - removes HeyGen surfaces entirely ("Open in desktop app" button and its
  *     menu items, aria-label "Get the desktop app" trigger)
- *   - rewrites remaining "HyperFrames"/"HeyGen" text nodes to "Editnce" in
+ *   - rewrites remaining "HyperFrames"/"HeyGen" text nodes to "Donova" in
  *     rendered UI (dialogs, toasts, menus — never script/style/code)
  * Each React-added node is checked itself AND its descendants — React mounts
  * controls as direct additions, which a descendants-only scan misses.
@@ -20,10 +20,10 @@ import { dirname, join } from "node:path";
  * and gesture slots. Full vendoring (item 3) supersedes.
  */
 
-const EDITNCE_FAVICON = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32"><rect width="32" height="32" rx="7" fill="#0b0e14"/><text x="16" y="22.5" text-anchor="middle" font-family="system-ui,-apple-system,sans-serif" font-size="19" font-weight="800" fill="#5df0a0">e</text></svg>`;
+const DONOVA_FAVICON = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32"><rect width="32" height="32" rx="7" fill="#0b0e14"/><text x="16" y="22.5" text-anchor="middle" font-family="system-ui,-apple-system,sans-serif" font-size="19" font-weight="800" fill="#5df0a0">d</text></svg>`;
 
 const PATCHER = `<script>
-// editnce-rebrand
+// donova-rebrand
 (function(){
   var REMOVE_SEL = 'button,[role="menuitem"],a,[role="button"],[aria-label]';
   var REMOVE_TEXT = ['open in desktop app','install the desktop app','finish installing','comment on this storyboard in the desktop app','edit this video in the desktop app'];
@@ -32,7 +32,7 @@ const PATCHER = `<script>
   var SKIP = {SCRIPT:1,STYLE:1,CODE:1,PRE:1,NOSCRIPT:1};
   function swap(svg){
     var s = document.createElement('span');
-    s.textContent = 'editnce';
+    s.textContent = 'donova';
     s.setAttribute('style','font:800 22px/1 system-ui,-apple-system,sans-serif;letter-spacing:-0.03em;color:currentColor;display:inline-flex;align-items:center;height:28px');
     svg.replaceWith(s);
   }
@@ -41,7 +41,7 @@ const PATCHER = `<script>
     var label = (el.getAttribute('aria-label')||'').toLowerCase();
     if (REMOVE_TEXT.indexOf(t) >= 0 || REMOVE_LABEL.indexOf(label) >= 0) el.remove();
   }
-  function texts(n){ n.textContent = n.textContent.replace(/HeyGen/g,'Editnce').replace(/heygen/g,'editnce').replace(/HyperFrames/g,'Editnce').replace(/hyperframes/g,'editnce'); }
+  function texts(n){ n.textContent = n.textContent.replace(/HeyGen/g,'Donova').replace(/heygen/g,'donova').replace(/HyperFrames/g,'Donova').replace(/hyperframes/g,'donova'); }
   function scrub(root){
     var self = root.nodeType === 1 ? root : null;
     if (self && self.matches && self.matches(WORDMARK)) swap(self);
@@ -76,7 +76,7 @@ const PATCHER = `<script>
  * + *.png into the project for the agent. Contract: plan/19-ANNOTATE.md.
  */
 const ANNOTATE = `<script>
-// editnce-rebrand-annotate-v1
+// donova-rebrand-annotate-v1
 (function(){
   var BTN_ID='fc-annotate-btn', OV_ID='fc-annotate-ov';
   var marks=[], cur=null, tool='pen', color='#5df0a0', drawing=false;
@@ -303,7 +303,7 @@ const ANNOTATE = `<script>
         if(window.__fcChat){window.__fcChat.send(note,j.file);}
         else toast('saved '+j.file+' — tell your agent');
       })
-      .catch(function(){toast('sidecar not running — restart editnce studio')});
+      .catch(function(){toast('sidecar not running — restart donova studio')});
   }
   function toast(msg){
     var t=document.createElement('div');t.textContent=msg;
@@ -319,11 +319,11 @@ const ANNOTATE = `<script>
  * Agent chat — collapsible panel wired to the sidecar's /agent/* bridge.
  * Agent picker dropdown lists detected CLIs (claude/codex/gemini/opencode/
  * aider) plus any configured OpenAI-compatible endpoint; selection persists
- * to editnce.json. No bridge → file-drop annotations still work.
+ * to donova.json. No bridge → file-drop annotations still work.
  * Exposes window.__fcChat for the annotate overlay's "Send to agent" path.
  */
 const CHAT = `<script>
-// editnce-rebrand-chat-v1
+// donova-rebrand-chat-v1
 (function(){
   var PID='fc-chat',TID='fc-chat-pill',port=(+location.port||80)+1000,base='http://127.0.0.1:'+port;
   var es=null,agent=null,agentList=[];
@@ -399,7 +399,7 @@ const CHAT = `<script>
       .then(function(r){return r.json()}).then(function(j){
         agent=j.agent;status(j.agent?('agent: '+j.agent):'no agent');
         if(j.agent)sys('agent → '+j.agent+(j.cmd?(' ('+j.cmd.slice(0,40)+(j.cmd.length>40?'…':'')+')'):''));
-        else sys('no agent — set "agent" in editnce.json or FC_AGENT');
+        else sys('no agent — set "agent" in donova.json or FC_AGENT');
       }).catch(function(){status('sidecar down')});
   }
   function hideSetup(){var s=document.getElementById('fc-agent-setup');if(s)s.style.display='none';}
@@ -447,7 +447,7 @@ const CHAT = `<script>
     fetch(base+'/agent/chat',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({message:msg,annotation:annotation||null})})
       .then(function(r){return r.json()})
       .then(function(j){
-        if(!j.ok){sys(j.error==='no-agent'?'no agent — pick one in the dropdown or set "agent" in editnce.json / FC_AGENT':('error: '+j.error));return;}
+        if(!j.ok){sys(j.error==='no-agent'?'no agent — pick one in the dropdown or set "agent" in donova.json / FC_AGENT':('error: '+j.error));return;}
         sys('running via '+(j.name||j.cmd)+(j.edits===false?' (reply only — cannot edit files)':'')+' …');
         var out=bubble('',false);
         if(es)es.close();
@@ -455,7 +455,7 @@ const CHAT = `<script>
         es.onmessage=function(e){try{out.textContent+=JSON.parse(e.data)}catch(x){out.textContent+=e.data}scroll();};
         es.addEventListener('done',function(){es.close();es=null;sys('done');});
         es.onerror=function(){if(es){es.close();es=null;}sys('stream ended');};
-      }).catch(function(){sys('sidecar not reachable — restart editnce studio')});
+      }).catch(function(){sys('sidecar not reachable — restart donova studio')});
   }
   function mount(){
     if(!document.body)return;
@@ -472,12 +472,14 @@ const CHAT = `<script>
 })();
 </script>`;
 
-const OLD_SCRIPT_RE = /<script>\s*\/\/ editnce-rebrand[^\n]*[\s\S]*?<\/script>/g;
+// Strips previously injected payloads regardless of which branding era wrote
+// them (donova/editnce/framecraft all use the "<word>-rebrand" marker).
+const OLD_SCRIPT_RE = /<script>\s*\/\/ \w+-rebrand[^\n]*[\s\S]*?<\/script>/g;
 
 // Marker hashes the injected payloads so ANY change to PATCHER/ANNOTATE
 // re-patches the bundle — a bumped-by-hand version string kept letting stale
 // scripts survive across edits.
-const MARKER = `editnce-rebrand-${createHash("sha1").update(`${PATCHER}${ANNOTATE}${CHAT}`).digest("hex").slice(0, 10)}`;
+const MARKER = `donova-rebrand-${createHash("sha1").update(`${PATCHER}${ANNOTATE}${CHAT}`).digest("hex").slice(0, 10)}`;
 
 function studioUiDir(): string | null {
   try {
@@ -500,13 +502,14 @@ export function rebrandStudioUi(): boolean {
     if (!html.includes(MARKER)) {
       const branded = html
         .replace(OLD_SCRIPT_RE, "")
-        .replace(/<title>[^<]*<\/title>/, "<title>Editnce Studio</title>")
+        .replace(/<!--\s*\w+-rebrand-[0-9a-f]+\s*-->/g, "")
+        .replace(/<title>[^<]*<\/title>/, "<title>Donova Studio</title>")
         .replace("</body>", `${PATCHER}\n${ANNOTATE}\n${CHAT}\n<!-- ${MARKER} -->\n</body>`);
       writeFileSync(indexPath, branded);
     }
   }
 
   const faviconPath = join(dir, "favicon.svg");
-  if (existsSync(faviconPath)) writeFileSync(faviconPath, `${EDITNCE_FAVICON}\n`);
+  if (existsSync(faviconPath)) writeFileSync(faviconPath, `${DONOVA_FAVICON}\n`);
   return true;
 }

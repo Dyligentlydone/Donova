@@ -1,6 +1,6 @@
-import { removeBackgroundImage, removeBackgroundVideo } from "@editnce/media";
+import { removeBackgroundImage, removeBackgroundVideo } from "@donova/media";
 
-/** `editnce remove-background` — image→PNG alpha, video→WebM alpha (MV8). */
+/** `donova remove-background` — image→PNG alpha, video→WebM alpha (MV8). */
 export async function removeBackgroundCmd(opts: {
   media: string;
   out?: string;

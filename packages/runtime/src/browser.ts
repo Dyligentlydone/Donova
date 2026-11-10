@@ -1,5 +1,5 @@
 /**
- * Editnce runtime — injected into every composition page.
+ * Donova runtime — injected into every composition page.
  * Built to dist/runtime.global.js (IIFE). All behavior is seek-safe:
  * renderSeek(t) must leave the page in the exact state for time t,
  * regardless of previous seeks (in either direction).
@@ -652,7 +652,7 @@ const videoOverlays: VideoOverlay[] = [];
 async function loadVideoMap(): Promise<void> {
   if (document.querySelector("video") == null) return;
   try {
-    const res = await fetch(".editnce/video-map.json");
+    const res = await fetch(".donova/video-map.json");
     if (!res.ok) return;
     const map = (await res.json()) as { entries?: VideoMapEntry[] };
     for (const e of map.entries ?? []) {

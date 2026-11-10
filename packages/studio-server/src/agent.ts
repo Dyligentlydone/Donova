@@ -57,7 +57,7 @@ const TOOLS: AgentTool[] = [
   {
     name: "run",
     description:
-      "Run an editnce command: check|snapshot|captions|cuts|scaffold|add|probe|timeline|renderDraft, with args object",
+      "Run an donova command: check|snapshot|captions|cuts|scaffold|add|probe|timeline|renderDraft, with args object",
     inputSchema: {
       type: "object",
       properties: { cmd: { type: "string" }, args: { type: "object" } },
@@ -72,7 +72,7 @@ const TOOLS: AgentTool[] = [
 ];
 
 function systemPrompt(ctx: AgentContext): string {
-  return `You are the Editnce editing agent inside Studio. The user describes edits in natural language; you make them real by calling tools. Rules:
+  return `You are the Donova editing agent inside Studio. The user describes edits in natural language; you make them real by calling tools. Rules:
 - Never modify source footage files under media/.
 - Composition rules: timed elements use class="clip" + data-start + data-duration; no Date.now/Math.random/network fetch in compositions; one paused root timeline on window.__timelines.
 - Blocks live in compositions/<name>/index.html, referenced with data-composition-src + data-composition-id on a .clip div and customized via data-var-* attributes. Run "add" first to install a block.
@@ -108,7 +108,7 @@ async function anthropicCall(ctx: AgentContext, messages: unknown[]): Promise<{ 
       "content-type": "application/json",
     },
     body: JSON.stringify({
-      model: process.env.EDITNCE_MODEL ?? "claude-sonnet-4-5",
+      model: process.env.DONOVA_MODEL ?? "claude-sonnet-4-5",
       max_tokens: 4096,
       system: systemPrompt(ctx),
       tools: TOOLS.map((t) => ({ name: t.name, description: t.description, input_schema: t.inputSchema })),
@@ -217,7 +217,7 @@ export class Agent {
       readContext: () => Promise<AgentContext>;
     },
   ) {
-    this.turnsFile = join(root, ".editnce", "turns.json");
+    this.turnsFile = join(root, ".donova", "turns.json");
   }
 
   async load(): Promise<void> {
@@ -231,7 +231,7 @@ export class Agent {
   }
 
   private async saveTurns(): Promise<void> {
-    await mkdir(join(this.root, ".editnce"), { recursive: true });
+    await mkdir(join(this.root, ".donova"), { recursive: true });
     await writeFile(this.turnsFile, JSON.stringify(this.turns, null, 2));
   }
 

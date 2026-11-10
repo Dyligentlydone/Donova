@@ -124,7 +124,7 @@ function anonymousId() {
   }
 }
 
-// The Editnce user id for a HeyGen username: the same sha256-derived UUID
+// The Donova user id for a HeyGen username: the same sha256-derived UUID
 // the CLI (auth/telemetryIdentity.ts), web app and Desktop key PostHog on.
 const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 

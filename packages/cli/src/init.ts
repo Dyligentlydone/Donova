@@ -2,7 +2,7 @@ import { mkdir, readdir, writeFile } from "node:fs/promises";
 import { basename, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
-/** `editnce init` — scaffold a new project (06 §init). */
+/** `donova init` — scaffold a new project (06 §init). */
 export async function initProject(
   dir: string,
   opts?: {
@@ -18,7 +18,7 @@ export async function initProject(
   },
 ): Promise<string[]> {
   const root = resolve(dir);
-  const name = opts?.name ?? "editnce-project";
+  const name = opts?.name ?? "donova-project";
   const w = opts?.width ?? 1920;
   const h = opts?.height ?? 1080;
   const d = opts?.duration ?? 5;
@@ -41,7 +41,7 @@ export async function initProject(
       meta = JSON.parse(await readFile(join(srcDir, "registry-item.json"), "utf8"));
     } catch {}
     const config = {
-      $schema: "https://editnce.dev/schemas/project.schema.json",
+      $schema: "https://donova.dev/schemas/project.schema.json",
       id: name,
       name,
       composition: "index.html",
@@ -50,8 +50,8 @@ export async function initProject(
       height: opts?.height ?? meta.dimensions?.height ?? h,
       render: { format: "mp4", quality: "standard", codec: "h264", alpha: false },
     };
-    await writeFile(join(root, "editnce.json"), `${JSON.stringify(config, null, 2)}\n`);
-    return [...(await readdir(root)), "editnce.json"];
+    await writeFile(join(root, "donova.json"), `${JSON.stringify(config, null, 2)}\n`);
+    return [...(await readdir(root)), "donova.json"];
   }
 
   if (opts?.footage) {
@@ -63,8 +63,8 @@ export async function initProject(
     const { copyFile } = await import("node:fs/promises");
     await copyFile(mediaAbs, join(assetsDir, basename(mediaAbs)));
 
-    const { locateFfmpeg, probe } = await import("@editnce/engine");
-    const { scaffoldFootage } = await import("@editnce/media");
+    const { locateFfmpeg, probe } = await import("@donova/engine");
+    const { scaffoldFootage } = await import("@donova/media");
     const { ffprobe } = await locateFfmpeg();
     const p = await probe(ffprobe, mediaAbs);
     const rot = Math.abs(p.rotation ?? 0);
@@ -99,7 +99,7 @@ export async function initProject(
     });
     await writeFile(join(root, "index.html"), html);
     const config = {
-      $schema: "https://editnce.dev/schemas/project.schema.json",
+      $schema: "https://donova.dev/schemas/project.schema.json",
       id: name,
       name,
       composition: "index.html",
@@ -108,8 +108,8 @@ export async function initProject(
       height: opts?.height ?? sh,
       render: { format: "mp4", quality: "standard", codec: "h264", alpha: false },
     };
-    await writeFile(join(root, "editnce.json"), `${JSON.stringify(config, null, 2)}\n`);
-    return ["index.html", "editnce.json", `assets/${basename(mediaAbs)}`];
+    await writeFile(join(root, "donova.json"), `${JSON.stringify(config, null, 2)}\n`);
+    return ["index.html", "donova.json", `assets/${basename(mediaAbs)}`];
   }
 
   const html = `<!doctype html>
@@ -128,7 +128,7 @@ export async function initProject(
 <div id="root" data-composition-id="main" data-width="${w}" data-height="${h}" data-duration="${d}" data-fps="${fps}" data-no-timeline>
   <div id="title-1" class="clip title" data-start="0" data-duration="${d}"
     data-fc-motion='{"v":1,"split":"words","stagger":0.08,"anims":[{"t":0,"dur":0.8,"ease":"power3.out","props":{"opacity":[0,1],"translateY":["0.6em","0em"]}}]}'>
-    Hello Editnce
+    Hello Donova
   </div>
 </div>
 </body>
@@ -136,7 +136,7 @@ export async function initProject(
 `;
 
   const config = {
-    $schema: "https://editnce.dev/schemas/project.schema.json",
+    $schema: "https://donova.dev/schemas/project.schema.json",
     id: name,
     name,
     composition: "index.html",
@@ -147,10 +147,10 @@ export async function initProject(
   };
 
   await writeFile(join(root, "index.html"), html);
-  await writeFile(join(root, "editnce.json"), `${JSON.stringify(config, null, 2)}\n`);
+  await writeFile(join(root, "donova.json"), `${JSON.stringify(config, null, 2)}\n`);
   await writeFile(
     join(root, "AGENTS.md"),
-    `# ${name}\n\nEditnce project. Composition: index.html.\n\n- Lint: \`editnce check\`\n- Preview: \`editnce preview\`\n- Render: \`editnce render --out out.mp4\`\n\nContract: timed elements carry data-start + data-duration (+ class="clip").\nRegister one paused GSAP timeline on window.__timelines["main"] when animating with GSAP code.\nStudio-authored animation uses data-fc-motion (never hand-edited GSAP).\n`,
+    `# ${name}\n\nDonova project. Composition: index.html.\n\n- Lint: \`donova check\`\n- Preview: \`donova preview\`\n- Render: \`donova render --out out.mp4\`\n\nContract: timed elements carry data-start + data-duration (+ class="clip").\nRegister one paused GSAP timeline on window.__timelines["main"] when animating with GSAP code.\nStudio-authored animation uses data-fc-motion (never hand-edited GSAP).\n`,
   );
-  return ["index.html", "editnce.json", "AGENTS.md", "compositions/", "media/"];
+  return ["index.html", "donova.json", "AGENTS.md", "compositions/", "media/"];
 }

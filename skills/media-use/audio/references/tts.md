@@ -1,12 +1,12 @@
 # Text To Speech
 
-`editnce tts` synthesizes locally with Kokoro. It does not accept a
+`donova tts` synthesizes locally with Kokoro. It does not accept a
 `--provider` or `--words` flag. For HeyGen audio plus word timestamps, use the
 bundled `heygen-tts.mjs` script below.
 
 > **Run the Preflight first — no credential is not a green light to silently use the local voice.** Before generating a voiceover, complete the sign-in **Preflight** (see `../../SKILL.md` → Preflight): run `hyperframes auth status`, recommend signing in, and **STOP for the user's choice** (sign in for HeyGen voices, or continue offline with local Kokoro). This applies to a one-off "generate a voiceover" request just as much as inside a full workflow.
 
-## Narrating an Editnce docs video
+## Narrating an Donova docs video
 
 Anything that will sit on hyperframes.heygen.com uses one narrator, so the site
 does not sound like two products.
@@ -48,12 +48,12 @@ to HeyGen sign-in. Read the Gemini section for its credential requirement.
 
 ```bash
 # Local Kokoro CLI
-editnce tts "Welcome to Editnce" -o narration.wav
+donova tts "Welcome to Donova" -o narration.wav
 ```
 
 ## Self-contained HeyGen (no CLI) — `scripts/heygen-tts.mjs`
 
-The published `editnce tts` CLI synthesizes locally with Kokoro only. When you
+The published `donova tts` CLI synthesizes locally with Kokoro only. When you
 want HeyGen specifically — best quality **plus** word timestamps in one call — use
 the skill's bundled script, which calls the HeyGen v3 REST API directly and needs
 no CLI provider plumbing:
@@ -65,7 +65,7 @@ project `.env` (auto-loaded, walks up ≤5 dirs) → an API key saved in
 `~/.hyperframes/credentials` (isolated from heygen-cli;
 `$HYPERFRAMES_CONFIG_DIR` overrides the root; `HYPERFRAMES_ENV=dev` uses `dev/`). An OAuth login is sent as
 `Authorization: Bearer`; an API key as `X-Api-Key`; only OAuth includes
-`X-HeyGen-Source: cli`. The server decides Editnce eligibility and charges;
+`X-HeyGen-Source: cli`. The server decides Donova eligibility and charges;
 explicit API keys use API billing. An expired or foreign OAuth session gives way
 to an env key; without one it stops rather than selecting a saved API key, with
 a hint to run `hyperframes auth refresh`.
@@ -76,7 +76,7 @@ export HEYGEN_API_KEY=...   # or put it in a project .env
 
 # Synthesize + capture word timestamps in one call (skips a Whisper pass)
 node skills/media-use/audio/scripts/heygen-tts.mjs \
-  "Welcome to Editnce." -o narration.wav --words narration.words.json
+  "Welcome to Donova." -o narration.wav --words narration.words.json
 
 node skills/media-use/audio/scripts/heygen-tts.mjs ./script.txt -o narration.wav
 node skills/media-use/audio/scripts/heygen-tts.mjs --list   # public starfish voices
@@ -115,7 +115,7 @@ node skills/media-use/audio/scripts/heygen-voice.mjs delete <voice_id>
 
 ## Gemini narration
 
-Use the shared audio engine, not `editnce tts`. Authenticate with either:
+Use the shared audio engine, not `donova tts`. Authenticate with either:
 
 - `GEMINI_API_KEY` or `GOOGLE_API_KEY` (first set key wins).
 - A service-account JSON file at `GOOGLE_APPLICATION_CREDENTIALS`, or injected
@@ -203,7 +203,7 @@ Default `af_heart`. Curated picks:
 | Documentation     | `bf_emma`, `bm_george` |
 | Casual / social   | `af_heart`, `af_sky`   |
 
-Run `editnce tts --list` for the bundled set.
+Run `donova tts --list` for the bundled set.
 
 ## Multilingual (Kokoro voice prefix → language)
 
@@ -222,8 +222,8 @@ The first letter of a Kokoro voice ID picks the phonemizer language; `--lang` ov
 | `z`    | Mandarin             |
 
 ```bash
-editnce tts "La reunión empieza a las nueve" --voice ef_dora
-editnce tts "Today is a nice day" --voice af_heart
+donova tts "La reunión empieza a las nueve" --voice ef_dora
+donova tts "Today is a nice day" --voice af_heart
 ```
 
 Valid `--lang` codes (only needed to override the voice's auto-detected language): `en-us`, `en-gb`, `es`, `fr-fr`, `hi`, `it`, `pt-br`, `ja`, `zh`.
@@ -237,7 +237,7 @@ Non-English phonemization requires `espeak-ng` system-wide (`brew install espeak
 - `1.1-1.2` — intros, transitions, upbeat content
 - `1.5+` — rarely appropriate, test carefully
 
-The `editnce tts` command honors `--speed` for Kokoro. Provider-specific
+The `donova tts` command honors `--speed` for Kokoro. Provider-specific
 helpers document their own pacing controls.
 
 ## Long scripts
@@ -255,4 +255,4 @@ When `--words <path>` is passed to a HeyGen call, the file is written in the sam
 ]
 ```
 
-For ElevenLabs / Kokoro, run `editnce transcribe narration.wav --model small.en` to get the same shape.
+For ElevenLabs / Kokoro, run `donova transcribe narration.wav --model small.en` to get the same shape.

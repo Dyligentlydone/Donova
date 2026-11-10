@@ -3,7 +3,7 @@
 Extract per-frame audio visualization data from an audio or video file.
 
 Outputs JSON with RMS amplitude and frequency band data at the target FPS,
-ready to embed in an Editnce composition.
+ready to embed in an Donova composition.
 
 Usage:
     python extract-audio-data.py input.mp3 -o audio-data.json

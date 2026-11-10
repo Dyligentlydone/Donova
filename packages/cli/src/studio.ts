@@ -1,8 +1,8 @@
 import { runHyperframes } from "./hf.js";
 
 /**
- * `editnce studio` — boot the HyperFrames Studio editor against an Editnce
- * project. Editnce projects already satisfy the HyperFrames composition
+ * `donova studio` — boot the HyperFrames Studio editor against an Donova
+ * project. Donova projects already satisfy the HyperFrames composition
  * contract (data-start/data-duration clips, sub-compositions, timed media), so
  * their studio-server edits our files natively.
  *

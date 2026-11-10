@@ -5,7 +5,7 @@ import { readWav } from "./wav.js";
 /**
  * Parakeet decode worker. Runs in a child process because onnxruntime can
  * abort the whole process on some inputs, uncatchably. Input arrives as JSON
- * in EDITNCE_PARAKEET_INPUT; results stream back as prefixed stdout lines.
+ * in DONOVA_PARAKEET_INPUT; results stream back as prefixed stdout lines.
  */
 
 interface Wave {
@@ -23,7 +23,7 @@ interface SherpaOnnx {
   };
 }
 
-const { wavPath, runtimePath, config } = JSON.parse(process.env.EDITNCE_PARAKEET_INPUT ?? "{}");
+const { wavPath, runtimePath, config } = JSON.parse(process.env.DONOVA_PARAKEET_INPUT ?? "{}");
 const parentPid = process.ppid;
 const { RESULT_PREFIX, ERROR_PREFIX, WINDOW_PREFIX } = WORKER_PREFIXES;
 

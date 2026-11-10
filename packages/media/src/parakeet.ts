@@ -36,7 +36,7 @@ const MODEL_REPO = "csukuangfj/sherpa-onnx-nemo-parakeet-tdt-0.6b-v3-int8";
 const MODEL_REVISION = "2bda32ec70b097a55adaa07d9a7173915b43cc78";
 
 export function parakeetModelDir(): string {
-  return join(homedir(), ".cache", "editnce", "parakeet", "parakeet-tdt-0.6b-v3-int8");
+  return join(homedir(), ".cache", "donova", "parakeet", "parakeet-tdt-0.6b-v3-int8");
 }
 
 export interface ModelFile {
@@ -176,9 +176,9 @@ export async function sherpaRuntimeLoadError(timeoutMs = 30_000): Promise<string
       process.execPath,
       [
         "-e",
-        "try{require(process.env.EDITNCE_SHERPA)}catch(e){console.error(String(e&&e.message||e));process.exit(1)}",
+        "try{require(process.env.DONOVA_SHERPA)}catch(e){console.error(String(e&&e.message||e));process.exit(1)}",
       ],
-      { timeout: timeoutMs, env: { ...process.env, EDITNCE_SHERPA: runtimePath } },
+      { timeout: timeoutMs, env: { ...process.env, DONOVA_SHERPA: runtimePath } },
       (err, _stdout, stderr) => {
         if (!err) resolve(null);
         else resolve(stderr.trim() || err.message);
@@ -189,9 +189,9 @@ export async function sherpaRuntimeLoadError(timeoutMs = 30_000): Promise<string
 
 // --- decode worker plumbing -------------------------------------------------
 
-const RESULT_PREFIX = "EDITNCE_PARAKEET_RESULT:";
-const ERROR_PREFIX = "EDITNCE_PARAKEET_ERROR:";
-const WINDOW_PREFIX = "EDITNCE_PARAKEET_WINDOW:";
+const RESULT_PREFIX = "DONOVA_PARAKEET_RESULT:";
+const ERROR_PREFIX = "DONOVA_PARAKEET_ERROR:";
+const WINDOW_PREFIX = "DONOVA_PARAKEET_WINDOW:";
 
 /** One decoded window from sherpa-onnx: token times are relative to the window's `offset` (s). */
 export interface SherpaWindow {
@@ -259,7 +259,7 @@ function decode(
       process.execPath,
       [worker],
       {
-        env: { ...process.env, EDITNCE_PARAKEET_INPUT: JSON.stringify(input) },
+        env: { ...process.env, DONOVA_PARAKEET_INPUT: JSON.stringify(input) },
         maxBuffer: 256 * 1024 * 1024,
         timeout: decodeTimeoutMs(audioSeconds),
       },

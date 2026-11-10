@@ -1,11 +1,11 @@
 import { readFile, writeFile } from "node:fs/promises";
 import { resolve } from "node:path";
-import { normalizeTranscript, planCuts } from "@editnce/media";
-import type { Transcript } from "@editnce/media";
+import { normalizeTranscript, planCuts } from "@donova/media";
+import type { Transcript } from "@donova/media";
 import { CliError, ERR } from "./errors.js";
 
 /**
- * `editnce cuts <transcript.json>` → cut plan JSON (17 §3.3).
+ * `donova cuts <transcript.json>` → cut plan JSON (17 §3.3).
  * Dead-air removal at word boundaries; no style decisions.
  */
 export async function cutsCmd(opts: {
@@ -23,7 +23,7 @@ export async function cutsCmd(opts: {
     throw new CliError(
       ERR.FILE_NOT_FOUND,
       `cannot read transcript: ${inPath}`,
-      "Run `editnce transcribe <media>` first.",
+      "Run `donova transcribe <media>` first.",
     );
   }
   if (transcript.words.length === 0) {

@@ -1,11 +1,11 @@
 import { readFile } from "node:fs/promises";
 import { join, resolve } from "node:path";
-import { parseCompositionHtml, resolveTimeline } from "@editnce/contract";
-import { locateFfmpeg, probe } from "@editnce/engine";
+import { parseCompositionHtml, resolveTimeline } from "@donova/contract";
+import { locateFfmpeg, probe } from "@donova/engine";
 import { CliError, ERR } from "./errors.js";
 
 /**
- * `editnce probe <media>` — normalized media info for agents (17 §3.5).
+ * `donova probe <media>` — normalized media info for agents (17 §3.5).
  */
 export async function probeCmd(media: string): Promise<Record<string, unknown>> {
   const p = resolve(media);
@@ -39,7 +39,7 @@ export interface TimelineClipInfo {
 }
 
 /**
- * `editnce timeline <dir>` — resolved clip list (17 §3.5).
+ * `donova timeline <dir>` — resolved clip list (17 §3.5).
  * Agents use this to see the timeline without parsing HTML themselves.
  */
 export async function timelineCmd(

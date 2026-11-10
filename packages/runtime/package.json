@@ -1,5 +1,5 @@
 {
-  "name": "@editnce/runtime",
+  "name": "@donova/runtime",
   "version": "0.1.0",
   "private": true,
   "type": "module",

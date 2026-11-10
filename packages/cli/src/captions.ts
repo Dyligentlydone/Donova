@@ -1,11 +1,11 @@
 import { readFile, writeFile } from "node:fs/promises";
 import { join, resolve } from "node:path";
-import { normalizeTranscript } from "@editnce/media";
-import type { CutPlan, Transcript, TranscriptWord } from "@editnce/media";
+import { normalizeTranscript } from "@donova/media";
+import type { CutPlan, Transcript, TranscriptWord } from "@donova/media";
 import { CliError, ERR } from "./errors.js";
 
 /**
- * `editnce captions` — generate a caption track into index.html from a
+ * `donova captions` — generate a caption track into index.html from a
  * transcript + cuts plan (17 §4 / MV4). Writes timed caption elements using
  * the word-captions block's classes (install it first for styles), mapped
  * source→comp through the cut plan.
@@ -112,7 +112,7 @@ export async function captionsCmd(opts: {
   const stripped = bIdx >= 0 && eIdx > bIdx ? html.slice(0, bIdx) + html.slice(eIdx + END.length) : html;
   const rootClose = stripped.lastIndexOf("</div>");
   if (rootClose < 0) throw new CliError(ERR.INVALID_PROJECT, "index.html has no composition root");
-  const block = `\n  ${BEGIN} (${mode}) — regenerate with editnce captions -->\n${els.join("\n")}\n  ${END}\n`;
+  const block = `\n  ${BEGIN} (${mode}) — regenerate with donova captions -->\n${els.join("\n")}\n  ${END}\n`;
 
   // Ensure caption styles exist: inline the word-captions block <style> if absent.
   let out = stripped.slice(0, rootClose) + block + stripped.slice(rootClose);

@@ -1,6 +1,6 @@
 # AGENTS.md — Instructions for the model building this project
 
-You are building **Editnce** (working codename — see "Naming" below): a complete,
+You are building **Donova** (working codename — see "Naming" below): a complete,
 production-grade "write HTML, render video" platform with an AI editing agent, a
 browser/desktop editor (Studio), a CLI, a cloud render service, and a block registry.
 It is a from-scratch rebuild of the architecture of HeyGen's open-source HyperFrames,
@@ -56,16 +56,16 @@ how a hard problem was solved). Rules:
 
 | Thing | Value |
 |---|---|
-| Product name | Editnce (placeholder; may be renamed later by find/replace) |
-| npm scope | `@editnce/*` |
-| CLI binary | `editnce` (alias `ec`) |
+| Product name | Donova (placeholder; may be renamed later by find/replace) |
+| npm scope | `@donova/*` |
+| CLI binary | `donova` (alias `do`) |
 | Browser global namespace | `window.__fc` |
 | Timeline registry global | `window.__timelines` (kept generic on purpose) |
-| Env var prefix | `EDITNCE_` |
-| Project config file | `editnce.json` |
-| Config dir | `~/.config/editnce/` (XDG), cache `~/.cache/editnce/` |
-| postMessage sources | `ec-parent` (host → runtime), `ec-runtime` (runtime → host) |
-| CSS/attr prefix for internal markers | `__fc-` / `data-ec-` |
+| Env var prefix | `DONOVA_` |
+| Project config file | `donova.json` |
+| Config dir | `~/.config/donova/` (XDG), cache `~/.cache/donova/` |
+| postMessage sources | `do-parent` (host → runtime), `do-runtime` (runtime → host) |
+| CSS/attr prefix for internal markers | `__fc-` / `data-do-` |
 
 Keep all of these defined as constants in `packages/contract/src/names.ts` and import
 them everywhere so a rename is a one-file change.
@@ -89,7 +89,7 @@ them everywhere so a rename is a one-file change.
   unseeded randomness, no network during capture. See `plan/02-RUNTIME.md`.
 - **GSAP rule (licensing, hard)**: GSAP is used only as code (written by users or the AI
   agent). No Studio/no-code UI feature may generate, edit, or delete GSAP code; visual
-  animation features write `data-ec-motion` only (see `plan/12-CLOUD-PLATFORM.md §9`).
+  animation features write `data-do-motion` only (see `plan/12-CLOUD-PLATFORM.md §9`).
   Keep GSAP's license/branding headers intact in vendored files.
 - **Out of scope**: AI avatars / talking-presenter generation. Do not build or integrate.
 - **No built-in creator style (hard)**: no tool, block default, skill, or prompt may
@@ -115,12 +115,12 @@ pnpm build            # builds all packages
 pnpm test             # unit + integration (until MV0.3: use `pnpm vitest run`)
 pnpm test:golden      # golden render tests (config created in MV0.3)
 pnpm lint
-node packages/cli/bin/editnce.mjs doctor     # after MV1.1
-node packages/cli/bin/editnce.mjs check fixtures/media
-node packages/cli/bin/editnce.mjs render fixtures/basic --out /tmp/out.mp4
+node packages/cli/bin/donova.mjs doctor     # after MV1.1
+node packages/cli/bin/donova.mjs check fixtures/media
+node packages/cli/bin/donova.mjs render fixtures/basic --out /tmp/out.mp4
 ```
 
 After finishing each MV task, update `plan/STATUS.md` (what exists, new lessons).
 
 System prerequisites for development: Node 22+, pnpm 9+, FFmpeg 6+ (with ffprobe),
-and Chrome-for-Testing `chrome-headless-shell` (auto-downloaded by `editnce browser ensure`).
+and Chrome-for-Testing `chrome-headless-shell` (auto-downloaded by `donova browser ensure`).

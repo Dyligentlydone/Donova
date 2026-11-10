@@ -1,4 +1,4 @@
-# 03 — Render Engine (`@editnce/engine`)
+# 03 — Render Engine (`@donova/engine`)
 
 Low-level, framework-agnostic: "seekable web page → frames → encoded video", plus audio
 mixing. Knows nothing about projects or the contract beyond the `window.__fc` seek protocol.
@@ -8,7 +8,7 @@ mixing. Knows nothing about projects or the contract beyond the `window.__fc` se
 | File | Responsibility |
 |---|---|
 | `chrome/version.ts` | Pinned Chrome-for-Testing build id for `chrome-headless-shell` |
-| `chrome/install.ts` | `ensureBrowser()` via `@puppeteer/browsers` into `~/.cache/editnce/chrome/`; env override `EDITNCE_CHROME_PATH` |
+| `chrome/install.ts` | `ensureBrowser()` via `@puppeteer/browsers` into `~/.cache/donova/chrome/`; env override `DONOVA_CHROME_PATH` |
 | `chrome/launch.ts` | Launch flags per capture mode; probe beginFrame support |
 | `chrome/pool.ts` | Browser lease pool (reuse browsers across renders; max per host) |
 | `fileServer.ts` | Hono static server for a directory with runtime injection, Range support |
@@ -27,7 +27,7 @@ mixing. Knows nothing about projects or the contract beyond the `window.__fc` se
 | `audio/fx.ts` | Audio effect → FFmpeg filter mapping |
 | `audio/loudness.ts` | EBU R128 measure + normalize |
 | `parallel/coordinator.ts` | Split frames across workers, collect, order |
-| `ffmpeg/locate.ts` | Find ffmpeg/ffprobe (env `EDITNCE_FFMPEG_PATH`, PATH, bundled) + version check |
+| `ffmpeg/locate.ts` | Find ffmpeg/ffprobe (env `DONOVA_FFMPEG_PATH`, PATH, bundled) + version check |
 | `ffmpeg/run.ts` | Spawn with progress parsing (`-progress pipe:2`), abort signal, stderr tail on error |
 
 ## 2. Chrome launch
@@ -40,7 +40,7 @@ Common flags:
 --hide-scrollbars --mute-audio --disable-background-timer-throttling
 --disable-renderer-backgrounding --disable-backgrounding-occluded-windows
 --force-color-profile=srgb --font-render-hinting=none --disable-features=Translate,MediaRouter
---disable-dev-shm-usage (Linux containers) --no-sandbox only when EDITNCE_NO_SANDBOX=1 (Docker)
+--disable-dev-shm-usage (Linux containers) --no-sandbox only when DONOVA_NO_SANDBOX=1 (Docker)
 --autoplay-policy=no-user-gesture-required
 --allow-file-access-from-files=false (we serve over http)
 ```
@@ -136,8 +136,8 @@ For each video:
    max size the element reaches; fall back to source size capped at composition size × 2).
    Apply rotation automatically (ffmpeg autorotates by default; keep it).
 4. Cache: key = sha256(src absolute path + mtime + size + window + extractFps + target size + format).
-   Dir `~/.cache/editnce/frames/<key>/` with `done.json` marker written last. LRU prune to
-   `EDITNCE_FRAME_CACHE_GB` (default 10).
+   Dir `~/.cache/donova/frames/<key>/` with `done.json` marker written last. LRU prune to
+   `DONOVA_FRAME_CACHE_GB` (default 10).
 5. Mapping time → file: `index = floor((mediaTime - winStart) * extractFps + 1e-6)`, clamp
    to `[0, count-1]` (hold last frame at tail).
 6. HDR sources: tone-map to SDR with `zscale=t=linear,tonemap=hable,zscale=p=bt709:t=bt709:m=bt709`
@@ -195,7 +195,7 @@ interface AudioTrack {
   mediaStart: number; rate: number;   // or rateLane
   volume: number; fadeIn: number; fadeOut: number;
   volumeLane?: Keyframe[]; rateLane?: Keyframe[];
-  fx?: FxNode[]; group?: string;      // <ec-audio-group> membership
+  fx?: FxNode[]; group?: string;      // <do-audio-group> membership
 }
 ```
 Sources: every `<audio>`; every `<video>` with `data-has-audio="true"` and not `muted`.
@@ -222,7 +222,7 @@ Volume lanes → expression: piecewise linear `if(between(t,t0,t1), v0+(v1-v0)*(
 with `eval=frame`; simplify constant lanes to a static volume.
 
 ### 7.3 Groups & ducking
-`<ec-audio-group id="music-bus" data-fx-chain="[...]" data-volume="0.8">` contains member
+`<do-audio-group id="music-bus" data-fx-chain="[...]" data-volume="0.8">` contains member
 `<audio>` elements (by `data-group="music-bus"`). Members are mixed into a submix, then the
 group's fx/volume applies. Ducking ("voiceover carve"): `sidechaincompress` with the voice
 group as sidechain: `[music][voice_sc]sidechaincompress=threshold=0.05:ratio=8:attack=20:release=300`.

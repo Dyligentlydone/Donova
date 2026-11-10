@@ -2,7 +2,7 @@
 
 <!-- registry-items: allow=max-width,data-composition-src,hyperframes-registry,blend-mode,caption-style,font-family -->
 
-**The live search is the source of truth for what the registry has.** The table(s) below are a hand-maintained sample and under-cover by design: run `editnce catalog --query "<what you want>" --json` — it needs nothing installed — before concluding the registry lacks something. Item names here are checked against `registry/registry.json` by `bun run lint:skills`.
+**The live search is the source of truth for what the registry has.** The table(s) below are a hand-maintained sample and under-cover by design: run `donova catalog --query "<what you want>" --json` — it needs nothing installed — before concluding the registry lacks something. Item names here are checked against `registry/registry.json` by `bun run lint:skills`.
 
 Before authoring: confirm the transcript came from the right Whisper model. CLI default `small.en` silently translates non-English audio — see [`../transcribe.md`](../transcribe.md) → "Language Rule" and [`transcript-handling.md`](transcript-handling.md) for the mandatory quality check.
 
@@ -17,7 +17,7 @@ Analyze spoken content to determine caption style. If user specifies a style, us
 ]
 ```
 
-`id` (`w0`, `w1`, …) is the stable reference for per-word overrides and is added by `editnce transcribe`. It's optional for backwards compatibility with hand-authored transcripts. See [`../transcribe.md`](../transcribe.md) → "Output Shape" for how this is produced, and [`transcript-handling.md`](transcript-handling.md) for cleanup before consumption.
+`id` (`w0`, `w1`, …) is the stable reference for per-word overrides and is added by `donova transcribe`. It's optional for backwards compatibility with hand-authored transcripts. See [`../transcribe.md`](../transcribe.md) → "Output Shape" for how this is produced, and [`transcript-handling.md`](transcript-handling.md) for cleanup before consumption.
 
 ## Style Detection (When No Style Specified)
 
@@ -117,11 +117,11 @@ tl.seek(0);
 
 ## Pre-Built Caption Components
 
-Before building caption styles from scratch, check the registry — 15 ready-to-use caption components cover the most common styles. Install with `editnce add <name>` and wire as a sub-composition via `data-composition-src` (see `hyperframes-registry`).
+Before building caption styles from scratch, check the registry — 15 ready-to-use caption components cover the most common styles. Install with `donova add <name>` and wire as a sub-composition via `data-composition-src` (see `hyperframes-registry`).
 
 ```bash
-editnce catalog --tag caption-style   # list all caption components
-editnce add caption-highlight         # install a specific one
+donova catalog --tag caption-style   # list all caption components
+donova add caption-highlight         # install a specific one
 ```
 
 | Style                     | Component                    | Best for                     |

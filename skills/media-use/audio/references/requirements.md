@@ -12,7 +12,7 @@ Run `hyperframes auth status` to see what's configured and which engines a workf
 | **Kokoro** (TTS, no key)         | always — final voice fallback                                                                                                                                                                  | `pip install kokoro-onnx soundfile`              |
 | **MusicGen** (BGM, no key)       | always — final music fallback                                                                                                                                                                  | `pip install transformers torch soundfile numpy` |
 
-`hyperframes auth login` (browser OAuth) is the recommended setup: one sign-in, every project, no per-repo `.env`. An OAuth login is sent as `Authorization: Bearer`; an API key as `X-Api-Key`; only OAuth is tagged with `X-HeyGen-Source: cli`. The server decides Editnce eligibility and charges; API keys use API billing. An expired or foreign OAuth session requires refresh/sign-in and never selects a saved API key. With no HeyGen credential, voice/BGM run fully locally (Kokoro / MusicGen) — `hyperframes auth status` and `editnce doctor` both report whether those local deps are installed.
+`hyperframes auth login` (browser OAuth) is the recommended setup: one sign-in, every project, no per-repo `.env`. An OAuth login is sent as `Authorization: Bearer`; an API key as `X-Api-Key`; only OAuth is tagged with `X-HeyGen-Source: cli`. The server decides Donova eligibility and charges; API keys use API billing. An expired or foreign OAuth session requires refresh/sign-in and never selects a saved API key. With no HeyGen credential, voice/BGM run fully locally (Kokoro / MusicGen) — `hyperframes auth status` and `donova doctor` both report whether those local deps are installed.
 
 ## Model caches & system dependencies
 
@@ -26,4 +26,4 @@ Each command downloads its own model on first run and caches it under `~/.cache/
 - **Transcribe** — Whisper model size depending on choice (75 MB – 3.1 GB) in `whisper/`, downloaded from HuggingFace on first use. `whisper.cpp` itself is NOT bundled: the CLI resolves it from PATH, installs via Homebrew (macOS), or builds it from source with git+cmake on first use (`$HYPERFRAMES_WHISPER_PATH` overrides).
 - **Remove-background** — `u2net_human_seg` (~168 MB ONNX) in `background-removal/models/`. Peak inference RAM ~1.5 GB.
 
-Run `editnce doctor` if a command fails because of a missing dependency.
+Run `donova doctor` if a command fails because of a missing dependency.

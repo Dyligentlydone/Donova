@@ -5,7 +5,7 @@ When no recorded voiceover exists, generate one and obtain word-level caption ti
 ## Path A — HeyGen (single call, no Whisper)
 
 HeyGen returns word timestamps in the same response as the audio. Use the
-bundled REST helper (the `editnce tts` command is Kokoro-only):
+bundled REST helper (the `donova tts` command is Kokoro-only):
 
 ```bash
 node skills/media-use/audio/scripts/heygen-tts.mjs \
@@ -24,8 +24,8 @@ request in [Text to speech](tts.md#gemini-narration), then consume
 For a standalone local Kokoro generation, generate the audio, then transcribe:
 
 ```bash
-editnce tts script.txt --voice af_heart --output narration.wav
-editnce transcribe narration.wav --model small.en   # voice af_heart is American English
+donova tts script.txt --voice af_heart --output narration.wav
+donova transcribe narration.wav --model small.en   # voice af_heart is American English
 ```
 
 Whisper extracts precise word boundaries from the generated audio, so caption timing matches delivery without hand-tuning. Match `--model` to the voice's language (use `small.en` for `a`/`b` prefixes, `small --language <code>` otherwise). Then consume `transcript.json` via the caption references in `captions/`.

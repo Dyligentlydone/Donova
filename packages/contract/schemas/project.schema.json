@@ -1,7 +1,7 @@
 {
-  "$id": "https://editnce.dev/schemas/project.schema.json",
+  "$id": "https://donova.dev/schemas/project.schema.json",
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "title": "Editnce project (editnce.json)",
+  "title": "Donova project (donova.json)",
   "type": "object",
   "properties": {
     "id": { "type": "string" },

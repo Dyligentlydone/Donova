@@ -6,7 +6,7 @@ import { join } from "node:path";
 import test from "node:test";
 import { fileURLToPath } from "node:url";
 
-// The stub stands in for `editnce transcribe <in> --dir <dir> ...`: it records its args,
+// The stub stands in for `donova transcribe <in> --dir <dir> ...`: it records its args,
 // writes the CLI's flat array and prints the CLI's --json line naming `cliEngine`.
 function runScript(engine, cliEngine) {
   const root = mkdtempSync(join(tmpdir(), "media-use-transcribe-"));
@@ -79,7 +79,7 @@ test(
       const bin = join(root, "bin");
       mkdirSync(bin);
       const reason =
-        "Parakeet is not installed. Install it with: editnce models install parakeet";
+        "Parakeet is not installed. Install it with: donova models install parakeet";
       writeFileSync(
         join(bin, "npx"),
         `#!/bin/sh\necho '{"ok":false,"error":"${reason}"}'\nexit 1\n`,
@@ -104,7 +104,7 @@ test(
         },
       );
       assert.equal(res.status, 1);
-      assert.match(JSON.parse(res.stdout.trim()).error, /editnce models install parakeet/);
+      assert.match(JSON.parse(res.stdout.trim()).error, /donova models install parakeet/);
     } finally {
       rmSync(root, { recursive: true, force: true });
     }

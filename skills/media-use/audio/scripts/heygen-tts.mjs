@@ -13,7 +13,7 @@
 //
 // Flags: -o/--output (.wav → ffmpeg transcode; .mp3 → raw bytes), --words,
 //   --voice (starfish id), --speed, --lang, --list.
-// Requires: $HEYGEN_API_KEY / OAuth ~/.editnce credentials and ffmpeg for .wav output.
+// Requires: $HEYGEN_API_KEY / OAuth ~/.donova credentials and ffmpeg for .wav output.
 
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { dirname, resolve } from "node:path";
@@ -113,7 +113,7 @@ if (wordsPath) {
     writeFileSync(wordsPath, JSON.stringify(withWordIds(words), null, 2));
     wordCount = words.length;
   } else {
-    console.error("⚠ no word_timestamps in response — run `editnce transcribe` instead");
+    console.error("⚠ no word_timestamps in response — run `donova transcribe` instead");
   }
 }
 

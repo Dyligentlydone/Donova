@@ -11,7 +11,7 @@ import { fileURLToPath } from "node:url";
  * overlay and writes them into the project for the agent to consume, and
  * bridges Studio chat to a locally configured agent CLI.
  *
- * `editnce studio` launches hyperframes' own preview server, whose routes we can't
+ * `donova studio` launches hyperframes' own preview server, whose routes we can't
  * extend, so this runs as a tiny detached server on studioPort+1000 bound to
  * localhost.
  *
@@ -20,16 +20,16 @@ import { fileURLToPath } from "node:url";
  *   POST /annotate                  persist annotations/*.json + *.png
  *   GET  /agent/health              { agent: bool, name, cmd } — bridge configured?
  *   GET  /agent/list                known agents + detected/setup state (chat picker)
- *   POST /agent/select {name}       switch the active agent (persists to editnce.json)
- *   POST /agent/setup {name,key?,url?,model?}  configure an API provider (~/.editnce/agents.json)
+ *   POST /agent/select {name}       switch the active agent (persists to donova.json)
+ *   POST /agent/setup {name,key?,url?,model?}  configure an API provider (~/.donova/agents.json)
  *   POST /agent/chat {message, annotation?} → { jobId } (503 when no bridge)
  *   GET  /agent/jobs/:id/stream     SSE of the agent run
  *   POST /stop                      shutdown
  *
  * Agent resolution (first hit wins):
  *   1. POST /agent/select session override
- *   2. editnce.json "agent":  "auto" | "<preset>" | { cmd } | { url, model }
- *   3. env: EDITNCE_AGENT (preset name or raw cmd) → EDITNCE_AGENT_CMD (raw cmd)
+ *   2. donova.json "agent":  "auto" | "<preset>" | { cmd } | { url, model }
+ *   3. env: DONOVA_AGENT (preset name or raw cmd) → DONOVA_AGENT_CMD (raw cmd)
  *      — legacy FC_* env vars still honored
  *   4. first preset whose binary is on PATH (claude, codex, gemini, …)
  *
@@ -126,7 +126,7 @@ const AGENT_PRESETS: { name: string; label: string; bin: string; cmd: string; in
 /**
  * API providers — any OpenAI-compatible /chat/completions endpoint. Configured
  * through the chat picker's setup form (POST /agent/setup); key/model/url live
- * in ~/.editnce/agents.json, never in the project. Runs the tool-call loop
+ * in ~/.donova/agents.json, never in the project. Runs the tool-call loop
  * so these agents can edit files, not just chat.
  */
 const API_PRESETS: { name: string; label: string; url: string; model: string; needsKey: boolean }[] = [
@@ -170,18 +170,19 @@ const API_PRESETS: { name: string; label: string; url: string; model: string; ne
 
 /** User-level agent secrets/config — outside the project so keys never get committed. */
 function agentStorePath(): string {
-  return join(homedir(), ".editnce", "agents.json");
+  return join(homedir(), ".donova", "agents.json");
 }
 function readAgentStore(): Record<string, { key?: string; url?: string; model?: string }> {
   try {
     return JSON.parse(readFileSync(agentStorePath(), "utf8"));
   } catch {}
-  // legacy path from the framecraft branding — read once, migrated on next write
-  try {
-    return JSON.parse(readFileSync(join(homedir(), ".framecraft", "agents.json"), "utf8"));
-  } catch {
-    return {};
+  // older-branding stores — read once, migrated on next write
+  for (const dir of [".editnce", ".framecraft"]) {
+    try {
+      return JSON.parse(readFileSync(join(homedir(), dir, "agents.json"), "utf8"));
+    } catch {}
   }
+  return {};
 }
 function writeAgentStore(store: Record<string, { key?: string; url?: string; model?: string }>): void {
   mkdirSync(join(agentStorePath(), ".."), { recursive: true });
@@ -190,9 +191,12 @@ function writeAgentStore(store: Record<string, { key?: string; url?: string; mod
 
 let sessionAgent: string | null = null;
 
-/** EDITNCE_* env vars preferred; FC_* (framecraft era) still honored. */
+/** DONOVA_* env vars preferred; EDITNCE_* and FC_* (earlier brands) still honored. */
 function agentEnv(suffix: string): string | undefined {
-  return process.env[`EDITNCE_${suffix}`] ?? process.env[`FC_${suffix}`];
+  return (
+    process.env[`DONOVA_${suffix}`] ??
+    ["EDITNCE_", "FC_"].map((p) => process.env[`${p}${suffix}`]).find(Boolean)
+  );
 }
 function agentKeyEnv(): string | undefined {
   return agentEnv("AGENT_KEY_ENV");
@@ -212,7 +216,7 @@ interface AgentConfig {
 }
 
 function readAgentConfig(projectDir: string): AgentConfig["agent"] {
-  for (const name of ["editnce.json", "framecraft.json"]) {
+  for (const name of ["donova.json", "editnce.json", "framecraft.json"]) {
     try {
       const cfg = join(projectDir, name);
       if (existsSync(cfg)) return (JSON.parse(readFileSync(cfg, "utf8")) as AgentConfig).agent;
@@ -371,7 +375,7 @@ const jobs = new Map<
 function buildPrompt(projectDir: string, body: ChatBody): string {
   let prompt = [
     `You are editing the video composition in the current directory (${projectDir}).`,
-    `It is a HyperFrames/Editnce HTML composition: timed elements carry data-start/data-duration, visuals carry class="clip", motion lives in a paused GSAP root timeline on window.__timelines. Only deterministic edits.`,
+    `It is a HyperFrames/Donova HTML composition: timed elements carry data-start/data-duration, visuals carry class="clip", motion lives in a paused GSAP root timeline on window.__timelines. Only deterministic edits.`,
     "The user just sent this request from the Studio dashboard:",
     "",
     body.message ?? "",
@@ -477,7 +481,7 @@ const AGENT_TOOLS = [
     type: "function",
     function: {
       name: "run_command",
-      description: "Run a shell command in the project dir (e.g. npx editnce check, ffmpeg probes)",
+      description: "Run a shell command in the project dir (e.g. npx donova check, ffmpeg probes)",
       parameters: { type: "object", properties: { cmd: { type: "string" } }, required: ["cmd"] },
     },
   },
@@ -695,7 +699,7 @@ function handle(projectDir: string, req: IncomingMessage, res: ServerResponse): 
         const spec = name ? preset(name) : null;
         sessionAgent = spec ? (spec.name as string) : null;
         // persist so the choice survives studio restarts
-        const cfgPath = join(projectDir, "editnce.json");
+        const cfgPath = join(projectDir, "donova.json");
         let cfg: Record<string, unknown> = {};
         try {
           if (existsSync(cfgPath)) cfg = JSON.parse(readFileSync(cfgPath, "utf8")) as Record<string, unknown>;

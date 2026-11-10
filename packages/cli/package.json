@@ -1,5 +1,5 @@
 {
-  "name": "@editnce/cli",
+  "name": "@donova/cli",
   "version": "0.1.0",
   "private": true,
   "type": "module",
@@ -24,17 +24,17 @@
     "vitest": "2.1.9"
   },
   "bin": {
-    "editnce": "./bin/editnce.mjs",
-    "ec": "./bin/editnce.mjs"
+    "donova": "./bin/donova.mjs",
+    "do": "./bin/donova.mjs"
   },
   "dependencies": {
-    "@editnce/contract": "workspace:*",
-    "@editnce/engine": "workspace:*",
-    "@editnce/lint": "workspace:*",
-    "@editnce/media": "workspace:*",
-    "@editnce/producer": "workspace:*",
-    "@editnce/runtime": "workspace:*",
-    "@editnce/studio-server": "workspace:*",
+    "@donova/contract": "workspace:*",
+    "@donova/engine": "workspace:*",
+    "@donova/lint": "workspace:*",
+    "@donova/media": "workspace:*",
+    "@donova/producer": "workspace:*",
+    "@donova/runtime": "workspace:*",
+    "@donova/studio-server": "workspace:*",
     "@hyperframes/inspector": "0.9.22",
     "@hyperframes/sdk": "0.9.22",
     "citty": "^0.1.6",

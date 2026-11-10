@@ -1,8 +1,8 @@
 import { resolve } from "node:path";
-import { startFileServer } from "@editnce/engine";
+import { startFileServer } from "@donova/engine";
 
 /**
- * `editnce preview` — serve the project + a minimal seek-scrub UI.
+ * `donova preview` — serve the project + a minimal seek-scrub UI.
  * The full Studio editor is a separate app; this is the fast local check.
  */
 export async function previewProject(

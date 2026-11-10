@@ -4,7 +4,7 @@ import { mkdir, readFile, stat } from "node:fs/promises";
 import { homedir } from "node:os";
 import { join } from "node:path";
 import { promisify } from "node:util";
-import { locateFfmpeg, probe, runFfmpeg } from "@editnce/engine";
+import { locateFfmpeg, probe, runFfmpeg } from "@donova/engine";
 import { download, sha256File } from "./download.js";
 import {
   PARAKEET_LANGUAGES,
@@ -22,7 +22,7 @@ const execFileAsync = promisify(execFile);
  * Local whisper.cpp transcription (17 §3.2).
  *
  * Models: ggml-* files from the ggerganov/whisper.cpp Hugging Face repo,
- * cached under ~/.cache/editnce/whisper/models/, SHA-256 verified against
+ * cached under ~/.cache/donova/whisper/models/, SHA-256 verified against
  * the pinned manifest below (hashes computed from known-good downloads).
  *
  * Binary: `whisper-cli` (whisper.cpp ≥1.7) on PATH — `brew install whisper-cpp`.
@@ -68,7 +68,7 @@ export function initialModelForLanguage(model: string, language?: string): strin
 const HF_BASE = "https://huggingface.co/ggerganov/whisper.cpp/resolve/main";
 
 export function whisperModelDir(): string {
-  return join(homedir(), ".cache", "editnce", "whisper", "models");
+  return join(homedir(), ".cache", "donova", "whisper", "models");
 }
 
 export async function findWhisperCli(): Promise<string | null> {
@@ -202,7 +202,7 @@ export async function transcribe(
   const { ffmpeg, ffprobe } = await locateFfmpeg();
   const p = await probe(ffprobe, mediaPath);
 
-  const cacheDir = join(homedir(), ".cache", "editnce", "whisper", "work");
+  const cacheDir = join(homedir(), ".cache", "donova", "whisper", "work");
   await mkdir(cacheDir, { recursive: true });
   const key = createHash("sha1")
     .update(mediaPath)
@@ -247,7 +247,7 @@ export async function transcribe(
   const bin = opts?.whisperBin ?? (await findWhisperCli());
   if (!bin) {
     throw new Error(
-      "whisper-cli not found. Install whisper.cpp (brew install whisper-cpp) or set EDITNCE_WHISPER.",
+      "whisper-cli not found. Install whisper.cpp (brew install whisper-cpp) or set DONOVA_WHISPER.",
     );
   }
   const model = initialModelForLanguage(opts?.model ?? DEFAULT_WHISPER_MODEL, opts?.language);

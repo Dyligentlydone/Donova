@@ -5,17 +5,17 @@ import { join, resolve } from "node:path";
 import { CliError, ERR } from "./errors.js";
 
 /**
- * `editnce style` — the user-owned style.md (17 §5).
+ * `donova style` — the user-owned style.md (17 §5).
  *
  * Resolution order (first hit wins):
  *   1. <project>/style.md
  *   2. <project>/STYLE.md
- *   3. ~/.config/editnce/style.md  (user-global)
+ *   3. ~/.config/donova/style.md  (user-global)
  * The app ships NO default style — the file belongs to the user.
  */
 
 export function globalStylePath(): string {
-  return join(homedir(), ".config", "editnce", "style.md");
+  return join(homedir(), ".config", "donova", "style.md");
 }
 
 export function resolveStylePath(projectDir?: string): string | null {
@@ -67,7 +67,7 @@ export async function styleCmd(opts: {
     throw new CliError(
       ERR.FILE_NOT_FOUND,
       "no style.md found",
-      `Run \`editnce style init\` in your project, or write one at ${globalStylePath()}`,
+      `Run \`donova style init\` in your project, or write one at ${globalStylePath()}`,
     );
   }
   return { path: p, content: await readFile(p, "utf8") };

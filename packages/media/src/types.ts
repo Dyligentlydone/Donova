@@ -1,4 +1,4 @@
-/** Word-level transcript schema written by `editnce transcribe` (17 §3.2). */
+/** Word-level transcript schema written by `donova transcribe` (17 §3.2). */
 export interface TranscriptWord {
   /** Display word (may include punctuation). */
   w: string;

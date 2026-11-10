@@ -17,7 +17,7 @@ export function withFileLock(lockPath, fs, task) {
       if (leftover || Date.now() - started > 10000)
         throw Object.assign(
           new Error(
-            `Settings are locked by another editnce process. If none is running, delete ${lockPath}`,
+            `Settings are locked by another donova process. If none is running, delete ${lockPath}`,
           ),
           { code: "HF_SETTINGS_LOCKED" },
         );

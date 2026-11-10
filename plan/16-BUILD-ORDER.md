@@ -26,19 +26,19 @@ into the app.
 ### MV1 — Agent tool layer
 - [ ] **MV1.1 `doctor`** — 17 §4.2. Done when: every check implemented with fix hints; `--json` schema test; exit 1 on any fail.
 - [ ] **MV1.2 `transcribe` (own whisper install + model download)** — 17 §4.3, 10 §2. Done when: model downloads with sha256 verify + resume; `transcript.json` matches schema; WER/timing criteria (10 §9); cache hit on rerun; `E_WHISPER_MISSING` hint per OS. Never reads `~/.cache/hyperframes`.
-- [ ] **MV1.3 `cuts` (`@editnce/media`, pure core)** — 17 §4.4. Done when: unit tests (gap collapse, fillers, keep/drop, no truncated words, monotonic remap, idempotent); `sourceToComp`/`compToSource` exported.
+- [ ] **MV1.3 `cuts` (`@donova/media`, pure core)** — 17 §4.4. Done when: unit tests (gap collapse, fillers, keep/drop, no truncated words, monotonic remap, idempotent); `sourceToComp`/`compToSource` exported.
 - [ ] **MV1.4 `scaffold footage`** — 17 §4.5. Done when: generated `index.html` passes `check` with 0 errors for 9:16, 16:9, 1:1; no grade/zoom/cards/SFX in output.
 - [ ] **MV1.5 `probe`, `timeline`, `snapshot --contact-sheet`, `render --draft/--range`, `catalog`, worker auto-sizing** — 17 §4.6. Done when: each has `--json`; contact sheet labeled with timecodes; draft renders at half size.
 - [ ] **MV1.6 `init --footage`** — 17 §1 layout + 6.3 AGENTS/CLAUDE.md. Done when: scaffolds the layout, copies media into `assets/raw/`, writes agent instructions pointing to skills + style file.
 
 ### MV2 — Style file
-- [ ] **MV2.1 `style init|show|path` + resolution (project → global via `editnce.json`)** — 17 §5.1–5.2. Done when: unit tests for resolution order; template matches §5.2.
+- [ ] **MV2.1 `style init|show|path` + resolution (project → global via `donova.json`)** — 17 §5.1–5.2. Done when: unit tests for resolution order; template matches §5.2.
 - [ ] **MV2.2 SDK `style()` / `updateStyle()`** — 17 §5.3. Done when: update appends a decisions row, never deletes user lines, marks superseded entries.
 
 ### MV3 — Skills
-- [ ] **MV3.1 Router skill update (`editnce`)** — 17 §6.1.
-- [ ] **MV3.2 `editnce-footage` + all references** — 17 §6.2. Done when: every listed reference exists; code-block extraction test lints/renders every `html composition` block.
-- [ ] **MV3.3 `editnce-cli`, `editnce-registry`, `editnce-motion`** — 17 §6.1.
+- [ ] **MV3.1 Router skill update (`donova`)** — 17 §6.1.
+- [ ] **MV3.2 `donova-footage` + all references** — 17 §6.2. Done when: every listed reference exists; code-block extraction test lints/renders every `html composition` block.
+- [ ] **MV3.3 `donova-cli`, `donova-registry`, `donova-motion`** — 17 §6.1.
 - [ ] **MV3.4 `skills update/list`** — 09 §3, 17 §6.3. Done when: installs into all agent dirs; modified skill not overwritten without `--force`.
 
 ### MV4 — Blocks + SFX
@@ -48,12 +48,12 @@ into the app.
 - [ ] **MV4.4 SFX library (synth script + CC0 only) + `add sfx/*`** — 17 §7.3. Done when: 15 sounds with `sfx.json` + `LICENSES.md`; no Pixabay files anywhere in the repo; install prints wiring snippet.
 
 ### MV5 — SDK + MCP
-- [ ] **MV5.1 `@editnce/sdk`** — 17 §8.1. Done when: CLI commands call the SDK (no duplicated logic); unit tests per op; writes return lint summaries.
-- [ ] **MV5.2 `editnce mcp`** — 17 §8.2. Done when: MCP inspector lists tools; snapshot tool returns images; Claude Code setup documented and manually verified.
+- [ ] **MV5.1 `@donova/sdk`** — 17 §8.1. Done when: CLI commands call the SDK (no duplicated logic); unit tests per op; writes return lint summaries.
+- [ ] **MV5.2 `donova mcp`** — 17 §8.2. Done when: MCP inspector lists tools; snapshot tool returns images; Claude Code setup documented and manually verified.
 - [ ] **MV5.3 "Copy prompt for your agent" in Studio** — 17 §8.3.
 
 ### MV6 — Studio vibe-edit chat
-- [ ] **MV6.1 `@editnce/agent` loop + Anthropic provider + tools on SDK** — 17 §9.1–9.3, 09 §4. Done when: fake-provider scripted test passes.
+- [ ] **MV6.1 `@donova/agent` loop + Anthropic provider + tools on SDK** — 17 §9.1–9.3, 09 §4. Done when: fake-provider scripted test passes.
 - [ ] **MV6.2 studio-server agent endpoints (turn, SSE stream, abort) + history snapshots/undo turn** — 17 §9.1, §9.4. Done when: undo restores byte-for-byte; path-escape test rejects.
 - [ ] **MV6.3 Chat panel UI + Style panel + Assets panel (SFX play/drag)** — 17 §9.5, §5.4, §7.3. Done when: preview updates < 1 s after agent writes, keeping playhead.
 - [ ] **MV6.4 Real-provider smoke test** — 17 §9.6 (env-gated). Done when: §0 scenario + style write-back pass.
@@ -81,7 +81,7 @@ into the app.
 - [ ] **T0.1 Monorepo skeleton** — spec 00 §4–5. pnpm workspace, turbo, tsconfig.base (strict), Biome, vitest workspace config, empty packages with `package.json`/`src/index.ts`/`tsup.config.ts`, root scripts (`build`, `test`, `lint`, `typecheck`, `test:golden`).
   Done when: `pnpm install && pnpm build && pnpm test && pnpm lint` succeed.
 - [ ] **T0.2 Names module** — AGENTS.md "Naming". `packages/contract/src/names.ts` exports every name constant.
-  Done when: grep shows no hard-coded `__fc`, `editnce`, `EDITNCE_` strings outside names.ts (except docs/tests).
+  Done when: grep shows no hard-coded `__fc`, `donova`, `DONOVA_` strings outside names.ts (except docs/tests).
 - [ ] **T0.3 CI** — spec 15 §6 `ci.yml` (build, lint, typecheck, unit). Done when: green on a PR.
 - [ ] **T0.4 Render Docker image (dev)** — `apps/render-worker/Dockerfile` with Node 22, ffmpeg 7, pinned chrome-headless-shell, fonts. Done when: `docker run … ffmpeg -version && chrome-headless-shell --version`.
 - [ ] **T0.5 Fixture media generator** — spec 15 §2 (barcode video, beep audio, VFR, rotated, 29.97, HEVC10). Done when: script generates all and a decoder test reads barcode frame numbers back.
@@ -94,7 +94,7 @@ into the app.
 - [ ] **T1.4 Minimal runtime v0** — 02 §2, §4 (only: root lookup, GSAP adapter, `renderSeek`, `renderReady`). Done when: browser test seeks a GSAP fixture out of order and pixel hash per frame is stable.
 - [ ] **T1.5 Capture session (both modes)** — 03 §3. Done when: captures 150 frames of fixture `gsap-basic` in each mode.
 - [ ] **T1.6 Streaming encoder** — 03 §6.1–6.2. Done when: 150 JPEG frames → valid MP4 (ffprobe: 150 frames, 5.0 s, yuv420p, faststart).
-- [ ] **T1.7 `render()` v0 + CLI `render` v0** — 04 §1 (subset), 06. Done when: `editnce render fixtures/engine/gsap-basic/project -o out.mp4` works; Docker determinism test passes (spec 15 §4).
+- [ ] **T1.7 `render()` v0 + CLI `render` v0** — 04 §1 (subset), 06. Done when: `donova render fixtures/engine/gsap-basic/project -o out.mp4` works; Docker determinism test passes (spec 15 §4).
 
 ## M2 — Contract + runtime
 
@@ -107,7 +107,7 @@ into the app.
 - [ ] **T2.7 Runtime: visibility & nested clocks** — 02 §4. Done when: boundary fixtures (start/end exact frames, nested with playback-start & rate) match goldens.
 - [ ] **T2.8 Variables & bindings** — 01 §7, 02 §2. Done when: CLI `--var` override, host values, defaults precedence test; `data-bind-*` fixture passes.
 - [ ] **T2.9 Adapters: waapi-css, lottie, animejs, three, custom** — 02 §5. Done when: each adapter fixture passes the out-of-order seek hash test.
-- [ ] **T2.9b Declarative motion (`data-ec-motion`)** — 01 §6b, 02 §5 `motion` adapter (schema, ease mapping incl. `linear()` for back/elastic/bounce, individual transform props, text splitting, stagger). Done when: motion fixtures pass the out-of-order seek hash test; a fixture combining GSAP `transform` + motion `translate` on one element renders both composed correctly.
+- [ ] **T2.9b Declarative motion (`data-do-motion`)** — 01 §6b, 02 §5 `motion` adapter (schema, ease mapping incl. `linear()` for back/elastic/bounce, individual transform props, text splitting, stagger). Done when: motion fixtures pass the out-of-order seek hash test; a fixture combining GSAP `transform` + motion `translate` on one element renders both composed correctly.
 - [ ] **T2.10 Golden harness** — 15 §3. Done when: `pnpm test:golden` runs all contract + adapter fixtures in Docker with PSNR/SSIM report.
 
 ## M3 — Media
@@ -128,7 +128,7 @@ into the app.
 
 - [ ] **T4.1 Runtime preview clock + media sync + Web Audio mix** — 02 §6.1, §7. Done when: Playwright plays fixture 3 s; video drift < 0.15 s; audio graph applies volume/fades.
 - [ ] **T4.2 Runtime bridge + pick mode + diagnostics** — 02 §8–10. Done when: bridge test (play/pause/seek/state/ready/pick) passes.
-- [ ] **T4.3 `<ec-player>`** — 05 all. Done when: 05 §6 criteria pass.
+- [ ] **T4.3 `<do-player>`** — 05 all. Done when: 05 §6 criteria pass.
 - [ ] **T4.4 studio-server minimal (serve project + runtime + live reload)** — 08 §11 (`/p/*`, `/__fc/*`, WS file-changed). Done when: editing a file reloads an open player within 300 ms.
 - [ ] **T4.5 CLI `preview` (+ `--background/--status/--stop`)** — 06 §1. Done when: 06 §5 preview criterion passes. (Studio UI can be a placeholder page with the player until M10.)
 - [ ] **T4.6 Lint engine + structure/contract/script/media rules** — 07 §1–2. Done when: fixtures for those categories pass; `--fix` works for fixable rules.
@@ -179,11 +179,11 @@ into the app.
 - [ ] **T8.2 Workflow skills** — 09 §2 items 6–13.
 - [ ] **T8.3 `skills update/list` + plugin manifests** — 09 §3. Done when: 09 §5 install criterion.
   > MV note: → MV3.4
-- [ ] **T8.4 SDK** (`@editnce/sdk`): open project, list/patch elements, timing ops, run lint/check/snapshot/render — shared by agent + studio-server. Done when: unit tests for each op with minimal-diff assertions.
+- [ ] **T8.4 SDK** (`@donova/sdk`): open project, list/patch elements, timing ops, run lint/check/snapshot/render — shared by agent + studio-server. Done when: unit tests for each op with minimal-diff assertions.
   > MV note: → superseded by MV5.1
 - [ ] **T8.5 Agent core: provider interface (Anthropic first), tools, loop, guardrails, context mgmt** — 09 §4. Done when: fake-provider scripted test; real-provider smoke test behind env flag.
   > MV note: → MV6.1
-- [ ] **T8.6 `editnce agent` CLI** — 06 §1. Done when: runs a brief end-to-end on a fixture with the real provider (manual verification recorded).
+- [ ] **T8.6 `donova agent` CLI** — 06 §1. Done when: runs a brief end-to-end on a fixture with the real provider (manual verification recorded).
 - [ ] **T8.7 Agent eval harness** — 09 §4.5. Done when: nightly job produces a score report.
   > MV note: → MV10.1
 
@@ -200,7 +200,7 @@ into the app.
 - [ ] **T10.1 studio-server full API** — 08 §11 (files, mutations with minimal-diff patching, timing ops, gsap mutations, media endpoints, history, render queue SSE, registry, fonts, jobs, WS). Done when: API tests per route incl. path traversal and CSRF tests.
 - [ ] **T10.2 Studio shell** — 08 §2–3 (dockview layout, stores, routing, theme). Done when: opens project, panels persist layout.
 - [ ] **T10.3 Canvas + overlay selection chrome** — 08 §4 (hover, select, multi-select, measure overlay geometry, snapping guides). Done when: overlay boxes match element rects ±1 px in Playwright across scales.
-- [ ] **T10.4 Direct manipulation commits (move/resize/rotate/nudge/crop; static mode + keyframe mode writing `data-ec-motion`; never touch scripts)** — 08 §4. Done when: 08 §12 drag, preset, and "no script modified" criteria.
+- [ ] **T10.4 Direct manipulation commits (move/resize/rotate/nudge/crop; static mode + keyframe mode writing `data-do-motion`; never touch scripts)** — 08 §4. Done when: 08 §12 drag, preset, and "no script modified" criteria.
 - [ ] **T10.5 Inline text editing** — 08 §4. Done when: edit text node only diff test.
 - [ ] **T10.6 Inspector (all sections) + font picker + ease picker + animation presets** — 08 §5.
 - [ ] **T10.7 Timeline (tracks, thumbnails, waveforms, move/trim/split/ripple, audio lanes, snapping, keyboard)** — 08 §6. Done when: 08 §12 timeline criterion; 500-clip perf budget.
@@ -224,7 +224,7 @@ into the app.
 - [ ] **T11.6 Publish + share pages + OG tags** — 12 §5. CLI `publish`.
 - [ ] **T11.7 AI proxy + metering + rate limits** — 12 §6.
 - [ ] **T11.8 Billing (Stripe) + credits ledger + usage reporting + dashboard** — 12 §7. CLI `usage`.
-- [ ] **T11.9 Public API + OpenAPI + `@editnce/cloud` SDK** — 12 §8.
+- [ ] **T11.9 Public API + OpenAPI + `@donova/cloud` SDK** — 12 §8.
 - [ ] **T11.10 Production deploy** (IaC: Terraform/Pulumi for DB, Redis, R2, workers autoscaling, web), observability (OpenTelemetry traces, structured logs, Sentry), backups. Done when: 12 §10 criteria pass against staging.
 
 ## M12 — Desktop
@@ -239,7 +239,7 @@ into the app.
 ## M13 — Differentiators
 
 - [ ] **T13.1 Transcript editing (EDL → split clips, word anchors, micro-fades)** — 14 §1.1.
-- [ ] **T13.2 Silence & filler removal (`editnce cut`, Studio button)** — 14 §1.2.
+- [ ] **T13.2 Silence & filler removal (`donova cut`, Studio button)** — 14 §1.2.
   > MV note: → MV1.3 (cuts) + skill guidance
 - [ ] **T13.3 Auto-reframe** — 14 §1.3.
 - [ ] **T13.4 Multicam sync** — 14 §1.4.

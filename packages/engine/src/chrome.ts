@@ -2,7 +2,7 @@ import { createHash } from "node:crypto";
 import { existsSync, mkdirSync } from "node:fs";
 import { homedir } from "node:os";
 import { join } from "node:path";
-import { CACHE_DIR, ENV_PREFIX, LEGACY } from "@editnce/contract";
+import { CACHE_DIR, ENV_PREFIX, LEGACY } from "@donova/contract";
 
 /** Deterministic flags (03 §2). Order matters to nothing, but keep stable. */
 export function deterministicFlags(): string[] {
@@ -60,17 +60,22 @@ export interface ChromeInfo {
 let cachedChrome: ChromeInfo | null = null;
 
 function cacheDir(): string {
-  // prefer the framecraft-era cache if it already holds a downloaded browser
-  // (saves a re-download); new installs land under ~/.editnce
-  const legacy = join(homedir(), LEGACY.cacheDir, "chrome");
-  if (existsSync(legacy)) return legacy;
+  // prefer an older-branding cache if it already holds a downloaded browser
+  // (saves a re-download); new installs land under ~/.donova
+  for (const dir of LEGACY.cacheDirs) {
+    const legacy = join(homedir(), dir, "chrome");
+    if (existsSync(legacy)) return legacy;
+  }
   const d = join(homedir(), CACHE_DIR, "chrome");
   mkdirSync(d, { recursive: true });
   return d;
 }
 
 function envOrLegacy(suffix: string): string | undefined {
-  return process.env[`${ENV_PREFIX}${suffix}`] ?? process.env[`${LEGACY.envPrefix}${suffix}`];
+  return (
+    process.env[`${ENV_PREFIX}${suffix}`] ??
+    LEGACY.envPrefixes.map((p) => process.env[`${p}${suffix}`]).find(Boolean)
+  );
 }
 
 /** Resolve a Chrome executable: env → system Chrome → @puppeteer/browsers install. */

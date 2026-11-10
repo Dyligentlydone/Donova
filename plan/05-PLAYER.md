@@ -1,13 +1,13 @@
-# 05 — Player (`@editnce/player`)
+# 05 — Player (`@donova/player`)
 
 An embeddable web component that previews a composition in real time. Used by Studio,
 share pages, the catalog site, and docs. Ships as ESM + a global IIFE
-(`editnce-player.global.js`).
+(`donova-player.global.js`).
 
 ## 1. Usage
 
 ```html
-<script src="https://cdn.editnce.dev/player@1/editnce-player.global.js"></script>
+<script src="https://cdn.donova.dev/player@1/donova-player.global.js"></script>
 <fc-player src="/projects/demo/index.html" controls autoplay muted loop
            poster="/projects/demo/poster.jpg" style="width:540px;aspect-ratio:9/16"></fc-player>
 ```

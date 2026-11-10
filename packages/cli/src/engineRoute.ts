@@ -7,20 +7,20 @@ import { dirname, join, resolve } from "node:path";
  * Studio (the hyperframes bundle we serve) can write composition features
  * that only the hyperframes runtime renders — color grades, motion blur,
  * audio groups/automation, FX chains. Our producer renders everything in
- * the Editnce contract (clips, media, speed, transforms, GSAP, fades,
+ * the Donova contract (clips, media, speed, transforms, GSAP, fades,
  * volume) byte-deterministically but does not implement those yet.
  *
- * Rather than let preview and render diverge silently, `editnce render` scans
+ * Rather than let preview and render diverge silently, `donova render` scans
  * the composition tree (root + data-composition-src children) and routes
  * to the hyperframes engine when any Studio-only feature is present. The
- * user can force either with --engine. `editnce check` reports the decision so
+ * user can force either with --engine. `donova check` reports the decision so
  * the choice is never a surprise.
  *
  * Each entry: the attribute (or tag) and the port backlog item in
  * plan/18-UPSTREAM-SYNC.md that would bring it home to our engine.
  */
 
-export type Engine = "editnce" | "hyperframes";
+export type Engine = "donova" | "hyperframes";
 
 export interface StudioOnlyFeature {
   /** attribute name or element tag that triggers routing */
@@ -77,13 +77,13 @@ export function decideEngine(projectDir: string, composition: string, forced?: E
     }
   }
   if (forced) return { engine: forced, reasons, forced: true };
-  return { engine: reasons.length ? "hyperframes" : "editnce", reasons, forced: false };
+  return { engine: reasons.length ? "hyperframes" : "donova", reasons, forced: false };
 }
 
 /** Human one-liner for check/render output. */
 export function describeDecision(d: EngineDecision): string {
-  if (d.engine === "editnce") {
-    return d.forced ? "render engine: editnce (forced)" : "render engine: editnce";
+  if (d.engine === "donova") {
+    return d.forced ? "render engine: donova (forced)" : "render engine: donova";
   }
   const why = d.reasons.length
     ? ` — Studio-only features: ${[...new Set(d.reasons.map((r) => r.label))].join(", ")}`
@@ -91,7 +91,7 @@ export function describeDecision(d: EngineDecision): string {
   return `render engine: hyperframes${d.forced ? " (forced)" : ""}${why}`;
 }
 
-/** Editnce project root marker, used by the hf render to pick a cwd. */
-export function hasEditnceJson(projectDir: string): boolean {
-  return existsSync(join(projectDir, "editnce.json")) || existsSync(join(projectDir, "framecraft.json"));
+/** Donova project root marker, used by the hf render to pick a cwd. */
+export function hasDonovaJson(projectDir: string): boolean {
+  return ["donova.json", "editnce.json", "framecraft.json"].some((f) => existsSync(join(projectDir, f)));
 }

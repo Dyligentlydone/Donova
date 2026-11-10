@@ -8,8 +8,8 @@ result lands in the ledger and the global cache like any other asset.
 
 The ffmpeg and local-model operations below run locally. Direct `heygen` recipes
 use the HeyGen CLI's own login and HeyGen/API billing; they do not inherit a
-Editnce subscription. Use those recipes only when that separate payer was
-selected. `editnce media-use resolve` uses the Editnce-selected credential.
+Donova subscription. Use those recipes only when that separate payer was
+selected. `donova media-use resolve` uses the Donova-selected credential.
 ffmpeg is assumed present (it backs the engine already).
 
 ## Cut / trim: keep a slice
@@ -55,9 +55,9 @@ sign-in alone, the rest through the `heygen` CLI. Showing the user a
 
 | Op                      | Local (free)                                       | HeyGen (quality)                                                                 |
 | ----------------------- | -------------------------------------------------- | -------------------------------------------------------------------------------- |
-| Background removal      | `editnce remove-background in.png` (u2net)     | `editnce media-use generate --type cutout --video in.mp4`; stills stay local |
+| Background removal      | `donova remove-background in.png` (u2net)     | `donova media-use generate --type cutout --video in.mp4`; stills stay local |
 | Upscale                 | `realesrgan-ncnn-vulkan -i in.png -o out.png -s 4` | n/a                                                                              |
-| Lipsync (dub)           | n/a                                                | `editnce media-use generate --type lipsync`                                  |
+| Lipsync (dub)           | n/a                                                | `donova media-use generate --type lipsync`                                  |
 | Translate               | n/a                                                | `heygen video-translate`                                                         |
 | Clone a voice           | n/a                                                | `heygen voice clone create`                                                      |
 | Text to video           | n/a                                                | `heygen video-agent create`                                                      |
@@ -86,7 +86,7 @@ node <SKILL_DIR>/scripts/dither.mjs \
   --palette '#0f380f,#306230,#8bac0f,#9bbc0f' \
   --point-size 3
 
-editnce media-use resolve \
+donova media-use resolve \
   --from source.atkinson.mp4 --type video --project .
 ```
 
@@ -120,13 +120,13 @@ engine directly.
 node <SKILL_DIR>/scripts/transcribe.mjs --input talk.mp4 --out talk.transcribe.json
 
 # the hyperframes CLI runs Parakeet on macOS, Linux and Windows once it is installed:
-editnce models install parakeet                 # once, ~640 MB, ask the user first
-editnce transcribe talk.mp4 --engine parakeet   # or --engine auto (default)
+donova models install parakeet                 # once, ~640 MB, ask the user first
+donova transcribe talk.mp4 --engine parakeet   # or --engine auto (default)
 ```
 
 VERIFIED on 24GB: accurate, ~3s (cached) for 8s audio. Parakeet covers 25
 European languages, English included. For other languages, or when parakeet-mlx is not
-installed, transcribe.mjs falls back to `editnce transcribe`, which uses the
+installed, transcribe.mjs falls back to `donova transcribe`, which uses the
 CLI's Parakeet when `models install parakeet` has run and whisper.cpp (99
 languages) otherwise. `--engine parakeet|whisper` forces one, except that a
 `--language` other than English runs whisper whenever it is installed, since
@@ -245,7 +245,7 @@ GENERATES. Two paths, best-for-the-machine picked automatically:
 ## Generate: video (`resolve --type video`, HeyGen avatar first)
 
 `resolve --type video "<intent>"` is the default path. It generates a
-script-driven HeyGen avatar video first using the Editnce-selected credential
+script-driven HeyGen avatar video first using the Donova-selected credential
 (the server decides eligibility and charges; explicit API keys use API billing), falling back to local generative LTX only when
 HeyGen is unavailable, uncredentialed, or `--local-only` is passed. The two
 are non-substitutable outputs (a real presenter vs. a generic generative
@@ -257,10 +257,10 @@ quality":
   `heygen` CLI — never the raw API — auto-picking a public avatar and a
   starfish voice (override with `--avatar-id`/`--voice-id`, threaded through
   as `ctx.avatarId`/`ctx.voiceId`). If the CLI reports `not_authenticated`,
-  the provider prints an Editnce sign-in recommendation to stderr and falls through to LTX instead of
+  the provider prints an Donova sign-in recommendation to stderr and falls through to LTX instead of
   hard-failing.
 - **Local fallback: LTX 2.3 on MLX** via `dgrauet/ltx-2-mlx`, the `videogen`
-  ladder bundled in the Editnce CLI. Generative clips
+  ladder bundled in the Donova CLI. Generative clips
   (t2v), spec-gated to RAM. Verified on 24GB: 512x320 x 33f with audio.
 
 Every generating `heygen` call from media-use — TTS, avatar video, and
@@ -274,7 +274,7 @@ For structured bodies `resolve --type video` doesn't expose yet (a specific
 `avatar_id`/`voice_id` combination beyond the ctx overrides, or a
 pre-recorded `audio_url` instead of a script), the raw `heygen video create`
 recipe below remains the escape hatch. This direct command uses the separate
-HeyGen CLI credential and HeyGen/API billing, not the Editnce subscription:
+HeyGen CLI credential and HeyGen/API billing, not the Donova subscription:
 
 ```bash
 # discover an avatar + a starfish voice, then create + wait

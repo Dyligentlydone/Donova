@@ -1,7 +1,7 @@
 {
-  "$id": "https://editnce.dev/schemas/motion.schema.json",
+  "$id": "https://donova.dev/schemas/motion.schema.json",
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "title": "Editnce declarative motion (data-fc-motion)",
+  "title": "Donova declarative motion (data-fc-motion)",
   "type": "object",
   "required": ["v", "anims"],
   "properties": {

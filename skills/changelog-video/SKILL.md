@@ -7,8 +7,8 @@ metadata:
 
 # Changelog → Branded Video
 
-Input: a changelog .md (themes + items, like the weekly Editnce digest).
-Output: a lint-clean, seam-gate-green Editnce project in
+Input: a changelog .md (themes + items, like the weekly Donova digest).
+Output: a lint-clean, seam-gate-green Donova project in
 `projects/active/weekly-changelog-<range>/`. Render only when asked.
 
 **Load first, non-negotiable:** `motion-doctrine` (+ `cut-the-curve`,
@@ -78,13 +78,13 @@ Save as `script-tokens.json` in the project.
 
 ```bash
 # spoken-layer text only; local Kokoro TTS, then word-align the produced audio
-editnce tts "$(cat ./vo-spoken.txt)" --out voiceover.wav
+donova tts "$(cat ./vo-spoken.txt)" --out voiceover.wav
 # word timestamps = ground truth of the SPOKEN audio:
-editnce transcribe voiceover.wav --out vo-words.json
+donova transcribe voiceover.wav --out vo-words.json
 ```
 
 `vo-words.json` must end up a `{"words": [{"word", "start", "end"}, …]}`-shaped
-file — `editnce transcribe` writes that shape directly. If you have HeyGen
+file — `donova transcribe` writes that shape directly. If you have HeyGen
 signed in, `hyperframes tts` offers hosted voices instead; the rest of the flow
 is unchanged. Then align spoken timestamps back to display tokens:
 
@@ -145,7 +145,7 @@ scaffold.
 
 ### 6 · Gates (all green before presenting)
 
-1. `editnce gate --caption-zone "x0=0;y0=.90;x1=1;y1=1;severity=error;seek=.02,.06,.10,.14,.18,.22,.26,.30,.34,.38,.42,.46,.50,.54,.58,.62,.66,.70,.74,.78,.82,.86,.90,.94,.98"` —
+1. `donova gate --caption-zone "x0=0;y0=.90;x1=1;y1=1;severity=error;seek=.02,.06,.10,.14,.18,.22,.26,.30,.34,.38,.42,.46,.50,.54,.58,.62,.66,.70,.74,.78,.82,.86,.90,.94,.98"` —
    0 errors (contrast: dim text ≥ .66 alpha; scene content stays above the
    caption rail).
 2. `seam-gate.mjs verify` — 0 fail.

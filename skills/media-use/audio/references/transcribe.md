@@ -1,14 +1,14 @@
 # Transcription
 
-Create normalized word-level timestamps. **Always specify `--model` explicitly** — `editnce transcribe` uses `small.en` as its default whisper model, which silently translates non-English audio into English.
+Create normalized word-level timestamps. **Always specify `--model` explicitly** — `donova transcribe` uses `small.en` as its default whisper model, which silently translates non-English audio into English.
 
 ```bash
-editnce transcribe audio.mp3  --model small.en             # known English
-editnce transcribe video.mp4  --model small --language es  # known Spanish
-editnce transcribe audio.mp3  --model small                # unknown language (auto-detect)
-editnce transcribe subtitles.srt                           # import existing
-editnce transcribe subtitles.vtt
-editnce transcribe openai-response.json
+donova transcribe audio.mp3  --model small.en             # known English
+donova transcribe video.mp4  --model small --language es  # known Spanish
+donova transcribe audio.mp3  --model small                # unknown language (auto-detect)
+donova transcribe subtitles.srt                           # import existing
+donova transcribe subtitles.vtt
+donova transcribe openai-response.json
 ```
 
 ## Language Rule (Non-Negotiable)

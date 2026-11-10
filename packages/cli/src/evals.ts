@@ -2,7 +2,7 @@ import { execFile } from "node:child_process";
 import { existsSync, statSync } from "node:fs";
 import { join, resolve } from "node:path";
 import { promisify } from "node:util";
-import { render } from "@editnce/producer";
+import { render } from "@donova/producer";
 import { checkProject } from "./check.js";
 import { probeCmd, timelineCmd } from "./inspect.js";
 import { snapshotTimes } from "./snapshot.js";
@@ -10,7 +10,7 @@ import { snapshotTimes } from "./snapshot.js";
 const _execFileP = promisify(execFile);
 
 /**
- * `editnce eval` — rule-scored checklist for a project (MV10). Each rule
+ * `donova eval` — rule-scored checklist for a project (MV10). Each rule
  * returns pass/fail with a note; score = weighted pass fraction. A project
  * passes at ≥0.7 (17 §evals). Used to grade both hand edits and agent turns.
  */
@@ -59,7 +59,7 @@ export async function evalProject(opts: {
       dir,
       "index.html",
       [0.1, duration / 2, Math.max(0.2, duration - 0.2)],
-      join(dir, ".editnce", "eval-snaps"),
+      join(dir, ".donova", "eval-snaps"),
     );
     const sizes = snaps.map((f) => statSync(f).size);
     const unique = new Set(sizes).size;

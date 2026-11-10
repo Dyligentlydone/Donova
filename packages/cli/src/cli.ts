@@ -1,9 +1,9 @@
 import { cpus } from "node:os";
 import { resolve } from "node:path";
 import { fileURLToPath } from "node:url";
-import { CLI_NAME, VERSION } from "@editnce/contract";
-import { render } from "@editnce/producer";
-import { startStudioServer } from "@editnce/studio-server";
+import { CLI_NAME, VERSION } from "@donova/contract";
+import { render } from "@donova/producer";
+import { startStudioServer } from "@donova/studio-server";
 import { defineCommand, runMain } from "citty";
 import { addBlock } from "./add.js";
 import { captionsCmd } from "./captions.js";
@@ -52,7 +52,7 @@ const renderCmd = defineCommand({
     engine: {
       type: "string",
       description:
-        "auto | editnce | hyperframes — auto routes to hyperframes when the comp uses Studio-only features (grade, motion blur, audio groups, FX)",
+        "auto | donova | hyperframes — auto routes to hyperframes when the comp uses Studio-only features (grade, motion blur, audio groups, FX)",
       default: "auto",
     },
     ...JSON_ARG,
@@ -60,14 +60,14 @@ const renderCmd = defineCommand({
   async run({ args }) {
     await guardJson(args.json, async () => {
       const { decideEngine, describeDecision } = await import("./engineRoute.js");
-      // "framecraft" accepted as a legacy alias for the editnce engine
-      const engineArg = args.engine === "framecraft" ? "editnce" : args.engine;
+      // older brand names accepted as aliases for the donova engine
+      const engineArg = args.engine === "framecraft" || args.engine === "editnce" ? "donova" : args.engine;
       const forced =
-        engineArg === "editnce" || engineArg === "hyperframes"
-          ? (engineArg as "editnce" | "hyperframes")
+        engineArg === "donova" || engineArg === "hyperframes"
+          ? (engineArg as "donova" | "hyperframes")
           : undefined;
       if (args.engine !== "auto" && !forced) {
-        throw Object.assign(new Error(`bad --engine "${args.engine}" (auto | editnce | hyperframes)`), {
+        throw Object.assign(new Error(`bad --engine "${args.engine}" (auto | donova | hyperframes)`), {
           code: ERR.INVALID_PROJECT,
         });
       }
@@ -128,13 +128,13 @@ const renderCmd = defineCommand({
         console.log(
           `${res.out}  ${res.width}x${res.height} @${res.fps}fps  ${res.frames} frames  ${res.duration.toFixed(2)}s${res.beginFrame ? "  [beginFrame]" : "  [screenshot]"}`,
         );
-      } else jsonOut({ ...res, engine: "editnce" });
+      } else jsonOut({ ...res, engine: "donova" });
     });
   },
 });
 
 const initCmd = defineCommand({
-  meta: { name: "init", description: "Scaffold a new Editnce project" },
+  meta: { name: "init", description: "Scaffold a new Donova project" },
   args: {
     dir: { type: "positional", description: "project directory", required: false, default: "." },
     name: { type: "string", description: "project name" },
@@ -343,7 +343,7 @@ const modelsCmd = defineCommand({
         sherpaRuntimeLoadError,
         sherpaUnsupportedReason,
         whisperModelDir,
-      } = await import("@editnce/media");
+      } = await import("@donova/media");
       const { existsSync } = await import("node:fs");
       const { join } = await import("node:path");
       if (args.action === "install") {
@@ -369,7 +369,7 @@ const modelsCmd = defineCommand({
         }
         throw new CliError(
           ERR.INVALID_ARGS,
-          `editnce models install <parakeet|${Object.keys(WHISPER_MODELS).join("|")}>`,
+          `donova models install <parakeet|${Object.keys(WHISPER_MODELS).join("|")}>`,
         );
       }
       const modelDir = whisperModelDir();
@@ -391,7 +391,7 @@ const modelsCmd = defineCommand({
         for (const w of res.whisper)
           console.log(`${w.installed ? "✓" : " "} whisper ${w.name} (${w.sizeMB} MB)`);
         console.log(
-          `${res.parakeet.model && res.parakeet.runtime === "ok" ? "✓" : " "} parakeet-tdt-0.6b-v3 ${res.parakeet.model ? "(model installed)" : "(not installed — editnce models install parakeet)"} ${res.parakeet.runtime !== "ok" ? `[runtime ${res.parakeet.runtime}]` : ""}`,
+          `${res.parakeet.model && res.parakeet.runtime === "ok" ? "✓" : " "} parakeet-tdt-0.6b-v3 ${res.parakeet.model ? "(model installed)" : "(not installed — donova models install parakeet)"} ${res.parakeet.runtime !== "ok" ? `[runtime ${res.parakeet.runtime}]` : ""}`,
         );
       }
     });
@@ -575,7 +575,7 @@ const styleCliCmd = defineCommand({
   args: {
     action: { type: "positional", description: "init | show | path", required: true },
     dir: { type: "string", default: "." },
-    global: { type: "boolean", description: "use ~/.config/editnce/style.md", default: false },
+    global: { type: "boolean", description: "use ~/.config/donova/style.md", default: false },
     ...JSON_ARG,
   },
   async run({ args }) {
@@ -707,8 +707,8 @@ const copyPromptCliCmd = defineCommand({
 /**
  * Passthrough delegates to the bundled `hyperframes` CLI (see hf.ts). All
  * arguments are forwarded verbatim via citty's rawArgs, so the full upstream
- * flag surface works — e.g. `editnce gate --verbose`, `editnce beats
- * assets/track.mp3`, `editnce capture https://example.com --out shots`.
+ * flag surface works — e.g. `donova gate --verbose`, `donova beats
+ * assets/track.mp3`, `donova capture https://example.com --out shots`.
  * Commands operate on the cwd project unless a dir positional/--dir is passed.
  */
 function hfDelegate(name: string, hfCmd: string, description: string) {
@@ -723,7 +723,7 @@ function hfDelegate(name: string, hfCmd: string, description: string) {
 }
 
 const main = defineCommand({
-  meta: { name: CLI_NAME, version: VERSION, description: "Editnce — HTML to video" },
+  meta: { name: CLI_NAME, version: VERSION, description: "Donova — HTML to video" },
   subCommands: {
     init: initCmd,
     check: checkCmd,

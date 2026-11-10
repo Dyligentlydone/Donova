@@ -19,7 +19,7 @@ compiles to plain compositions), so they stay renderable, editable, and agent-fr
   fade-in/out 0.01 on segment clips) to avoid clicks.
 
 ### 1.2 Silence & filler removal
-`editnce cut --silence --fillers --padding 0.08 --min-gap 0.25` / Studio button:
+`donova cut --silence --fillers --padding 0.08 --min-gap 0.25` / Studio button:
 1. Silence ranges (10 §6) ∪ filler words (10 §2) → removal ranges (shrink by padding).
 2. Merge ranges closer than min-gap; never cut inside a word.
 3. Preview diff in Studio (struck-through words) → Apply → transcript cut mechanism (§1.1).
@@ -50,7 +50,7 @@ From transcript keywords/noun phrases (LLM extraction) → stock search (10 §7)
 
 Turns "edit it in my style" into data.
 
-### 2.1 Analyzer (`editnce analyze-style refs/*.mp4 --out style.json`)
+### 2.1 Analyzer (`donova analyze-style refs/*.mp4 --out style.json`)
 Per reference video:
 - **Cuts / pacing**: scene detection → shot lengths → median, p10, p90, cuts per minute; pacing curve over time (hook speed vs body).
 - **Captions**: sample 2 fps, OCR (tesseract.js or ONNX PaddleOCR) on the lower 60% → caption presence %, position (normalized y), words per card, size relative to frame height, casing (UPPER ratio), color clusters (text + stroke/box), highlight behaviour (color changes within a card across frames).
@@ -87,7 +87,7 @@ Acceptance: analyzer on 3 fixture refs with known caption style returns correct 
 ## 3. Incremental re-rendering
 - Partition the timeline into **segments** at scene boundaries (root-level clips/sub-comps that don't overlap) — or fixed 2 s windows if none.
 - Segment hash = sha256(compiled HTML of everything visible in the window + asset hashes + render options + engine version).
-- Cache encoded segment chunks (closed GOP) in `.editnce-cache/segments/<hash>.mp4`.
+- Cache encoded segment chunks (closed GOP) in `.donova-cache/segments/<hash>.mp4`.
 - Re-render: only segments whose hash changed are captured; concat with cached chunks; audio always re-mixed (cheap).
 Acceptance: change text in scene 3 of a 5-scene 60 s project → re-render captures only scene 3 frames (log) and output equals a full re-render (frame hash).
 
@@ -96,7 +96,7 @@ Acceptance: change text in scene 3 of a 5-scene 60 s project → re-render captu
 - Experimental (v2): in-browser capture using Chrome's HTML-in-canvas / `drawElementImage` API when available (feature-detect), frames → WebCodecs `VideoEncoder` (H.264) → mux with `mediabunny` → MP4 download. Fallback to server. Gate behind a flag; verify parity PSNR ≥ 35 dB against producer.
 
 ## 5. Simplicity & UX wins
-- 5 core CLI verbs for humans (`init`, `preview`, `check`, `render`, `add`); everything else under `editnce tools …` (aliases kept).
+- 5 core CLI verbs for humans (`init`, `preview`, `check`, `render`, `add`); everything else under `donova tools …` (aliases kept).
 - Plain-language errors everywhere with a "Fix it for me" button in Studio that sends the finding to the agent.
 - Templates are real, beautiful, and tested (CI renders every template).
 

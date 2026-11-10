@@ -1,4 +1,4 @@
-# 08 — Studio (`@editnce/studio`) + Studio Server (`@editnce/studio-server`)
+# 08 — Studio (`@donova/studio`) + Studio Server (`@donova/studio-server`)
 
 Studio is the visual editor. **The HTML files on disk are the single source of truth.**
 Every edit is a minimal text patch to those files, made by studio-server. Studio never
@@ -34,7 +34,7 @@ diagnostics inline from `/api/lint`; format on save with prettier optional).
 
 ## 3. Frontend architecture
 - React 19 + Vite + Tailwind v4 + zustand stores:
-  - `projectStore` (files list, active composition, editnce.json),
+  - `projectStore` (files list, active composition, donova.json),
   - `timelineStore` (clip manifest from runtime, zoom, scroll, selection),
   - `playerStore` (time, playing, rate, muted),
   - `selectionStore` (selected element ids, hovered),
@@ -105,7 +105,7 @@ element, playhead time, current composition. Model/provider picker; BYO API key 
 - Conflict: if file on disk changed since Studio's last read (mtime/hash) and user edits → banner "File changed outside Studio — Reload / Keep mine".
 
 ## 9. Undo/redo
-Server-side history per project (`.editnce/history/`): each mutation stores
+Server-side history per project (`.donova/history/`): each mutation stores
 `{ id, groupId, file, before (full text or diff), after, label, ts }`. Undo applies the
 inverse for the whole group. Persistent across restarts; cap 500 entries (prune oldest).
 Gesture-level grouping: a drag = one entry; an agent turn = one group.
@@ -121,7 +121,7 @@ Panel lists jobs with progress (SSE), cancel, open file, reveal in Finder (deskt
 | `GET /` , `/assets/*` | Studio SPA |
 | `GET /p/*` | Project files served with runtime injection for `.html` (preview mode); Range support |
 | `GET /__fc/runtime.js`, `/__fc/vendor/*` | runtime + vendored libs |
-| `GET /api/project` | editnce.json, meta, compositions list, file tree |
+| `GET /api/project` | donova.json, meta, compositions list, file tree |
 | `GET /api/files?path=` / `PUT /api/files` `{path, content, baseHash}` | raw read/write (409 on hash mismatch) |
 | `POST /api/files/create|rename|delete` | file ops (inside project root only; path traversal guarded) |
 | `POST /api/upload` | multipart upload into `assets/` (limit 4 GB, stream to disk) |

@@ -1,5 +1,5 @@
 {
-  "name": "@editnce/media",
+  "name": "@donova/media",
   "version": "0.1.0",
   "private": true,
   "type": "module",
@@ -24,8 +24,8 @@
     "vitest": "2.1.9"
   },
   "dependencies": {
-    "@editnce/contract": "workspace:*",
-    "@editnce/engine": "workspace:*",
+    "@donova/contract": "workspace:*",
+    "@donova/engine": "workspace:*",
     "onnxruntime-node": "1.20.1",
     "sharp": "0.33.5",
     "sherpa-onnx-node": "1.13.8"

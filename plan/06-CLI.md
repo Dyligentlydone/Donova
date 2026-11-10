@@ -1,13 +1,13 @@
-# 06 — CLI (`@editnce/cli`, binary `editnce`, alias `ec`)
+# 06 — CLI (`@donova/cli`, binary `donova`, alias `do`)
 
 Built with `citty`; each command is a lazily imported module (`src/commands/<name>.ts`) so
-`editnce --version` starts in < 100 ms. Every command supports `--json` (machine
+`donova --version` starts in < 100 ms. Every command supports `--json` (machine
 output: a single JSON object on stdout; logs go to stderr) and `--help` with examples.
 Exit codes: 0 success, 1 runtime error, 2 usage error, 3 lint/check failure.
 
 Global flags: `--cwd <dir>`, `--json`, `--verbose`, `--quiet`, `--no-color`.
-Env: `EDITNCE_NO_TELEMETRY=1`, `DO_NOT_TRACK=1` (both disable telemetry),
-`EDITNCE_FFMPEG_PATH`, `EDITNCE_CHROME_PATH`, `EDITNCE_API_URL`, `EDITNCE_CACHE_DIR`.
+Env: `DONOVA_NO_TELEMETRY=1`, `DO_NOT_TRACK=1` (both disable telemetry),
+`DONOVA_FFMPEG_PATH`, `DONOVA_CHROME_PATH`, `DONOVA_API_URL`, `DONOVA_CACHE_DIR`.
 Load `.env` from cwd (never overriding existing env).
 
 ## 1. Command reference
@@ -15,7 +15,7 @@ Load `.env` from cwd (never overriding existing env).
 ### Project
 | Command | Flags | Behaviour |
 |---|---|---|
-| `init [name]` | `--template <id>` (default `blank`), `--aspect 16:9|9:16|1:1|4:5`, `--width --height --fps --duration`, `--tailwind`, `--no-install`, `--no-skills`, `--git` | Create project from `registry/examples/<template>`; write `editnce.json`, `meta.json` (uuid), `AGENTS.md` + `CLAUDE.md` (identical, from `cli/templates/_shared/`), `package.json` with scripts (`dev`, `check`, `render`) pinning exact CLI version; vendor gsap; install core skills unless `--no-skills`. Interactive prompts (`@clack/prompts`) when TTY and flags missing |
+| `init [name]` | `--template <id>` (default `blank`), `--aspect 16:9|9:16|1:1|4:5`, `--width --height --fps --duration`, `--tailwind`, `--no-install`, `--no-skills`, `--git` | Create project from `registry/examples/<template>`; write `donova.json`, `meta.json` (uuid), `AGENTS.md` + `CLAUDE.md` (identical, from `cli/templates/_shared/`), `package.json` with scripts (`dev`, `check`, `render`) pinning exact CLI version; vendor gsap; install core skills unless `--no-skills`. Interactive prompts (`@clack/prompts`) when TTY and flags missing |
 | `info` | | Print project summary: entry, dimensions, fps, duration (+source), clip count, media list with probe info, compositions tree |
 | `compositions` | | List compositions (id, file, size, duration, variables) |
 | `timeline` | `--composition`, `--format table|json` | Print compiled timeline (clips with abs start/end, tracks) |
@@ -27,7 +27,7 @@ Load `.env` from cwd (never overriding existing env).
 ### Author loop
 | Command | Flags | Behaviour |
 |---|---|---|
-| `preview` | `--port` (default 3017), `--open/--no-open`, `--background`, `--status`, `--stop`, `--host 127.0.0.1` | Start studio-server serving Studio UI + project; live reload. `--background` daemonizes (pidfile `~/.cache/editnce/preview/<hash>.json`), returns URL; `--status` / `--stop` manage it (agent-safe) |
+| `preview` | `--port` (default 3017), `--open/--no-open`, `--background`, `--status`, `--stop`, `--host 127.0.0.1` | Start studio-server serving Studio UI + project; live reload. `--background` daemonizes (pidfile `~/.cache/donova/preview/<hash>.json`), returns URL; `--status` / `--stop` manage it (agent-safe) |
 | `lint` | `--json`, `--fix`, `--rule <id>`, `--verbose` (include info) | Static rules (07-LINT) |
 | `check` | `--json`, `--samples N`, `--strict` | lint + browser gate (runtime errors, layout overflow, contrast, motion sanity, media load). Exit 3 on errors |
 | `snapshot` | `--at 0,1.5,3` or `--every 1`, `--frames 0,45`, `--out dir`, `--grid` (contact sheet), `--scale 0.5`, `--composition` | Render PNG stills at times via the same capture path as render. Prints file paths (agent uses them to "look") |
@@ -91,11 +91,11 @@ Each: renders and passes `check` in CI.
 
 ## 4. Scaffolded AGENTS.md / CLAUDE.md content (in every project)
 Short: what the project is, "use skills first" (list core skills), commands
-(`npm run dev`, `npx editnce preview --background`, `check`, `render`), key contract
+(`npm run dev`, `npx donova preview --background`, `check`, `render`), key contract
 rules (6 bullets mirroring 01 §3–4 + determinism), "always run check after editing".
 
 ## 5. Acceptance criteria
 - Command matrix test: each command `--help` exits 0; each runs against fixtures with `--json` and output validates against a JSON schema per command (`cli/schemas/<cmd>.json`).
 - `init` → `check` → `render` succeeds for every template.
 - `preview --background` → `--status` reports running → `--stop` kills; no orphan processes.
-- Cold start `editnce --version` < 150 ms.
+- Cold start `donova --version` < 150 ms.

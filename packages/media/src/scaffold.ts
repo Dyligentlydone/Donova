@@ -36,7 +36,7 @@ export function scaffoldFootage(opts: {
 <html>
 <head>
 <meta charset="utf-8" />
-<title>editnce composition</title>
+<title>donova composition</title>
 <script>window.__timelines = window.__timelines || {};</script>
 <style>
   html, body { margin: 0; padding: 0; background: #000; overflow: hidden; }

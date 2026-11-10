@@ -1,6 +1,6 @@
-import { tts } from "@editnce/media";
+import { tts } from "@donova/media";
 
-/** `editnce tts` — text → audio file (MV9). */
+/** `donova tts` — text → audio file (MV9). */
 export async function ttsCmd(opts: {
   text: string;
   out: string;

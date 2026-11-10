@@ -6,7 +6,7 @@ import { fileURLToPath } from "node:url";
 import { CliError, ERR } from "./errors.js";
 
 /**
- * `editnce skills update [dir]` — install Editnce's skill set into the
+ * `donova skills update [dir]` — install Donova's skill set into the
  * agent skill directories of a project (17 §6.3).
  *
  * Writes <dir>/.claude/skills/<name> and <dir>/.agents/skills/<name> for
@@ -26,7 +26,7 @@ export async function skillsUpdateCmd(opts: {
     fileURLToPath(new URL("../../../skills", import.meta.url)), // repo from dist/
     fileURLToPath(new URL("../../../../skills", import.meta.url)), // repo from src/
   ];
-  const src = candidates.find((d) => existsSync(join(d, "editnce", "SKILL.md")));
+  const src = candidates.find((d) => existsSync(join(d, "donova", "SKILL.md")));
   if (!src) {
     throw new CliError(ERR.FILE_NOT_FOUND, "shipped skills/ directory not found next to CLI");
   }

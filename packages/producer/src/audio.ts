@@ -1,7 +1,7 @@
 import { mkdir } from "node:fs/promises";
 import { basename, join } from "node:path";
-import type { ClipSpec, CompositionSpec } from "@editnce/contract";
-import { runFfmpeg } from "@editnce/engine";
+import type { ClipSpec, CompositionSpec } from "@donova/contract";
+import { runFfmpeg } from "@donova/engine";
 
 /**
  * Audio pipeline (03 §4, 04 §9).

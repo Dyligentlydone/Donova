@@ -3,7 +3,7 @@
 Reproducible definition of the media-use usage dashboard. The dashboard answers
 "how much is media-use used, for what, is reuse working, and what can't it
 satisfy" from the telemetry `scripts/lib/telemetry.mjs` already emits. Build it
-in an authorized Editnce analytics project; this doc is the source of truth
+in an authorized Donova analytics project; this doc is the source of truth
 so it can be recreated. Local complement: `resolve --stats` (same questions,
 from `.media/` + `~/.media`, no dashboard access needed).
 

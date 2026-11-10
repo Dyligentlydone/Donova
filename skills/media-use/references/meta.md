@@ -2,11 +2,11 @@
 
 Maintainer-facing reference. Nothing here changes how you resolve or operate on media.
 
-## What it owns (the gaps Editnce leaves)
+## What it owns (the gaps Donova leaves)
 
-Editnce owns media _playback_; media-use owns everything else. Each row is enforced by `packages/cli/src/media-use/lib/coverage.test.mjs` so the claim can't rot.
+Donova owns media _playback_; media-use owns everything else. Each row is enforced by `packages/cli/src/media-use/lib/coverage.test.mjs` so the claim can't rot.
 
-| Editnce gap                            | media-use owns it via                                                                                                                                                                                                                                    |
+| Donova gap                            | media-use owns it via                                                                                                                                                                                                                                    |
 | ------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Audio-only, no image/icon                  | `resolve --type image\|icon` (heygen asset search)                                                                                                                                                                                                       |
 | No third-party brand logos                 | `resolve --type logo` (theSVG → GitHub org avatar → domain favicon)                                                                                                                                                                                      |
@@ -16,7 +16,7 @@ Editnce owns media _playback_; media-use owns everything else. Each row is enfor
 | No transcript-driven cutting               | `scripts/transcript-cut.mjs` compiles word-timestamp edits into cut lists                                                                                                                                                                                |
 | No auto-duck / publish loudness            | `scripts/audio-duck.mjs` + `references/operations.md` loudnorm/sidechain recipes                                                                                                                                                                         |
 | No cross-project memory                    | global content-addressed cache + auto-promote (`~/.media`)                                                                                                                                                                                               |
-| Grade recipes and LUT freezing             | `resolve --type grade` emits a paste-ready recipe and `resolve --type lut` freezes validated `.cube` files; direct element analysis/authoring lives in `editnce media-treatment`                                                                     |
+| Grade recipes and LUT freezing             | `resolve --type grade` emits a paste-ready recipe and `resolve --type lut` freezes validated `.cube` files; direct element analysis/authoring lives in `donova media-treatment`                                                                     |
 | No image generation                        | `resolve --type image` — RAM-graded local mflux (FLUX), codex `image_gen` upsell                                                                                                                                                                         |
 | No video generation                        | `resolve --type video` — HeyGen avatar video first (free-usage path, sign-in nudge on auth failure), local LTX fallback (`videogen` ladder); image-to-video, photo-avatar, dub/translate remain manual `heygen` CLI recipes (`references/operations.md`) |
 | Weak local-model defaults                  | HeyGen free-usage path via the `heygen` CLI; local open-source tools only as opt-in alternatives                                                                                                                                                         |
@@ -26,7 +26,7 @@ Editnce owns media _playback_; media-use owns everything else. Each row is enfor
 Use `resolve --stats` for a local, shareable report over the current project's `.media/` manifest, the global `~/.media/` cache, and local resolve misses. Human output is compact; add `--json` for a single machine-readable object, and `--days N` to window timestamped records.
 
 ```bash
-editnce media-use resolve --stats --project . --days 7
+donova media-use resolve --stats --project . --days 7
 # media-use stats
 # total resolves: 12
 # misses: 2

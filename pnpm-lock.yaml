@@ -30,25 +30,25 @@ importers:
 
   packages/cli:
     dependencies:
-      '@editnce/contract':
+      '@donova/contract':
         specifier: workspace:*
         version: link:../contract
-      '@editnce/engine':
+      '@donova/engine':
         specifier: workspace:*
         version: link:../engine
-      '@editnce/lint':
+      '@donova/lint':
         specifier: workspace:*
         version: link:../lint
-      '@editnce/media':
+      '@donova/media':
         specifier: workspace:*
         version: link:../media
-      '@editnce/producer':
+      '@donova/producer':
         specifier: workspace:*
         version: link:../producer
-      '@editnce/runtime':
+      '@donova/runtime':
         specifier: workspace:*
         version: link:../runtime
-      '@editnce/studio-server':
+      '@donova/studio-server':
         specifier: workspace:*
         version: link:../studio-server
       '@hyperframes/inspector':
@@ -95,10 +95,10 @@ importers:
 
   packages/engine:
     dependencies:
-      '@editnce/contract':
+      '@donova/contract':
         specifier: workspace:*
         version: link:../contract
-      '@editnce/runtime':
+      '@donova/runtime':
         specifier: workspace:*
         version: link:../runtime
       '@puppeteer/browsers':
@@ -120,7 +120,7 @@ importers:
 
   packages/lint:
     dependencies:
-      '@editnce/contract':
+      '@donova/contract':
         specifier: workspace:*
         version: link:../contract
     devDependencies:
@@ -136,10 +136,10 @@ importers:
 
   packages/media:
     dependencies:
-      '@editnce/contract':
+      '@donova/contract':
         specifier: workspace:*
         version: link:../contract
-      '@editnce/engine':
+      '@donova/engine':
         specifier: workspace:*
         version: link:../engine
       onnxruntime-node:
@@ -176,10 +176,10 @@ importers:
 
   packages/producer:
     dependencies:
-      '@editnce/contract':
+      '@donova/contract':
         specifier: workspace:*
         version: link:../contract
-      '@editnce/engine':
+      '@donova/engine':
         specifier: workspace:*
         version: link:../engine
       ffmpeg-static:
@@ -213,19 +213,19 @@ importers:
 
   packages/studio-server:
     dependencies:
-      '@editnce/contract':
+      '@donova/contract':
         specifier: workspace:*
         version: link:../contract
-      '@editnce/engine':
+      '@donova/engine':
         specifier: workspace:*
         version: link:../engine
-      '@editnce/lint':
+      '@donova/lint':
         specifier: workspace:*
         version: link:../lint
-      '@editnce/producer':
+      '@donova/producer':
         specifier: workspace:*
         version: link:../producer
-      '@editnce/runtime':
+      '@donova/runtime':
         specifier: workspace:*
         version: link:../runtime
       parse5:

@@ -1,5 +1,5 @@
 {
-  "name": "@editnce/studio-server",
+  "name": "@donova/studio-server",
   "version": "0.1.0",
   "private": true,
   "type": "module",
@@ -22,11 +22,11 @@
     "typescript": "5.7.3"
   },
   "dependencies": {
-    "@editnce/contract": "workspace:*",
-    "@editnce/engine": "workspace:*",
-    "@editnce/producer": "workspace:*",
-    "@editnce/lint": "workspace:*",
-    "@editnce/runtime": "workspace:*",
+    "@donova/contract": "workspace:*",
+    "@donova/engine": "workspace:*",
+    "@donova/producer": "workspace:*",
+    "@donova/lint": "workspace:*",
+    "@donova/runtime": "workspace:*",
     "parse5": "^7.2.1"
   }
 }

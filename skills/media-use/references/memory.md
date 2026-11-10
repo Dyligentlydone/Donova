@@ -12,7 +12,7 @@ node <SKILL_DIR>/scripts/prefs.mjs record --hyperframes . --key style_preset --v
 
 Only what the user actually confirmed gets recorded — never an inferred or defaulted value. A remembered value becomes the recommended default, shown with where it came from; it never skips a question.
 
-Preference records serialize writes with `preferences.json.lock` beside each tier's file. If a process stops while holding that lock, later records leave it in place and report "Settings are locked…". After confirming no Editnce process is recording preferences, delete the named lock file and retry. A locked personal tier does not fail the project record; personal promotion waits for a later record.
+Preference records serialize writes with `preferences.json.lock` beside each tier's file. If a process stops while holding that lock, later records leave it in place and report "Settings are locked…". After confirming no Donova process is recording preferences, delete the named lock file and retry. A locked personal tier does not fail the project record; personal promotion waits for a later record.
 
 Keep the project's preference file committed, and add `.media/*.lock` to the project's `.gitignore` so transient locks are never shared with the team.
 

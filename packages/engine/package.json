@@ -1,5 +1,5 @@
 {
-  "name": "@editnce/engine",
+  "name": "@donova/engine",
   "version": "0.1.0",
   "private": true,
   "type": "module",
@@ -24,8 +24,8 @@
     "typescript": "5.7.3"
   },
   "dependencies": {
-    "@editnce/contract": "workspace:*",
-    "@editnce/runtime": "workspace:*",
+    "@donova/contract": "workspace:*",
+    "@donova/runtime": "workspace:*",
     "puppeteer-core": "^24.10.0",
     "@puppeteer/browsers": "^2.10.0"
   }

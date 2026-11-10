@@ -6,7 +6,7 @@ import { runHyperframes } from "./hf.js";
  * Render through the hyperframes engine — chosen by engineRoute when the
  * composition uses Studio-only features our producer doesn't implement yet.
  * Maps our render flags onto theirs; output lands at the same path the
- * editnce engine would have used.
+ * donova engine would have used.
  */
 
 export interface HfRenderOptions {
