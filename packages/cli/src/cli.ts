@@ -39,7 +39,7 @@ const renderCmd = defineCommand({
   args: {
     dir: { type: "positional", description: "project directory", required: false, default: "." },
     composition: { type: "string", description: "composition file", default: "index.html" },
-    out: { type: "string", description: "output file", default: "out.mp4" },
+    out: { type: "string", alias: "o", description: "output file", default: "out.mp4" },
     fps: { type: "string", description: "frames per second" },
     quality: { type: "string", description: "draft | standard | high", default: "standard" },
     format: { type: "string", description: "mp4 | webm | mov | gif | png-seq | hls", default: "mp4" },
@@ -49,10 +49,45 @@ const renderCmd = defineCommand({
     draft: { type: "boolean", description: "half-res fast draft", default: false },
     scale: { type: "string", description: "output scale factor (e.g. 0.5)" },
     profile: { type: "boolean", description: "print per-stage timings", default: false },
+    engine: {
+      type: "string",
+      description:
+        "auto | framecraft | hyperframes — auto routes to hyperframes when the comp uses Studio-only features (grade, motion blur, audio groups, FX)",
+      default: "auto",
+    },
     ...JSON_ARG,
   },
   async run({ args }) {
     await guardJson(args.json, async () => {
+      const { decideEngine, describeDecision } = await import("./engineRoute.js");
+      const forced =
+        args.engine === "framecraft" || args.engine === "hyperframes"
+          ? (args.engine as "framecraft" | "hyperframes")
+          : undefined;
+      if (args.engine !== "auto" && !forced) {
+        throw Object.assign(new Error(`bad --engine "${args.engine}" (auto | framecraft | hyperframes)`), {
+          code: ERR.INVALID_PROJECT,
+        });
+      }
+      const decision = decideEngine(String(args.dir), String(args.composition), forced);
+      if (!args.json) console.error(describeDecision(decision));
+      if (decision.engine === "hyperframes") {
+        const { renderViaHyperframes } = await import("./renderHf.js");
+        const res = await renderViaHyperframes({
+          projectDir: String(args.dir),
+          composition: String(args.composition),
+          out: String(args.out),
+          fps: args.fps ? Number(args.fps) : undefined,
+          quality: String(args.quality),
+          format: String(args.format),
+          workers: args.workers === "auto" ? autoWorkers() : Number(args.workers) || 1,
+          range: args.range ? String(args.range) : undefined,
+          scale: args.draft || args.quality === "draft" ? 0.5 : args.scale ? Number(args.scale) : undefined,
+          json: Boolean(args.json),
+        });
+        if (args.json) jsonOut({ ...res, engine: "hyperframes", reasons: decision.reasons });
+        return;
+      }
       const range = args.range
         ? (() => {
             const m = /^\s*([\d.]+)\s*-\s*([\d.]+)\s*$/.exec(String(args.range));
@@ -91,7 +126,7 @@ const renderCmd = defineCommand({
         console.log(
           `${res.out}  ${res.width}x${res.height} @${res.fps}fps  ${res.frames} frames  ${res.duration.toFixed(2)}s${res.beginFrame ? "  [beginFrame]" : "  [screenshot]"}`,
         );
-      } else jsonOut(res);
+      } else jsonOut({ ...res, engine: "framecraft" });
     });
   },
 });

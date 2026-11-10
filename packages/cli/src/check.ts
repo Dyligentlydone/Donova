@@ -5,11 +5,13 @@ import { ensureChrome, startFileServer } from "@framecraft/engine";
 import { formatIssues, lintHtml, summarize } from "@framecraft/lint";
 import { getRuntimeSource } from "@framecraft/runtime";
 import puppeteer from "puppeteer-core";
+import { type EngineDecision, decideEngine, describeDecision } from "./engineRoute.js";
 
 export interface CheckResult {
   issues: ContractIssue[];
   runtimeErrors: string[];
   ok: boolean;
+  engine: EngineDecision;
 }
 
 /**
@@ -93,8 +95,17 @@ export async function checkProject(
     }
   }
 
+  const engine = decideEngine(dir, composition);
+  for (const r of engine.reasons) {
+    issues.push({
+      rule: "render-engine-hyperframes",
+      severity: "info",
+      message: `${r.label} renders via the hyperframes engine (fc render routes automatically)`,
+      file: r.file,
+    });
+  }
   const s = summarize(issues);
-  return { issues, runtimeErrors, ok: s.errors === 0 && runtimeErrors.length === 0 };
+  return { issues, runtimeErrors, ok: s.errors === 0 && runtimeErrors.length === 0, engine };
 }
 
 export function reportCheck(res: CheckResult): string {
@@ -107,6 +118,7 @@ export function reportCheck(res: CheckResult): string {
   parts.push(
     `\n${s.errors} errors, ${s.warnings} warnings, ${s.info} info, ${res.runtimeErrors.length} runtime errors`,
   );
+  parts.push(describeDecision(res.engine));
   parts.push(res.ok ? "✓ check passed" : "✖ check failed");
   return parts.join("\n");
 }

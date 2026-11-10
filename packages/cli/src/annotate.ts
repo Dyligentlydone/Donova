@@ -1,9 +1,9 @@
-import { createServer, type IncomingMessage, type Server, type ServerResponse } from "node:http";
-import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
-import { join } from "node:path";
 import { execSync, spawn } from "node:child_process";
-import { fileURLToPath } from "node:url";
+import { appendFileSync, existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
+import { type IncomingMessage, type Server, type ServerResponse, createServer } from "node:http";
 import { get } from "node:http";
+import { join } from "node:path";
+import { fileURLToPath } from "node:url";
 
 /**
  * Annotation sidecar — receives "draw on the frame" marks from the Studio
@@ -78,13 +78,16 @@ function resolveAgentCmd(projectDir: string): string | null {
   return null;
 }
 
-const jobs = new Map<string, { lines: string[]; done: boolean; code: number | null; listeners: ServerResponse[] }>();
+const jobs = new Map<
+  string,
+  { lines: string[]; done: boolean; code: number | null; listeners: ServerResponse[] }
+>();
 
 function buildPrompt(projectDir: string, body: ChatBody): string {
   let prompt = [
     `You are editing the video composition in the current directory (${projectDir}).`,
     `It is a HyperFrames/Framecraft HTML composition: timed elements carry data-start/data-duration, visuals carry class="clip", motion lives in a paused GSAP root timeline on window.__timelines. Only deterministic edits.`,
-    `The user just sent this request from the Studio dashboard:`,
+    "The user just sent this request from the Studio dashboard:",
     "",
     body.message ?? "",
   ].join("\n");
@@ -100,7 +103,12 @@ function buildPrompt(projectDir: string, body: ChatBody): string {
 
 function startJob(projectDir: string, cmd: string, prompt: string): string {
   const id = `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`;
-  const job = { lines: [] as string[], done: false, code: null as number | null, listeners: [] as ServerResponse[] };
+  const job = {
+    lines: [] as string[],
+    done: false,
+    code: null as number | null,
+    listeners: [] as ServerResponse[],
+  };
   jobs.set(id, job);
   if (jobs.size > 50) {
     const oldest = jobs.keys().next().value;
@@ -161,7 +169,11 @@ function handle(projectDir: string, req: IncomingMessage, res: ServerResponse): 
     const rel = decodeURIComponent(fileMatch[1] ?? "").replace(/[^a-zA-Z0-9._/-]/g, "");
     const full = join(projectDir, rel);
     if (rel.startsWith("annotations/") && existsSync(full) && !full.includes("..")) {
-      const ext = rel.endsWith(".png") ? "image/png" : rel.endsWith(".json") ? "application/json" : "application/octet-stream";
+      const ext = rel.endsWith(".png")
+        ? "image/png"
+        : rel.endsWith(".json")
+          ? "application/json"
+          : "application/octet-stream";
       res.writeHead(200, { "content-type": ext });
       res.end(readFileSync(full));
       return;
@@ -201,7 +213,9 @@ function handle(projectDir: string, req: IncomingMessage, res: ServerResponse): 
   }
   if (req.method === "POST" && req.url === "/agent/chat") {
     let raw = "";
-    req.on("data", (c) => (raw += c));
+    req.on("data", (c) => {
+      raw += c;
+    });
     req.on("end", () => {
       try {
         const body = JSON.parse(raw) as ChatBody;
@@ -223,7 +237,9 @@ function handle(projectDir: string, req: IncomingMessage, res: ServerResponse): 
   }
   if (req.method === "POST" && req.url === "/annotate") {
     let raw = "";
-    req.on("data", (c) => (raw += c));
+    req.on("data", (c) => {
+      raw += c;
+    });
     req.on("end", () => {
       try {
         const body = JSON.parse(raw) as AnnotationBody;
@@ -241,6 +257,9 @@ function handle(projectDir: string, req: IncomingMessage, res: ServerResponse): 
           createdAt: new Date().toISOString(),
         };
         writeFileSync(join(dir, `${base}.json`), JSON.stringify(spec, null, 2));
+        // append-only ledger — intents survive even if the per-annotation
+        // files are pruned/moved; agents can replay from here.
+        appendFileSync(join(dir, "log.jsonl"), `${JSON.stringify({ file: `${base}.json`, ...spec })}\n`);
         if (body.png) {
           const data = body.png.replace(/^data:image\/\w+;base64,/, "");
           writeFileSync(join(dir, `${base}.png`), Buffer.from(data, "base64"));
@@ -273,9 +292,13 @@ async function sidecarUp(port: number, projectDir: string): Promise<boolean> {
   return new Promise((resolve) => {
     const req = get({ host: "127.0.0.1", port, path: "/health", timeout: 1500 }, (res) => {
       let body = "";
-      res.on("data", (c) => (body += c));
+      res.on("data", (c) => {
+        body += c;
+      });
       res.on("end", () =>
-        resolve(res.statusCode === 200 && body.includes(projectDir) && body.includes(`"v":${SIDECAR_VERSION}`)),
+        resolve(
+          res.statusCode === 200 && body.includes(projectDir) && body.includes(`"v":${SIDECAR_VERSION}`),
+        ),
       );
     });
     req.on("error", () => resolve(false));
@@ -292,7 +315,9 @@ export async function ensureAnnotateServer(projectDir: string, studioPort: numbe
   if (await sidecarUp(port, projectDir)) return;
   // a stale sidecar may hold the port — ask it to stop before respawning
   await new Promise<void>((resolve) => {
-    const req = get({ host: "127.0.0.1", port, path: "/stop", timeout: 800, method: "POST" }, () => resolve());
+    const req = get({ host: "127.0.0.1", port, path: "/stop", timeout: 800, method: "POST" }, () =>
+      resolve(),
+    );
     req.on("error", () => resolve());
     req.on("timeout", () => {
       req.destroy();

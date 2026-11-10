@@ -30,7 +30,13 @@ export async function launchHyperframesStudio(
     hfArgs.push("--stop");
     const { annotatePort } = await import("./annotate.js");
     const { request } = await import("node:http");
-    const r = request({ host: "127.0.0.1", port: annotatePort(port), path: "/stop", method: "POST", timeout: 1500 });
+    const r = request({
+      host: "127.0.0.1",
+      port: annotatePort(port),
+      path: "/stop",
+      method: "POST",
+      timeout: 1500,
+    });
     r.on("error", () => {});
     r.end();
   } else {

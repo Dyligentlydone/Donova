@@ -55,14 +55,27 @@ to stderr in `--json` mode. Error codes: `E_INTERNAL`, `E_INVALID_PROJECT`,
 
 ## Render
 
-- `render [dir] [--out out.mp4] [--fps N] [--quality draft|standard|high]
+- `render [dir] [-o|--out out.mp4] [--fps N] [--quality draft|standard|high]
   [--format mp4|webm|mov|gif|png-seq|hls] [--alpha] [--workers N|auto]
-  [--range START-END] [--draft] [--scale 0.5] [--profile] [--json]`
+  [--range START-END] [--draft] [--scale 0.5] [--profile]
+  [--engine auto|framecraft|hyperframes] [--json]`
   - `--range 1.5-4` renders only that window (audio trimmed to match).
   - `--draft` = half-res (scale 0.5) fast pass; `--scale` arbitrary.
   - `--profile` prints stage timings: extract-frames, capture+encode,
     audio-mix, mux.
   - `--workers auto` ≈ cores/3 capped at 8.
+  - **Engine routing** (`--engine auto`, default): the comp tree is scanned
+    for Studio-only features the framecraft engine doesn't implement yet —
+    `data-motion-blur`, `data-color-grading`, `data-audio-group` /
+    `<hf-audio-group>`, `data-automation`, `data-fx-chain`, `data-vfx-chain`,
+    `data-playback-start`, `data-lottie-src`, shaders. If any are present the
+    render runs through the hyperframes engine (identical to Studio Export),
+    so preview and render never diverge. Otherwise the framecraft engine
+    renders (byte-deterministic, golden-tested). `fc check` prints the
+    decision + the triggering features as info rows; `--json` includes
+    `engine` and `reasons`. Force with `--engine framecraft|hyperframes`.
+  - Output audio is always 48 kHz stereo (mono sources upmixed), matching
+    hyperframes.
 - `add <block> [--dir .]` — install a registry block into `compositions/`;
   `add sfx/<name>` drops an SFX into `assets/sfx/`.
 

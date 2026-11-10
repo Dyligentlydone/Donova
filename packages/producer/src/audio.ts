@@ -124,7 +124,7 @@ export function buildAudioGraph(jobs: AudioTrackJob[]): {
     chains.push(`${inLabel}${parts.join(",")}${outLabel}`);
     mixLabels.push(outLabel);
   });
-  const filter = `${chains.join(";")};${mixLabels.join("")}amix=inputs=${mixLabels.length}:normalize=0,aresample=48000,alimiter=limit=0.95[aout]`;
+  const filter = `${chains.join(";")};${mixLabels.join("")}amix=inputs=${mixLabels.length}:normalize=0,aresample=48000,aformat=channel_layouts=stereo,alimiter=limit=0.95[aout]`;
   return { inputs, filter, hasAudio: true };
 }
 

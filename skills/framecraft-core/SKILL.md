@@ -41,6 +41,9 @@ A composition is a static HTML file rendered frame-by-frame into video.
 ## Sub-compositions
 `data-composition-src="compositions/file.html"` + `data-composition-id` on a timed element embeds another composition. Its timeline is offset by the clip start; `data-speed` rescales; `data-clip-absolute="true"` pins absolute seconds. Imported sub-comps keep their own scripts/styles (scoped to the host); GSAP-timeline blocks register `window.__timelines` and are seeked on their local clock.
 
+## Studio-only features (grade, blur, audio bus, FX)
+Studio can write `data-color-grading`, `data-motion-blur`, `data-audio-group` / `<hf-audio-group>`, `data-automation`, `data-fx-chain`, `data-vfx-chain`, `data-playback-start`, `data-lottie-src`. These are valid — authoring them is fine — but they render through the hyperframes engine, which `framecraft render` selects automatically when present (`fc check` reports it). Don't strip them to "fix" a check; the routing exists so preview and render match.
+
 ## Determinism rules (enforced by lint)
 - No `Date.now()`, `new Date()`, `Math.random()` (unseeded), runtime `fetch()` to remote URLs, `setInterval`, or wall-clock rAF.
 - All assets local or bundled; fonts via local files.
