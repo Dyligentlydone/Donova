@@ -29,7 +29,7 @@ import { get } from "node:http";
  */
 
 const SIDECAR_PORT_OFFSET = 1000;
-const SIDECAR_VERSION = 2;
+const SIDECAR_VERSION = 3;
 
 export function annotatePort(studioPort: number): number {
   return studioPort + SIDECAR_PORT_OFFSET;
@@ -71,7 +71,9 @@ function resolveAgentCmd(projectDir: string): string | null {
   if (process.env.FC_AGENT_CMD) return process.env.FC_AGENT_CMD;
   try {
     execSync("which claude", { stdio: "ignore" });
-    return "claude -p -";
+    // headless: prompt arrives on stdin; skip-permissions so it can edit files
+    // without an interactive approval prompt (the user sent the request).
+    return "claude -p --dangerously-skip-permissions";
   } catch {}
   return null;
 }
