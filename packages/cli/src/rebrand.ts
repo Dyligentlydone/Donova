@@ -114,6 +114,9 @@ const ANNOTATE = `<script>
       if((tabs[i].textContent||'').trim()==='Catalog'){
         var b=tabs[i].cloneNode(true);
         b.id=BTN_ID;
+        b.removeAttribute('aria-selected');
+        b.removeAttribute('aria-controls');
+        b.removeAttribute('data-testid');
         b.classList.remove('dv-active-tab');
         if(b.className.indexOf('dv-inactive-tab')<0)b.classList.add('dv-inactive-tab');
         var tn=b,guard=0;
@@ -127,7 +130,13 @@ const ANNOTATE = `<script>
         tn.textContent='Annotate';
         b.style.cursor='pointer';
         b.title='Draw on the frame, tell the agent what to do';
-        b.onclick=function(){toggle()};
+        // Dockview treats tab clicks as panel activation — our clone has no
+        // panel, so their handler re-renders the strip and wipes the node.
+        // Swallow pointer events in capture phase before they ever see it.
+        var eat=function(e){e.stopImmediatePropagation();e.preventDefault();};
+        b.addEventListener('pointerdown',eat,true);
+        b.addEventListener('mousedown',eat,true);
+        b.addEventListener('click',function(e){eat(e);toggle();},true);
         tabs[i].parentElement.insertBefore(b,tabs[i].nextSibling);
         return b;
       }
@@ -137,7 +146,8 @@ const ANNOTATE = `<script>
     f.title='Draw on the frame, tell the agent what to do';
     f.dataset.fallback='1';
     f.setAttribute('style','position:fixed;bottom:20px;right:20px;z-index:2147483000;padding:8px 14px;border-radius:8px;border:1px solid #5df0a055;background:#0b0e14e6;color:#5df0a0;font:600 13px system-ui;cursor:pointer');
-    f.onclick=function(){toggle()};
+    f.addEventListener('pointerdown',function(e){e.stopImmediatePropagation();e.preventDefault();},true);
+    f.addEventListener('click',function(e){e.stopImmediatePropagation();e.preventDefault();toggle();},true);
     document.body.appendChild(f);
     return f;
   }
@@ -161,13 +171,16 @@ const ANNOTATE = `<script>
     if(document.getElementById(OV_ID))return;
     var r=ovRect(ifr);
     var ov=document.createElement('div');ov.id=OV_ID;
-    ov.setAttribute('style','position:fixed;inset:0;z-index:2147483001');
+    // scope to the comp box only — full-viewport canvas sat above the
+    // dashboard's own chrome (Annotate tab, panels) and swallowed its clicks.
+    ov.setAttribute('style','position:fixed;left:'+r.x+'px;top:'+r.y+'px;width:'+r.w+'px;height:'+r.h+'px;z-index:2147483001');
     var cv=document.createElement('canvas');
-    cv.width=innerWidth*devicePixelRatio;cv.height=innerHeight*devicePixelRatio;
+    cv.width=r.w*devicePixelRatio;cv.height=r.h*devicePixelRatio;
     cv.setAttribute('style','position:absolute;inset:0;width:100%;height:100%');
     var ctx=cv.getContext('2d');ctx.scale(devicePixelRatio,devicePixelRatio);
+    ctx.translate(-r.x,-r.y);
     var bar=document.createElement('div');
-    bar.setAttribute('style','position:absolute;top:'+Math.max(8,r.y-44)+'px;left:'+r.x+'px;display:flex;gap:6px;align-items:center;background:#0b0e14f2;border:1px solid #ffffff22;border-radius:10px;padding:6px 10px;font:12px system-ui;color:#e8ecf1');
+    bar.setAttribute('style','position:absolute;top:-44px;left:0;display:flex;gap:6px;align-items:center;background:#0b0e14f2;border:1px solid #ffffff22;border-radius:10px;padding:6px 10px;font:12px system-ui;color:#e8ecf1');
     var tools=['pen','circle','arrow','rect'];
     var tb={};
     tools.forEach(function(t){
@@ -206,8 +219,8 @@ const ANNOTATE = `<script>
     function esc(e){if(e.key==='Escape')close();}
     window.__fcAnnotatePaint=paint;
     function paint(){
-      ctx.clearRect(0,0,innerWidth,innerHeight);
-      ctx.fillStyle='rgba(0,0,0,0.25)';ctx.fillRect(0,0,innerWidth,innerHeight);
+      ctx.clearRect(r.x,r.y,r.w,r.h);
+      ctx.fillStyle='rgba(0,0,0,0.25)';ctx.fillRect(r.x,r.y,r.w,r.h);
       var all=marks.slice();if(cur)all.push(cur);
       all.forEach(function(m){
         ctx.strokeStyle=m.color;ctx.lineWidth=4;ctx.lineCap='round';ctx.lineJoin='round';
