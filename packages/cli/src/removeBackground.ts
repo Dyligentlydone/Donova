@@ -7,7 +7,7 @@ export async function removeBackgroundCmd(opts: {
   start?: number;
   end?: number;
   smoothing?: number;
-}): Promise<{ path: string; kind: "image" | "video"; frames?: number }> {
+}): Promise<{ path: string; kind: "image" | "video"; frames?: number; report?: unknown }> {
   const isImage = /\.(png|jpe?g|webp)$/i.test(opts.media);
   if (isImage) {
     const out = opts.out ?? `${opts.media.replace(/\.[^.]+$/, "")}-cutout.png`;

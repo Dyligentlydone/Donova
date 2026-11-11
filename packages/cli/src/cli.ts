@@ -1,6 +1,7 @@
 import { cpus } from "node:os";
 import { join, resolve } from "node:path";
-import { CLI_NAME, VERSION } from "@donova/contract";
+import { readFileSync } from "node:fs";
+import { CLI_NAME } from "@donova/contract";
 import { render } from "@donova/producer";
 import { startStudioServer } from "@donova/studio-server";
 import { defineCommand, runMain } from "citty";
@@ -164,6 +165,25 @@ const initCmd = defineCommand({
   },
 });
 
+const setupCmd = defineCommand({
+  meta: { name: "setup", description: "Build the Donova Studio workspace folder (style guide, inspo, footage, exports)" },
+  args: {
+    dir: { type: "positional", description: "workspace folder (default: Downloads/Donova Studio)", required: false },
+    ...JSON_ARG,
+  },
+  async run({ args }) {
+    await guardJson(args.json, async () => {
+      const { setupWorkspace } = await import("./workspace.js");
+      const res = await setupWorkspace(args.dir ? String(args.dir) : undefined);
+      if (args.json) jsonOut(res);
+      else {
+        console.log(`workspace: ${res.workspace}`);
+        console.log(`\nnext: cd "${res.project}" && ${CLI_NAME} studio`);
+      }
+    });
+  },
+});
+
 const checkCmd = defineCommand({
   meta: { name: "check", description: "Lint + headless browser gate" },
   args: {
@@ -199,7 +219,7 @@ const previewCmd = defineCommand({
 });
 
 const studioCmd = defineCommand({
-  meta: { name: "studio", description: "Open the Studio editor (HyperFrames-powered)" },
+  meta: { name: "studio", description: "Open Donova Studio in your browser" },
   args: {
     dir: { type: "positional", default: "." },
     port: { type: "string", default: "0" },
@@ -666,7 +686,15 @@ const removeBgCliCmd = defineCommand({
     );
     if (res == null) return;
     if (args.json) jsonOut(res);
-    else console.log(`cutout: ${res.path}  (${res.kind}${res.frames ? `, ${res.frames} frames` : ""})`);
+    else {
+      const r = res as { report?: { flicker?: number; coverageMin?: number; coverageMax?: number } };
+      const rep = r.report;
+      const extra =
+        rep && typeof rep.flicker === "number"
+          ? `, flicker ${rep.flicker.toFixed(2)}, coverage ${Math.round((rep.coverageMin ?? 0) * 100)}-${Math.round((rep.coverageMax ?? 0) * 100)}%`
+          : "";
+      console.log(`cutout: ${res.path}  (${res.kind}${res.frames ? `, ${res.frames} frames` : ""}${extra})`);
+    }
   },
 });
 
@@ -775,10 +803,19 @@ function hfDelegate(name: string, hfCmd: string, description: string) {
   });
 }
 
+const PKG_VERSION: string = (() => {
+  try {
+    return JSON.parse(readFileSync(new URL("../package.json", import.meta.url), "utf8")).version;
+  } catch {
+    return "0.0.0";
+  }
+})();
+
 const main = defineCommand({
-  meta: { name: CLI_NAME, version: VERSION, description: "Donova — HTML to video" },
+  meta: { name: CLI_NAME, version: PKG_VERSION, description: "Donova — HTML to video" },
   subCommands: {
     init: initCmd,
+    setup: setupCmd,
     check: checkCmd,
     render: renderCmd,
     preview: previewCmd,
