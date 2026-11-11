@@ -517,8 +517,9 @@ const AUTO = `<script>
     if(!p){
       p=document.createElement('button');p.id=ID;
       p.setAttribute('style','position:fixed;top:10px;right:20px;z-index:2147483000;padding:6px 12px;border-radius:8px;border:1px solid #ffffff22;background:#0b0e14e6;color:#9aa3b2;font:600 12px system-ui,sans-serif;cursor:pointer;display:inline-flex;align-items:center;gap:7px');
-      p.title='auto donova — drop a clip in "02 Projects/raw footage", it gets edited to your style and lands in "donova videos"';
-      p.onclick=function(){
+      p.title='auto donova — click ⓘ for what it does';
+      p.onclick=function(e){
+        if(e.target&&e.target.id===ID+'-i'){infoCard();return;}
         p.disabled=true;
         fetch(base+'/auto',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({enabled:!st.enabled})})
           .then(function(r){return r.json()})
@@ -529,10 +530,24 @@ const AUTO = `<script>
     }
     return p;
   }
+  function infoCard(){
+    var c=document.getElementById(ID+'-card');
+    if(c){c.remove();return;}
+    var p=document.getElementById(ID);if(!p)return;
+    var r=p.getBoundingClientRect();
+    c=document.createElement('div');c.id=ID+'-card';
+    c.setAttribute('style','position:fixed;top:'+(r.bottom+8)+'px;right:'+(innerWidth-r.right)+'px;width:250px;z-index:2147483003;background:#0b0e14f6;border:1px solid #5df0a044;border-radius:10px;padding:12px 14px;font:12px/1.55 system-ui;color:#cfd6e2;box-shadow:0 8px 30px #000a');
+    c.innerHTML='<div style="font:700 12px system-ui;color:#5df0a0;margin-bottom:6px">auto donova</div>'+
+      'Drop a clip into <b style="color:#e8ecf1">02 Projects/raw footage</b> — it gets edited to your style bible and lands in <b style="color:#e8ecf1">donova videos</b>.<br><br>'+
+      'Runs in the background, even with Studio closed. Needs an agent connected (chat pill, bottom-right). Teach your style first via <b style="color:#e8ecf1">01 Style Guide/inspo</b>.';
+    document.body.appendChild(c);
+    var off=function(ev){if(!c.contains(ev.target)&&ev.target.id!==ID+'-i'){c.remove();document.removeEventListener('mousedown',off,true);}};
+    setTimeout(function(){document.addEventListener('mousedown',off,true);},0);
+  }
   function paint(){
     var p=document.getElementById(ID);if(!p)return;
     var dot=st.enabled?(st.running?'#5df0a0':'#e9cf6b'):'#ffffff33';
-    p.innerHTML='<span style="width:7px;height:7px;border-radius:50%;background:'+dot+';display:inline-block"></span>auto '+(st.enabled?'on':'off');
+    p.innerHTML='<span style="width:7px;height:7px;border-radius:50%;background:'+dot+';display:inline-block"></span>auto '+(st.enabled?'on':'off')+'<span id="'+ID+'-i" style="margin-left:1px;width:13px;height:13px;border:1px solid currentColor;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font:700 9px system-ui;opacity:.65;cursor:help">i</span>';
     p.style.color=st.enabled?'#5df0a0':'#9aa3b2';
     p.style.borderColor=st.enabled?'#5df0a055':'#ffffff22';
     p.style.opacity=st.down?'0.4':'1';
