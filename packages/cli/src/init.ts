@@ -26,8 +26,8 @@ export async function initProject(
   await mkdir(root, { recursive: true });
   await mkdir(join(root, "compositions"), { recursive: true });
   await mkdir(join(root, "media"), { recursive: true });
-  await mkdir(join(root, "footage"), { recursive: true });
-  await mkdir(join(root, "renders"), { recursive: true });
+  await mkdir(join(root, "raw footage"), { recursive: true });
+  await mkdir(join(root, "donova videos"), { recursive: true });
 
   if (opts?.template) {
     const examplesDir = pkgAsset("registry/examples");
@@ -156,7 +156,7 @@ export async function initProject(
   );
   await writeFile(
     join(root, "AGENTS.md"),
-    `# ${name}\n\nDonova project. Composition: index.html.\n\n- Lint: \`donova check\`\n- Preview: \`donova preview\`\n- Render: \`donova render --out renders/out.mp4\`\n\nFolders: drop raw clips in footage/, exports land in renders/, assets/ is media\nreferenced by the composition. style.md is the user's style bible — read it\nbefore editing.\n\nContract: timed elements carry data-start + data-duration (+ class="clip").\nRegister one paused GSAP timeline on window.__timelines["main"] when animating with GSAP code.\nStudio-authored animation uses data-fc-motion (never hand-edited GSAP).\n`,
+    `# ${name}\n\nDonova project. Composition: index.html.\n\n- Lint: \`donova check\`\n- Preview: \`donova preview\`\n- Render: \`donova render --out "donova videos/out.mp4"\`\n\nFolders: drop raw clips in "raw footage"/, exports land in "donova videos"/\n(when inside a Donova Studio workspace, the shared pools "../raw footage" and\n"../donova videos" take precedence), assets/ is media referenced by the\ncomposition. style.md is the user's style bible — read it before editing.\n\nContract: timed elements carry data-start + data-duration (+ class="clip").\nRegister one paused GSAP timeline on window.__timelines["main"] when animating with GSAP code.\nStudio-authored animation uses data-fc-motion (never hand-edited GSAP).\n`,
   );
-  return ["index.html", "donova.json", "AGENTS.md", "style.md", "compositions/", "media/", "footage/", "renders/"];
+  return ["index.html", "donova.json", "AGENTS.md", "style.md", "compositions/", "media/", "raw footage/", "donova videos/"];
 }
