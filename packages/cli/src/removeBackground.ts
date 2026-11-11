@@ -1,4 +1,4 @@
-import { removeBackgroundImage, removeBackgroundVideo } from "@donova/media";
+import { type MatteModel, removeBackgroundImage, removeBackgroundVideo } from "@donova/media";
 
 /** `donova remove-background` — image→PNG alpha, video→WebM alpha (MV8). */
 export async function removeBackgroundCmd(opts: {
@@ -7,11 +7,12 @@ export async function removeBackgroundCmd(opts: {
   start?: number;
   end?: number;
   smoothing?: number;
+  model?: MatteModel;
 }): Promise<{ path: string; kind: "image" | "video"; frames?: number; report?: unknown }> {
   const isImage = /\.(png|jpe?g|webp)$/i.test(opts.media);
   if (isImage) {
     const out = opts.out ?? `${opts.media.replace(/\.[^.]+$/, "")}-cutout.png`;
-    const r = await removeBackgroundImage(opts.media, out);
+    const r = await removeBackgroundImage(opts.media, out, opts.model);
     return { ...r, kind: "image" };
   }
   const out = opts.out ?? `${opts.media.replace(/\.[^.]+$/, "")}-cutout.webm`;
@@ -21,6 +22,7 @@ export async function removeBackgroundCmd(opts: {
     start: opts.start,
     end: opts.end,
     smoothing: opts.smoothing,
+    model: opts.model,
   });
   return { ...r, kind: "video" };
 }

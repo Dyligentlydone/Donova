@@ -9,77 +9,126 @@ import { promisify } from "node:util";
 const execFileP = promisify(execFile);
 
 /**
- * Background removal (MV8) — U²-Net human segmentation via onnxruntime-node,
- * same model class HyperFrames uses but our own implementation. Apache-2.0
- * model from the rembg project's GitHub releases; downloaded on first use.
+ * Background removal (MV8) — portrait matting via onnxruntime-node.
+ *
+ * Default model: MODNet (Apache-2.0, ZHKKKe/MODNet; ONNX export hosted at
+ * huggingface.co/Xenova/modnet). It emits a continuous alpha matte — real
+ * hair edge detail — at 512². Fallback: u2net_human_seg (Apache-2.0, rembg
+ * GitHub releases) at 320², a binary-ish segmentation mask. Both download
+ * on first use into ~/.cache/donova/models; a LICENSE note lands beside
+ * each file.
  *
  * Image → PNG with alpha. Video → WebM VP9 with alpha (yuva420p).
  *
  * Pipeline per frame:
  *   1. letterbox the frame into the model's square input (never squash)
- *   2. run U²-Net, normalize logits against a fixed window (frame-stable —
+ *   2. run the model, take its probability matte directly (frame-stable —
  *      per-frame min/max drifted the fg/bg level and flickered edges)
  *   3. keep the largest connected component (drops wall patches, outlets)
  *      and fill holes inside it (fixes see-through light clothing)
  *   4. upsample to full res, then guided-filter the edge against the real
- *      pixels so the silhouette follows the frame, not the 320px guess
+ *      pixels so the silhouette follows the frame, not the model-res guess
  *   5. blend toward the previous frame's mask only where it is stable —
  *      suppresses flicker without smearing real motion
  */
 
-const MODEL_URL = "https://github.com/danielgatis/rembg/releases/download/v0.0.0/u2net_human_seg.onnx";
-const MODEL_SIZE = 320; // model input is 320×320
+export type MatteModel = "modnet" | "u2net";
+
+interface ModelSpec {
+  file: string;
+  url: string;
+  /** square model input side */
+  size: number;
+  inputName: string;
+  /** undefined = use the first output */
+  outputName?: string;
+  mean: [number, number, number];
+  std: [number, number, number];
+  /** u2net's silhouette runs ~2 model-px loose; erode after cleaning */
+  erode?: number;
+  license: string;
+}
+
+const MODELS: Record<MatteModel, ModelSpec> = {
+  modnet: {
+    file: "modnet.onnx",
+    url: "https://huggingface.co/Xenova/modnet/resolve/main/onnx/model.onnx",
+    size: 512,
+    inputName: "input",
+    outputName: "output",
+    mean: [0.5, 0.5, 0.5],
+    std: [0.5, 0.5, 0.5],
+    license:
+      "MODNet — Real-Time Trimap-Free Portrait Matting via Objective Decomposition (AAAI 2022)\n" +
+      "https://github.com/ZHKKKe/MODNet — Apache License 2.0\n" +
+      "ONNX export: huggingface.co/Xenova/modnet\n",
+  },
+  u2net: {
+    file: "u2net_human_seg.onnx",
+    url: "https://github.com/danielgatis/rembg/releases/download/v0.0.0/u2net_human_seg.onnx",
+    size: 320,
+    inputName: "input.1",
+    mean: [0.485, 0.456, 0.406],
+    std: [0.229, 0.224, 0.225],
+    erode: 1,
+    license:
+      "U^2-Net human segmentation (u2net_human_seg.onnx)\n" +
+      "https://github.com/xuebinqin/U-2-Net — Apache License 2.0\n" +
+      "Weights redistributed via github.com/danielgatis/rembg releases\n",
+  },
+};
 
 function modelDir(): string {
   return join(process.env.HOME ?? tmpdir(), ".cache", "donova", "models");
 }
 
-export async function ensureModel(): Promise<string> {
+export async function ensureModel(model: MatteModel = "modnet"): Promise<string> {
+  const spec = MODELS[model];
   const dir = modelDir();
-  const path = join(dir, "u2net_human_seg.onnx");
-  if (existsSync(path)) return path;
-  await mkdir(dir, { recursive: true });
-  const tmp = `${path}.download`;
-  await new Promise<void>((resolve, reject) => {
-    httpsGet(MODEL_URL, (res) => {
-      if (res.statusCode === 302 && res.headers.location) {
-        httpsGet(res.headers.location, (r2) => {
-          const out = createWriteStream(tmp);
-          r2.pipe(out);
-          out.on("finish", () => out.close(() => resolve()));
-          r2.on("error", reject);
-        }).on("error", reject);
-        return;
-      }
-      if (res.statusCode !== 200) return reject(new Error(`model download: HTTP ${res.statusCode}`));
-      const out = createWriteStream(tmp);
-      res.pipe(out);
-      out.on("finish", () => out.close(() => resolve()));
-      res.on("error", reject);
-    }).on("error", reject);
-  });
-  const { rename } = await import("node:fs/promises");
-  await rename(tmp, path);
+  const path = join(dir, spec.file);
+  if (!existsSync(path)) {
+    await mkdir(dir, { recursive: true });
+    const tmp = `${path}.download`;
+    await new Promise<void>((resolve, reject) => {
+      httpsGet(spec.url, function get(res) {
+        if ((res.statusCode === 301 || res.statusCode === 302 || res.statusCode === 307 || res.statusCode === 308) && res.headers.location) {
+          httpsGet(res.headers.location, get).on("error", reject);
+          return;
+        }
+        if (res.statusCode !== 200) return reject(new Error(`model download: HTTP ${res.statusCode}`));
+        const out = createWriteStream(tmp);
+        res.pipe(out);
+        out.on("finish", () => out.close(() => resolve()));
+        res.on("error", reject);
+      }).on("error", reject);
+    });
+    const { rename } = await import("node:fs/promises");
+    await rename(tmp, path);
+  }
+  if (!existsSync(`${path}.LICENSE.txt`)) await writeFile(`${path}.LICENSE.txt`, spec.license, "utf8");
   return path;
 }
 
-let _session: unknown = null;
-async function session(): Promise<{
+const _sessions = new Map<MatteModel, unknown>();
+async function session(model: MatteModel): Promise<{
   run(i: Record<string, unknown>): Promise<Record<string, { data: Float32Array }>>;
 }> {
-  if (!_session) {
+  let s = _sessions.get(model);
+  if (!s) {
     const ort = await import("onnxruntime-node");
-    _session = await ort.InferenceSession.create(await ensureModel(), {
+    s = await ort.InferenceSession.create(await ensureModel(model), {
       executionProviders: process.platform === "darwin" ? ["coreml", "cpu"] : ["cpu"],
     });
+    _sessions.set(model, s);
   }
-  return _session as never;
+  return s as never;
 }
 
 /* ---------------------------------- masks --------------------------------- */
 
 /** 4-connected components over a binary grid; returns per-pixel label ids. */
-function components(bin: Uint8Array, n: number): { labels: Int32Array; sizes: Map<number, number> } {
+function components(bin: Uint8Array, size: number): { labels: Int32Array; sizes: Map<number, number> } {
+  const n = size * size;
   const labels = new Int32Array(n).fill(-1);
   const sizes = new Map<number, number>();
   let next = 0;
@@ -89,16 +138,16 @@ function components(bin: Uint8Array, n: number): { labels: Int32Array; sizes: Ma
     let top = 0;
     stack[top++] = s;
     labels[s] = next;
-    let size = 0;
+    let count = 0;
     while (top > 0) {
       const i = stack[--top] as number;
-      size++;
-      const x = (i as number) % MODEL_SIZE;
-      const y = ((i as number) / MODEL_SIZE) | 0;
-      const nb = [x > 0 ? i - 1 : -1, x < MODEL_SIZE - 1 ? i + 1 : -1, y > 0 ? i - MODEL_SIZE : -1, y < MODEL_SIZE - 1 ? i + MODEL_SIZE : -1];
+      count++;
+      const x = (i as number) % size;
+      const y = ((i as number) / size) | 0;
+      const nb = [x > 0 ? i - 1 : -1, x < size - 1 ? i + 1 : -1, y > 0 ? i - size : -1, y < size - 1 ? i + size : -1];
       for (const j of nb) if (j >= 0 && bin[j] && labels[j] === -1) { labels[j] = next; stack[top++] = j; }
     }
-    sizes.set(next as number, size as number);
+    sizes.set(next as number, count as number);
     next++;
   }
   return { labels, sizes };
@@ -108,15 +157,15 @@ function components(bin: Uint8Array, n: number): { labels: Int32Array; sizes: Ma
  * Clean a model-res probability mask: keep the largest foreground component,
  * then fill holes inside it (background pockets fully enclosed by it).
  */
-function cleanModelMask(u8: Uint8Array): { mask: Uint8Array; dropped: number } {
-  const n = MODEL_SIZE * MODEL_SIZE;
+function cleanModelMask(u8: Uint8Array, size: number): { mask: Uint8Array; dropped: number } {
+  const n = size * size;
   const fg = new Uint8Array(n);
   for (let i = 0; i < n; i++) fg[i] = (u8[i] ?? 0) >= 128 ? 1 : 0;
 
-  const { labels, sizes } = components(fg, n);
+  const { labels, sizes } = components(fg, size);
   let best = -1;
   let bestSize = 0;
-  for (const [id, size] of sizes) if ((size ?? 0) > bestSize) { best = id ?? -1; bestSize = size ?? 0; }
+  for (const [id, sz] of sizes) if (sz > bestSize) { best = id; bestSize = sz; }
   if (best === -1) return { mask: u8, dropped: 0 };
 
   const keep = new Uint8Array(n);
@@ -127,15 +176,15 @@ function cleanModelMask(u8: Uint8Array): { mask: Uint8Array; dropped: number } {
   for (let i = 0; i < n; i++) bg[i] = labels[i] === best ? 0 : 1;
   const outside = new Uint8Array(n);
   const stack: number[] = [];
-  for (let x = 0; x < MODEL_SIZE; x++)
-    for (const y of [0, MODEL_SIZE - 1]) { const i = y * MODEL_SIZE + x; if (bg[i]) { outside[i] = 1; stack.push(i); } }
-  for (let y = 0; y < MODEL_SIZE; y++)
-    for (const x of [0, MODEL_SIZE - 1]) { const i = y * MODEL_SIZE + x; if (bg[i] && !outside[i]) { outside[i] = 1; stack.push(i); } }
+  for (let x = 0; x < size; x++)
+    for (const y of [0, size - 1]) { const i = y * size + x; if (bg[i]) { outside[i] = 1; stack.push(i); } }
+  for (let y = 0; y < size; y++)
+    for (const x of [0, size - 1]) { const i = y * size + x; if (bg[i] && !outside[i]) { outside[i] = 1; stack.push(i); } }
   while (stack.length) {
     const i = stack.pop() ?? 0;
-    const x = i % MODEL_SIZE;
-    const y = (i / MODEL_SIZE) | 0;
-    for (const j of [x > 0 ? i - 1 : -1, x < MODEL_SIZE - 1 ? i + 1 : -1, y > 0 ? i - MODEL_SIZE : -1, y < MODEL_SIZE - 1 ? i + MODEL_SIZE : -1])
+    const x = i % size;
+    const y = (i / size) | 0;
+    for (const j of [x > 0 ? i - 1 : -1, x < size - 1 ? i + 1 : -1, y > 0 ? i - size : -1, y < size - 1 ? i + size : -1])
       if (j >= 0 && bg[j] && !outside[j]) { outside[j] = 1; stack.push(j); }
   }
   for (let i = 0; i < n; i++) if (bg[i] && !outside[i]) keep[i] = 255;
@@ -143,23 +192,23 @@ function cleanModelMask(u8: Uint8Array): { mask: Uint8Array; dropped: number } {
 }
 
 /** Light erosion at model-res (U²-Net's silhouette runs ~2 model-px loose). */
-function erode(u8: Uint8Array, passes: number): Uint8Array {
+function erode(u8: Uint8Array, size: number, passes: number): Uint8Array {
   let cur = u8;
   for (let pass = 0; pass < passes; pass++) {
     const out = new Uint8Array(cur);
-    for (let y = 0; y < MODEL_SIZE; y++) {
-      for (let x = 0; x < MODEL_SIZE; x++) {
+    for (let y = 0; y < size; y++) {
+      for (let x = 0; x < size; x++) {
         let mn = 255;
         for (let dy = -1; dy <= 1; dy++)
           for (let dx = -1; dx <= 1; dx++) {
             const yy = y + dy;
             const xx = x + dx;
-            if (yy >= 0 && yy < MODEL_SIZE && xx >= 0 && xx < MODEL_SIZE) {
-              const v = cur[yy * MODEL_SIZE + xx] ?? 0;
+            if (yy >= 0 && yy < size && xx >= 0 && xx < size) {
+              const v = cur[yy * size + xx] ?? 0;
               if ((v ?? 0) < mn) mn = v ?? 0;
             }
           }
-        out[y * MODEL_SIZE + x] = mn;
+        out[y * size + x] = mn;
       }
     }
     cur = out;
@@ -235,43 +284,44 @@ export interface MaskStats {
   coverage: number;
 }
 
-/** Run U²-Net on an RGBA image buffer → alpha mask (0..255), WxH. */
+/** Run the matte model on an RGBA image buffer → alpha mask (0..255), WxH. */
 export async function maskFor(
   rgba: Buffer,
   width: number,
   height: number,
+  model: MatteModel = "modnet",
 ): Promise<{ mask: Float32Array; stats: MaskStats }> {
   const ort = await import("onnxruntime-node");
   const sharp = (await import("sharp")).default;
+  const spec = MODELS[model];
+  const S = spec.size;
 
   // 1. letterbox into the square model input — never squash 9:16 into 1:1
-  const scale = Math.min(MODEL_SIZE / width, MODEL_SIZE / height);
+  const scale = Math.min(S / width, S / height);
   const rw = Math.max(1, Math.round(width * scale));
   const rh = Math.max(1, Math.round(height * scale));
-  const ox = Math.floor((MODEL_SIZE - rw) / 2);
-  const oy = Math.floor((MODEL_SIZE - rh) / 2);
+  const ox = Math.floor((S - rw) / 2);
+  const oy = Math.floor((S - rh) / 2);
   const { data } = await sharp(rgba, { raw: { width, height, channels: 4 } })
     .resize(rw, rh)
     .removeAlpha()
-    .extend({ top: oy, bottom: MODEL_SIZE - rh - oy, left: ox, right: MODEL_SIZE - rw - ox, background: { r: 114, g: 114, b: 114 } })
+    .extend({ top: oy, bottom: S - rh - oy, left: ox, right: S - rw - ox, background: { r: 114, g: 114, b: 114 } })
     .raw()
     .toBuffer({ resolveWithObject: true });
 
-  // NCHW float32 with ImageNet mean/std normalization (rembg's transform).
-  const input = new Float32Array(3 * MODEL_SIZE * MODEL_SIZE);
-  const px = MODEL_SIZE * MODEL_SIZE;
-  const MEAN = [0.485, 0.456, 0.406];
-  const STD = [0.229, 0.224, 0.225];
+  // NCHW float32 with the model's own mean/std normalization.
+  const input = new Float32Array(3 * S * S);
+  const px = S * S;
   for (let i = 0; i < px; i++)
-    for (let c = 0; c < 3; c++) input[c * px + i] = ((data[i * 3 + c] ?? 0) / 255 - (MEAN[c] ?? 0)) / (STD[c] ?? 1);
+    for (let c = 0; c < 3; c++) input[c * px + i] = ((data[i * 3 + c] ?? 0) / 255 - (spec.mean[c] ?? 0)) / (spec.std[c] ?? 1);
 
-  const sess = await session();
+  const sess = await session(model);
   const out = await sess.run({
-    "input.1": new ort.Tensor("float32", input, [1, 3, MODEL_SIZE, MODEL_SIZE]),
+    [spec.inputName]: new ort.Tensor("float32", input, [1, 3, S, S]),
   });
-  const outKey = Object.keys(out)[0];
+  const outKey = spec.outputName ?? Object.keys(out)[0];
   const m = outKey ? out[outKey]?.data : undefined;
-  if (!m) throw new Error("u2net produced no output tensor");
+  if (!m) throw new Error(`${model} produced no output tensor`);
 
   // 2. stable normalization: this ONNX build emits probabilities (sigmoid
   // is baked in), so the values are already on the same 0..1 scale every
@@ -283,13 +333,14 @@ export async function maskFor(
     u8[i] = Math.round(Math.max(0, Math.min(1, v)) * 255);
   }
 
-  // 3. largest component + hole fill at model-res
-  const { mask: cleaned, dropped } = cleanModelMask(u8);
-  const tightened = erode(cleaned, 1);
+  // 3. largest component + hole fill at model-res; u2net's silhouette
+  // runs loose so it gets a light erosion — MODNet's soft matte doesn't.
+  const { mask: cleaned, dropped } = cleanModelMask(u8, S);
+  const tightened = spec.erode ? erode(cleaned, S, spec.erode) : cleaned;
 
   // 4. upsample the cleaned letterbox region back to full res
   const { data: cropped } = await sharp(Buffer.from(tightened), {
-    raw: { width: MODEL_SIZE, height: MODEL_SIZE, channels: 1 },
+    raw: { width: S, height: S, channels: 1 },
   })
     .extract({ left: ox, top: oy, width: rw, height: rh })
     .resize(width, height, { kernel: "lanczos3" })
@@ -379,10 +430,10 @@ export interface MatteReport {
   coverageMax: number;
 }
 
-export async function removeBackgroundImage(input: string, out: string): Promise<{ path: string }> {
+export async function removeBackgroundImage(input: string, out: string, model: MatteModel = "modnet"): Promise<{ path: string }> {
   const sharp = (await import("sharp")).default;
   const { data, info } = await sharp(input).ensureAlpha().raw().toBuffer({ resolveWithObject: true });
-  const { mask } = await maskFor(data, info.width, info.height);
+  const { mask } = await maskFor(data, info.width, info.height, model);
   const refined = await guidedRefine(data, mask, info.width, info.height);
   applyMask(data, refined, null, 0);
   await sharp(data, { raw: { width: info.width, height: info.height, channels: 4 } })
@@ -397,6 +448,7 @@ export async function removeBackgroundVideo(opts: {
   ffmpeg?: string;
   ffprobe?: string;
   smoothing?: number; // 0..1 mask blend with previous frame
+  model?: MatteModel;
   start?: number;
   end?: number;
   onProgress?: (done: number, total: number) => void;
@@ -448,7 +500,7 @@ export async function removeBackgroundVideo(opts: {
       .ensureAlpha()
       .raw()
       .toBuffer({ resolveWithObject: true });
-    const { mask, stats } = await maskFor(data, info.width, info.height);
+    const { mask, stats } = await maskFor(data, info.width, info.height, opts.model);
     const refined = await guidedRefine(data, mask, info.width, info.height);
     const alpha = applyMask(data, refined, prev, smoothing);
     coverageMin = Math.min(coverageMin, stats.coverage);

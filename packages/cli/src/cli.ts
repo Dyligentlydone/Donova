@@ -672,6 +672,7 @@ const removeBgCliCmd = defineCommand({
     start: { type: "string", description: "start seconds (video)" },
     end: { type: "string", description: "end seconds (video)" },
     smoothing: { type: "string", default: "0.4" },
+    model: { type: "string", description: "matte model: modnet (default) | u2net" },
     ...JSON_ARG,
   },
   async run({ args }) {
@@ -682,6 +683,7 @@ const removeBgCliCmd = defineCommand({
         start: args.start ? Number(args.start) : undefined,
         end: args.end ? Number(args.end) : undefined,
         smoothing: Number(args.smoothing),
+        model: args.model === "u2net" ? "u2net" : "modnet",
       }),
     );
     if (res == null) return;
