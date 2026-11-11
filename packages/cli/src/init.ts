@@ -26,6 +26,8 @@ export async function initProject(
   await mkdir(root, { recursive: true });
   await mkdir(join(root, "compositions"), { recursive: true });
   await mkdir(join(root, "media"), { recursive: true });
+  await mkdir(join(root, "footage"), { recursive: true });
+  await mkdir(join(root, "renders"), { recursive: true });
 
   if (opts?.template) {
     const examplesDir = pkgAsset("registry/examples");
@@ -149,8 +151,12 @@ export async function initProject(
   await writeFile(join(root, "index.html"), html);
   await writeFile(join(root, "donova.json"), `${JSON.stringify(config, null, 2)}\n`);
   await writeFile(
-    join(root, "AGENTS.md"),
-    `# ${name}\n\nDonova project. Composition: index.html.\n\n- Lint: \`donova check\`\n- Preview: \`donova preview\`\n- Render: \`donova render --out out.mp4\`\n\nContract: timed elements carry data-start + data-duration (+ class="clip").\nRegister one paused GSAP timeline on window.__timelines["main"] when animating with GSAP code.\nStudio-authored animation uses data-fc-motion (never hand-edited GSAP).\n`,
+    join(root, "style.md"),
+    `# Style\n\nYour editing style — the agent reads this before touching the cut.\nKeep it short; delete lines you don't care about.\n\n- vibe:      \n- colors:    \n- fonts:     \n- captions:  \n- pacing:    \n- music:     \n`,
   );
-  return ["index.html", "donova.json", "AGENTS.md", "compositions/", "media/"];
+  await writeFile(
+    join(root, "AGENTS.md"),
+    `# ${name}\n\nDonova project. Composition: index.html.\n\n- Lint: \`donova check\`\n- Preview: \`donova preview\`\n- Render: \`donova render --out renders/out.mp4\`\n\nFolders: drop raw clips in footage/, exports land in renders/, assets/ is media\nreferenced by the composition. style.md is the user's style bible — read it\nbefore editing.\n\nContract: timed elements carry data-start + data-duration (+ class="clip").\nRegister one paused GSAP timeline on window.__timelines["main"] when animating with GSAP code.\nStudio-authored animation uses data-fc-motion (never hand-edited GSAP).\n`,
+  );
+  return ["index.html", "donova.json", "AGENTS.md", "style.md", "compositions/", "media/", "footage/", "renders/"];
 }
