@@ -1,6 +1,5 @@
 import { cpus } from "node:os";
 import { resolve } from "node:path";
-import { fileURLToPath } from "node:url";
 import { CLI_NAME, VERSION } from "@donova/contract";
 import { render } from "@donova/producer";
 import { startStudioServer } from "@donova/studio-server";
@@ -16,6 +15,7 @@ import { CliError, ERR, guardJson, jsonErr, jsonOut } from "./errors.js";
 import { evalProject } from "./evals.js";
 import { initProject } from "./init.js";
 import { probeCmd, timelineCmd } from "./inspect.js";
+import { pkgAsset } from "./pkgAssets.js";
 import { previewProject } from "./preview.js";
 import { removeBackgroundCmd } from "./removeBackground.js";
 import { scaffoldCmd } from "./scaffold.js";
@@ -309,7 +309,7 @@ const catalogCmd = defineCommand({
     await guardJson(args.json, async () => {
       const { readFile } = await import("node:fs/promises");
       const { join } = await import("node:path");
-      const regRoot = fileURLToPath(new URL("../../../registry", import.meta.url));
+      const regRoot = pkgAsset("registry");
       const catalog = JSON.parse(await readFile(join(regRoot, "catalog.json"), "utf8")) as {
         items: Array<{ name: string; type?: string; description?: string }>;
       };

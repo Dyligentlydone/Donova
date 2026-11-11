@@ -1,9 +1,13 @@
 {
-  "name": "@donova/cli",
+  "name": "donova",
   "version": "0.1.0",
-  "private": true,
+  "description": "Donova — describe your edit, ship your video. AI-assisted HTML video editor with Studio, annotations, and a model-agnostic agent bridge.",
+  "license": "SEE LICENSE IN LICENSE",
   "type": "module",
   "main": "./dist/index.js",
+  "engines": {
+    "node": ">=20"
+  },
   "types": "./dist/index.d.ts",
   "exports": {
     ".": {
@@ -12,22 +16,27 @@
     },
     "./package.json": "./package.json"
   },
-  "files": ["dist", "bin", "schemas", "vendor"],
+  "files": [
+    "dist",
+    "bin",
+    "vendor",
+    "skills",
+    "registry",
+    "ui",
+    "NOTICE.md",
+    "LICENSE-hyperframes"
+  ],
   "scripts": {
-    "build": "tsup src/index.ts --format esm --dts --clean",
+    "build": "tsup && node scripts/copy-assets.mjs",
+    "prepack": "pnpm build",
     "test": "vitest run --passWithNoTests",
     "typecheck": "tsc --noEmit"
-  },
-  "devDependencies": {
-    "tsup": "^8.3.5",
-    "typescript": "5.7.3",
-    "vitest": "2.1.9"
   },
   "bin": {
     "donova": "./bin/donova.mjs",
     "do": "./bin/donova.mjs"
   },
-  "dependencies": {
+  "devDependencies": {
     "@donova/contract": "workspace:*",
     "@donova/engine": "workspace:*",
     "@donova/lint": "workspace:*",
@@ -35,10 +44,22 @@
     "@donova/producer": "workspace:*",
     "@donova/runtime": "workspace:*",
     "@donova/studio-server": "workspace:*",
+    "tsup": "^8.3.5",
+    "typescript": "5.7.3",
+    "vitest": "2.1.9"
+  },
+  "dependencies": {
     "@hyperframes/inspector": "0.9.22",
     "@hyperframes/sdk": "0.9.22",
+    "@puppeteer/browsers": "^2.10.0",
     "citty": "^0.1.6",
+    "ffmpeg-static": "^5.2.0",
+    "ffprobe-static": "^3.1.0",
     "hyperframes": "0.9.22",
-    "puppeteer-core": "^24.10.0"
+    "onnxruntime-node": "1.20.1",
+    "parse5": "^7.2.1",
+    "puppeteer-core": "^24.10.0",
+    "sharp": "0.33.5",
+    "sherpa-onnx-node": "1.13.8"
   }
 }

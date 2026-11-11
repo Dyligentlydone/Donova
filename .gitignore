@@ -20,3 +20,11 @@ dist/
 out.mp4
 *.tmp.mp4
 *.video-only.tmp.mp4
+
+# generated packaged assets (scripts/copy-assets.mjs)
+packages/cli/skills/
+packages/cli/registry/
+packages/cli/ui/
+packages/cli/vendor/
+packages/cli/LICENSE-hyperframes
+packages/cli/*.tgz

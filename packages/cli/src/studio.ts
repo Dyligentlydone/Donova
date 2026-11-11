@@ -1,4 +1,4 @@
-import { runHyperframes } from "./hf.js";
+import { runHyperframesRebranded } from "./hf.js";
 
 /**
  * `donova studio` — boot the HyperFrames Studio editor against an Donova
@@ -43,7 +43,7 @@ export async function launchHyperframesStudio(
     hfArgs.push("--background", `--port=${port}`);
     if (opts.noOpen) hfArgs.push("--no-open");
   }
-  const code = await runHyperframes(hfArgs);
+  const code = await runHyperframesRebranded(hfArgs);
   if (code !== 0) throw new Error(`hyperframes exited ${code}`);
   if (!opts.stop) {
     const { ensureAnnotateServer } = await import("./annotate.js");

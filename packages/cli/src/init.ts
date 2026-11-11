@@ -1,6 +1,6 @@
 import { mkdir, readdir, writeFile } from "node:fs/promises";
 import { basename, join, resolve } from "node:path";
-import { fileURLToPath } from "node:url";
+import { pkgAsset } from "./pkgAssets.js";
 
 /** `donova init` — scaffold a new project (06 §init). */
 export async function initProject(
@@ -28,7 +28,7 @@ export async function initProject(
   await mkdir(join(root, "media"), { recursive: true });
 
   if (opts?.template) {
-    const examplesDir = fileURLToPath(new URL("../../../registry/examples", import.meta.url));
+    const examplesDir = pkgAsset("registry/examples");
     const srcDir = join(examplesDir, opts.template);
     const { cp, readFile } = await import("node:fs/promises");
     const available = (await readdir(examplesDir)).sort();

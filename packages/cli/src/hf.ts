@@ -42,3 +42,45 @@ export function runHyperframes(args: string[], cwd?: string): Promise<number> {
     });
   });
 }
+
+/**
+ * Studio-launch variant: buffers the child's banner, rewrites user-facing
+ * brand strings to Donova, then flushes. Real filesystem paths and URLs
+ * (e.g. ~/.local/state/hyperframes/...) are left untouched — they are true
+ * facts about where upstream keeps state, and faking them would break
+ * anyone following the printed path.
+ */
+export function runHyperframesRebranded(args: string[], cwd?: string): Promise<number> {
+  const bin = resolveHyperframesBin();
+  const viaNode = bin.endsWith(".mjs");
+  const cmd = viaNode ? process.execPath : bin;
+  return new Promise((resolvePromise, reject) => {
+    const child = spawn(cmd, viaNode ? [bin, ...args] : args, {
+      stdio: ["inherit", "pipe", "pipe"],
+      cwd,
+      env: { ...process.env, HYPERFRAMES_NO_TELEMETRY: "1", DO_NOT_TRACK: "1" },
+    });
+    let out = "";
+    let err = "";
+    child.stdout?.on("data", (d) => {
+      out += d;
+    });
+    child.stderr?.on("data", (d) => {
+      err += d;
+    });
+    child.on("error", reject);
+    child.on("exit", (code) => {
+      process.stdout.write(rebrandBanner(out));
+      process.stderr.write(err);
+      if (code != null && code !== 0) process.exitCode = code;
+      resolvePromise(code ?? 1);
+    });
+  });
+}
+
+function rebrandBanner(s: string): string {
+  return s
+    .replace(/hyperframes preview/gi, "Donova Studio")
+    .replace(/HyperFrames(?!\.|\/)/g, "Donova")
+    .replace(/hyperframes(?!\.|\/)/g, "donova");
+}

@@ -1,7 +1,7 @@
 import { existsSync } from "node:fs";
 import { cp, mkdir, readFile, readdir } from "node:fs/promises";
-import { dirname, join, resolve } from "node:path";
-import { fileURLToPath } from "node:url";
+import { join, resolve } from "node:path";
+import { pkgAsset } from "./pkgAssets.js";
 
 /**
  * `donova add <block>` — install a registry block into the project's
@@ -9,7 +9,7 @@ import { fileURLToPath } from "node:url";
  */
 export async function addBlock(projectDir: string, name: string): Promise<{ dest: string; files: string[] }> {
   const dir = resolve(projectDir);
-  const regRoot = join(dirname(fileURLToPath(import.meta.url)), "../../../registry");
+  const regRoot = pkgAsset("registry");
   const catalog = JSON.parse(await readFile(join(regRoot, "catalog.json"), "utf8")) as {
     items: Array<{ name: string; path: string; type?: string }>;
   };
