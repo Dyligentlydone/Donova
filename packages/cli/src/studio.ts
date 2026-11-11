@@ -1,3 +1,4 @@
+import { createServer } from "node:http";
 import { resolve } from "node:path";
 import { runHyperframesRebranded } from "./hf.js";
 
@@ -19,6 +20,22 @@ export interface StudioLaunchOptions {
 
 const DEFAULT_STUDIO_PORT = 3006;
 
+/** First free port >= preferred — a second Studio takes 3007 instead of
+ * erroring on the one that's already running (installer re-run case). */
+async function freePort(preferred: number): Promise<number> {
+  const tryPort = (p: number) =>
+    new Promise<boolean>((res) => {
+      const s = createServer();
+      s.once("error", () => res(false));
+      s.once("listening", () => s.close(() => res(true)));
+      s.listen(p, "127.0.0.1");
+    });
+  for (let p = preferred; p < preferred + 20; p++) {
+    if (await tryPort(p)) return p;
+  }
+  return preferred;
+}
+
 export async function launchHyperframesStudio(
   projectDir: string,
   opts: StudioLaunchOptions = {},
@@ -28,7 +45,7 @@ export async function launchHyperframesStudio(
   // carry the CLI entry path into the detached sidecar so its children
   // (auto watcher, agent jobs) can respawn `donova` reliably.
   if (process.argv[1]) process.env.DONOVA_BIN = resolve(process.argv[1]);
-  const port = opts.port || DEFAULT_STUDIO_PORT;
+  const port = opts.port || (await freePort(DEFAULT_STUDIO_PORT));
   const hfArgs = ["preview", projectDir];
   if (opts.stop) {
     hfArgs.push("--stop");

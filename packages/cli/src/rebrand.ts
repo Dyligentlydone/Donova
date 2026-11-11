@@ -482,19 +482,41 @@ const CHAT = `<script>
 })();
 </script>`;
 
-// "auto donova" toggle — pill left of the agent chat pill. Reads/flips the
-// sidecar's /auto route, which drives the raw-footage watcher daemon: drop a
-// clip → it gets edited to the style bible → lands in donova videos/.
+// "auto donova" toggle — pill pinned in the top header, immediately left of
+// the Export button. React owns that header so we never inject inside it —
+// we measure Export's rect and pin ourselves beside it (re-measured on a
+// timer + resize). Reads/flips the sidecar's /auto route, which drives the
+// raw-footage watcher daemon.
 const AUTO = `<script>
-// donova-rebrand-auto-v1
+// donova-rebrand-auto-v2
 (function(){
   var ID='fc-auto-pill',port=(+location.port||80)+1000,base='http://127.0.0.1:'+port;
   var st={enabled:false,running:false,down:false};
+  function exportBtn(){
+    var bs=document.querySelectorAll('button');
+    for(var i=0;i<bs.length;i++){
+      var t=(bs[i].textContent||'').trim();
+      if(t==='Export'||t==='Rendering…'||t==='Rendering...')return bs[i];
+    }
+    return null;
+  }
+  function place(){
+    var p=document.getElementById(ID);if(!p)return;
+    var b=exportBtn();
+    if(b){
+      var r=b.getBoundingClientRect();
+      p.style.top=(r.top+(r.height-p.offsetHeight)/2)+'px';
+      p.style.right=(innerWidth-r.left+8)+'px';
+      p.style.bottom='auto';
+    }else{
+      p.style.top='10px';p.style.right='20px';p.style.bottom='auto';
+    }
+  }
   function pill(){
     var p=document.getElementById(ID);
     if(!p){
       p=document.createElement('button');p.id=ID;
-      p.setAttribute('style','position:fixed;right:130px;bottom:20px;z-index:2147483000;padding:8px 14px;border-radius:8px;border:1px solid #ffffff22;background:#0b0e14e6;color:#9aa3b2;font:600 13px system-ui,sans-serif;cursor:pointer;display:inline-flex;align-items:center;gap:7px');
+      p.setAttribute('style','position:fixed;top:10px;right:20px;z-index:2147483000;padding:6px 12px;border-radius:8px;border:1px solid #ffffff22;background:#0b0e14e6;color:#9aa3b2;font:600 12px system-ui,sans-serif;cursor:pointer;display:inline-flex;align-items:center;gap:7px');
       p.title='auto donova — drop a clip in "02 Projects/raw footage", it gets edited to your style and lands in "donova videos"';
       p.onclick=function(){
         p.disabled=true;
@@ -517,17 +539,18 @@ const AUTO = `<script>
   }
   function toast(m){
     var t=document.createElement('div');t.textContent=m;
-    t.setAttribute('style','position:fixed;bottom:64px;right:130px;z-index:2147483002;background:#0b0e14f2;color:#e8ecf1;border:1px solid #5df0a055;border-radius:8px;padding:8px 14px;font:12px system-ui');
+    t.setAttribute('style','position:fixed;top:52px;right:20px;z-index:2147483002;background:#0b0e14f2;color:#e8ecf1;border:1px solid #5df0a055;border-radius:8px;padding:8px 14px;font:12px system-ui');
     document.body.appendChild(t);setTimeout(function(){t.remove()},3600);
   }
   function tick(){
     fetch(base+'/auto').then(function(r){return r.json()})
-      .then(function(j){st.enabled=!!j.enabled;st.running=!!j.running;st.down=false;pill();paint();})
+      .then(function(j){st.enabled=!!j.enabled;st.running=!!j.running;st.down=false;paint();})
       .catch(function(){st.down=true;paint();});
   }
-  var mo=new MutationObserver(function(){pill();});
-  mo.observe(document.documentElement,{childList:true,subtree:true});
-  setInterval(tick,10000);pill();paint();tick();
+  new MutationObserver(function(){pill();place();}).observe(document.documentElement,{childList:true,subtree:true});
+  addEventListener('resize',place);
+  setInterval(place,2000);setInterval(tick,10000);
+  pill();paint();place();tick();
 })();
 </script>`;
 

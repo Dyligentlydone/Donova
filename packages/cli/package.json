@@ -1,6 +1,6 @@
 {
   "name": "donova",
-  "version": "0.1.5",
+  "version": "0.1.6",
   "description": "Donova — describe your edit, ship your video. AI-assisted HTML video editor with Studio, annotations, and a model-agnostic agent bridge.",
   "license": "SEE LICENSE IN LICENSE",
   "type": "module",
