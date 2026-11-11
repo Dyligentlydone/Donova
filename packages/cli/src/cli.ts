@@ -1,5 +1,5 @@
 import { cpus } from "node:os";
-import { resolve } from "node:path";
+import { join, resolve } from "node:path";
 import { CLI_NAME, VERSION } from "@donova/contract";
 import { render } from "@donova/producer";
 import { startStudioServer } from "@donova/studio-server";
@@ -684,6 +684,59 @@ const evalCliCmd = defineCommand({
   },
 });
 
+const watchCliCmd = defineCommand({
+  meta: {
+    name: "watch",
+    description:
+      "auto donova — watch the workspace raw footage/ pool and auto-edit new clips to the style bible",
+  },
+  args: {
+    workspace: { type: "string", description: "path to the 'Donova Studio' workspace folder" },
+    stop: { type: "boolean", description: "disable auto editing", default: false },
+    status: { type: "boolean", description: "show auto state", default: false },
+    run: { type: "boolean", description: "(internal) run the watcher in-process", default: false },
+    ...JSON_ARG,
+  },
+  async run({ args }) {
+    const { autoStatus, findWorkspace, runWatch, setAutoEnabled } = await import("./watch.js");
+    if (args.run) {
+      await runWatch(args.workspace ? String(args.workspace) : undefined);
+      return;
+    }
+    if (args.status) {
+      const st = await autoStatus(process.cwd());
+      if (args.json) {
+        jsonOut(st);
+        return;
+      }
+      console.log(`auto donova: ${st.enabled ? (st.running ? "on" : "enabled, watcher down") : "off"}`);
+      if (st.workspace) console.log(`workspace:  ${st.workspace}`);
+      const done = Object.entries(st.processed);
+      if (done.length) {
+        console.log("processed:");
+        for (const [f, p] of done.slice(-8)) {
+          console.log(`  ${f} → ${p.error ? `error: ${p.error}` : (p.out ?? "ok")}`);
+        }
+      }
+      return;
+    }
+    if (args.stop) {
+      const st = setAutoEnabled(false);
+      if (args.json) jsonOut(st);
+      else console.log("auto donova: off");
+      return;
+    }
+    const ws = args.workspace ? resolve(String(args.workspace)) : (findWorkspace() ?? undefined);
+    const st = setAutoEnabled(true, ws);
+    if (args.json) {
+      jsonOut(st);
+      return;
+    }
+    console.log(`auto donova: on — watching ${join(String(st.workspace), "02 Projects", "raw footage")}`);
+    console.log("drop a clip there → it gets edited to your style and lands in donova videos/");
+  },
+});
+
 const mcpCliCmd = defineCommand({
   meta: { name: "mcp", description: "MCP server over stdio for agent clients" },
   args: {},
@@ -744,6 +797,7 @@ const main = defineCommand({
     timeline: timelineCliCmd,
     style: styleCliCmd,
     skills: skillsCliCmd,
+    watch: watchCliCmd,
     mcp: mcpCliCmd,
     "copy-prompt": copyPromptCliCmd,
     tts: ttsCliCmd,

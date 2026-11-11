@@ -1,3 +1,4 @@
+import { resolve } from "node:path";
 import { runHyperframesRebranded } from "./hf.js";
 
 /**
@@ -24,6 +25,9 @@ export async function launchHyperframesStudio(
 ): Promise<void> {
   const { rebrandStudioUi } = await import("./rebrand.js");
   rebrandStudioUi();
+  // carry the CLI entry path into the detached sidecar so its children
+  // (auto watcher, agent jobs) can respawn `donova` reliably.
+  if (process.argv[1]) process.env.DONOVA_BIN = resolve(process.argv[1]);
   const port = opts.port || DEFAULT_STUDIO_PORT;
   const hfArgs = ["preview", projectDir];
   if (opts.stop) {
@@ -48,5 +52,13 @@ export async function launchHyperframesStudio(
   if (!opts.stop) {
     const { ensureAnnotateServer } = await import("./annotate.js");
     await ensureAnnotateServer(projectDir, port);
+    // self-heal: auto was left on but the watcher died (sleep/reboot/kill)
+    const { autoStatus, findWorkspace, setAutoEnabled } = await import("./watch.js");
+    const st = await autoStatus();
+    if (st.enabled && !st.running) {
+      try {
+        setAutoEnabled(true, st.workspace ?? findWorkspace(projectDir) ?? undefined, "studio-heal");
+      } catch {}
+    }
   }
 }

@@ -482,6 +482,55 @@ const CHAT = `<script>
 })();
 </script>`;
 
+// "auto donova" toggle — pill left of the agent chat pill. Reads/flips the
+// sidecar's /auto route, which drives the raw-footage watcher daemon: drop a
+// clip → it gets edited to the style bible → lands in donova videos/.
+const AUTO = `<script>
+// donova-rebrand-auto-v1
+(function(){
+  var ID='fc-auto-pill',port=(+location.port||80)+1000,base='http://127.0.0.1:'+port;
+  var st={enabled:false,running:false,down:false};
+  function pill(){
+    var p=document.getElementById(ID);
+    if(!p){
+      p=document.createElement('button');p.id=ID;
+      p.setAttribute('style','position:fixed;right:130px;bottom:20px;z-index:2147483000;padding:8px 14px;border-radius:8px;border:1px solid #ffffff22;background:#0b0e14e6;color:#9aa3b2;font:600 13px system-ui,sans-serif;cursor:pointer;display:inline-flex;align-items:center;gap:7px');
+      p.title='auto donova — drop a clip in "02 Projects/raw footage", it gets edited to your style and lands in "donova videos"';
+      p.onclick=function(){
+        p.disabled=true;
+        fetch(base+'/auto',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({enabled:!st.enabled})})
+          .then(function(r){return r.json()})
+          .then(function(j){p.disabled=false;if(!j.ok){toast(j.error||'auto failed');return;}st.enabled=!!j.enabled;st.running=!!j.running;paint();toast(st.enabled?'auto on — drop a clip in raw footage':'auto off');})
+          .catch(function(){p.disabled=false;toast('auto: sidecar unreachable');});
+      };
+      document.body.appendChild(p);
+    }
+    return p;
+  }
+  function paint(){
+    var p=document.getElementById(ID);if(!p)return;
+    var dot=st.enabled?(st.running?'#5df0a0':'#e9cf6b'):'#ffffff33';
+    p.innerHTML='<span style="width:7px;height:7px;border-radius:50%;background:'+dot+';display:inline-block"></span>auto '+(st.enabled?'on':'off');
+    p.style.color=st.enabled?'#5df0a0':'#9aa3b2';
+    p.style.borderColor=st.enabled?'#5df0a055':'#ffffff22';
+    p.style.opacity=st.down?'0.4':'1';
+  }
+  function toast(m){
+    var t=document.createElement('div');t.textContent=m;
+    t.setAttribute('style','position:fixed;bottom:64px;right:130px;z-index:2147483002;background:#0b0e14f2;color:#e8ecf1;border:1px solid #5df0a055;border-radius:8px;padding:8px 14px;font:12px system-ui');
+    document.body.appendChild(t);setTimeout(function(){t.remove()},3600);
+  }
+  function tick(){
+    fetch(base+'/auto').then(function(r){return r.json()})
+      .then(function(j){st.enabled=!!j.enabled;st.running=!!j.running;st.down=false;pill();paint();})
+      .catch(function(){st.down=true;paint();});
+  }
+  var mo=new MutationObserver(function(){pill();});
+  mo.observe(document.documentElement,{childList:true,subtree:true});
+  setInterval(tick,10000);pill();paint();tick();
+})();
+</script>`;
+
 // Strips previously injected payloads regardless of which branding era wrote
 // them (donova/editnce/framecraft all use the "<word>-rebrand" marker).
 const OLD_SCRIPT_RE = /<script>\s*\/\/ \w+-rebrand[^\n]*[\s\S]*?<\/script>/g;
@@ -520,7 +569,7 @@ export function rebrandStudioUi(): boolean {
   const markUri = readAsset("donova-d.png");
   const patcher = PATCHER.replaceAll("__DONOVA_LOGO__", logoUri ? `data:image/png;base64,${logoUri}` : "");
   const chat = CHAT.replaceAll("__DONOVA_LOGO__", logoUri ? `data:image/png;base64,${logoUri}` : "");
-  const payloads = `${patcher}${ANNOTATE}${chat}`;
+  const payloads = `${patcher}${ANNOTATE}${chat}${AUTO}`;
   const marker = markerFor(payloads);
 
   const indexPath = join(dir, "index.html");
@@ -531,7 +580,7 @@ export function rebrandStudioUi(): boolean {
         .replace(OLD_SCRIPT_RE, "")
         .replace(/<!--\s*\w+-rebrand-[0-9a-f]+\s*-->/g, "")
         .replace(/<title>[^<]*<\/title>/, "<title>Donova Studio</title>")
-        .replace("</body>", `${patcher}\n${ANNOTATE}\n${chat}\n<!-- ${marker} -->\n</body>`);
+        .replace("</body>", `${patcher}\n${ANNOTATE}\n${chat}\n${AUTO}\n<!-- ${marker} -->\n</body>`);
       writeFileSync(indexPath, branded);
     }
   }

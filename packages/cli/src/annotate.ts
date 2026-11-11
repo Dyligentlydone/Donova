@@ -3,7 +3,7 @@ import { appendFileSync, existsSync, mkdirSync, readFileSync, writeFileSync } fr
 import { type IncomingMessage, type Server, type ServerResponse, createServer } from "node:http";
 import { get } from "node:http";
 import { homedir } from "node:os";
-import { join, resolve } from "node:path";
+import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
 /**
@@ -72,7 +72,7 @@ function slug(s: string): string {
 
 // --- agent bridge -----------------------------------------------------------
 
-interface AgentSpec {
+export interface AgentSpec {
   name: string; // preset key, "custom", or "endpoint"
   label: string;
   kind: "cli" | "http";
@@ -240,6 +240,61 @@ function preset(name: string): AgentSpec | null {
   const p = AGENT_PRESETS.find((a) => a.name === name);
   if (p) return { name: p.name, label: p.label, kind: "cli", cmd: p.cmd, edits: true };
   return apiPreset(name);
+}
+
+/** Public alias — the auto watcher resolves agents outside the sidecar. */
+export function resolveAgentSpec(projectDir: string): AgentSpec | null {
+  return resolveAgent(projectDir);
+}
+
+/**
+ * Run an agent to completion outside the sidecar (auto watcher). Streams
+ * lines via onLine; resolves with the exit code. PATH gets the CLI's own
+ * bin dir prepended so agents can run `donova` even on user-prefix installs.
+ */
+export function runAgentJob(
+  projectDir: string,
+  spec: AgentSpec,
+  prompt: string,
+  onLine: (line: string) => void,
+): Promise<number> {
+  return new Promise((resolvePromise) => {
+    const finish = (code: number | null) => resolvePromise(code ?? 1);
+    if (spec.kind === "http" && spec.url) {
+      void runHttpJob(projectDir, spec, prompt, onLine, finish);
+      return;
+    }
+    const cmd = spec.cmd ?? "";
+    const entry = process.argv[1];
+    // launchd daemons run with a minimal PATH — pad with the bins where agent
+    // CLIs and `donova` itself typically live so spawned agents can exec them.
+    const extra = [
+      entry ? dirname(entry) : "",
+      join(homedir(), ".donova", "npm", "bin"),
+      "/opt/homebrew/bin",
+      "/usr/local/bin",
+    ]
+      .filter(Boolean)
+      .join(":");
+    const env = {
+      ...process.env,
+      PATH: `${extra}:${process.env.PATH ?? "/usr/bin:/bin:/usr/sbin:/sbin"}`,
+    };
+    if (cmd.includes("{prompt}")) {
+      const full = cmd.replaceAll("{prompt}", `'${prompt.replaceAll("'", "'\\''")}'`);
+      const proc = spawn(full, { cwd: projectDir, shell: true, stdio: ["ignore", "pipe", "pipe"], env });
+      proc.stdout?.on("data", (d: Buffer) => onLine(d.toString()));
+      proc.stderr?.on("data", (d: Buffer) => onLine(d.toString()));
+      proc.on("close", finish);
+    } else {
+      const proc = spawn(cmd, { cwd: projectDir, shell: true, stdio: ["pipe", "pipe", "pipe"], env });
+      proc.stdin.write(prompt);
+      proc.stdin.end();
+      proc.stdout?.on("data", (d: Buffer) => onLine(d.toString()));
+      proc.stderr?.on("data", (d: Buffer) => onLine(d.toString()));
+      proc.on("close", finish);
+    }
+  });
 }
 
 /** Resolve the configured agent, honoring presets, custom cmds, HTTP endpoints. */
@@ -737,6 +792,49 @@ function handle(projectDir: string, req: IncomingMessage, res: ServerResponse): 
     job.listeners.push(res);
     req.on("close", () => {
       job.listeners = job.listeners.filter((l) => l !== res);
+    });
+    return;
+  }
+  if (req.method === "GET" && req.url === "/auto") {
+    void (async () => {
+      const { autoStatus, findWorkspace } = await import("./watch.js");
+      const st = await autoStatus(projectDir);
+      res.writeHead(200, { "content-type": "application/json" });
+      res.end(
+        JSON.stringify({
+          ok: true,
+          enabled: st.enabled,
+          running: st.running,
+          workspace: findWorkspace(projectDir) ?? st.workspace,
+          agent: st.agent,
+          processed: Object.keys(st.processed).length,
+        }),
+      );
+    })().catch((e) => {
+      res.writeHead(500, { "content-type": "application/json" });
+      res.end(JSON.stringify({ ok: false, error: String(e) }));
+    });
+    return;
+  }
+  if (req.method === "POST" && req.url === "/auto") {
+    let raw = "";
+    req.on("data", (c) => {
+      raw += c;
+    });
+    req.on("end", () => {
+      void (async () => {
+        const { setAutoEnabled, findWorkspace } = await import("./watch.js");
+        const body = JSON.parse(raw) as { enabled?: boolean };
+        const ws = findWorkspace(projectDir);
+        const st = setAutoEnabled(Boolean(body.enabled), ws ?? undefined, "studio");
+        res.writeHead(200, { "content-type": "application/json" });
+        res.end(
+          JSON.stringify({ ok: true, enabled: st.enabled, running: st.running, workspace: st.workspace }),
+        );
+      })().catch((e) => {
+        res.writeHead(400, { "content-type": "application/json" });
+        res.end(JSON.stringify({ ok: false, error: String(e) }));
+      });
     });
     return;
   }
