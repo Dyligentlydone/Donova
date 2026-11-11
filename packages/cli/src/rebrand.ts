@@ -20,20 +20,29 @@ import { dirname, join } from "node:path";
  * and gesture slots. Full vendoring (item 3) supersedes.
  */
 
-const DONOVA_FAVICON = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32"><rect width="32" height="32" rx="7" fill="#0b0e14"/><text x="16" y="22.5" text-anchor="middle" font-family="system-ui,-apple-system,sans-serif" font-size="19" font-weight="800" fill="#5df0a0">d</text></svg>`;
-
+// __DONOVA_LOGO__ / __DONOVA_MARK__ are substituted at patch time with data
+// URIs built from assets/donova-dots.png + assets/donova-d.png (committed
+// brand assets — dotted wordmark + cropped "d" glyph for the favicon).
 const PATCHER = `<script>
 // donova-rebrand
 (function(){
+  var LOGO='__DONOVA_LOGO__';
   var REMOVE_SEL = 'button,[role="menuitem"],a,[role="button"],[aria-label]';
   var REMOVE_TEXT = ['open in desktop app','install the desktop app','finish installing','comment on this storyboard in the desktop app','edit this video in the desktop app'];
   var REMOVE_LABEL = ['get the desktop app'];
   var WORDMARK = 'svg[aria-label="Hyperframes"]';
   var SKIP = {SCRIPT:1,STYLE:1,CODE:1,PRE:1,NOSCRIPT:1};
   function swap(svg){
-    var s = document.createElement('span');
-    s.textContent = 'donova';
-    s.setAttribute('style','font:800 22px/1 system-ui,-apple-system,sans-serif;letter-spacing:-0.03em;color:currentColor;display:inline-flex;align-items:center;height:28px');
+    var s;
+    if (LOGO) {
+      s = document.createElement('img');
+      s.src = LOGO; s.alt = 'donova';
+      s.setAttribute('style','height:22px;width:auto;display:inline-flex;align-items:center');
+    } else {
+      s = document.createElement('span');
+      s.textContent = 'donova';
+      s.setAttribute('style','font:800 22px/1 system-ui,-apple-system,sans-serif;letter-spacing:-0.03em;color:currentColor;display:inline-flex;align-items:center;height:28px');
+    }
     svg.replaceWith(s);
   }
   function drop(el){
@@ -326,7 +335,7 @@ const CHAT = `<script>
 // donova-rebrand-chat-v1
 (function(){
   var PID='fc-chat',TID='fc-chat-pill',port=(+location.port||80)+1000,base='http://127.0.0.1:'+port;
-  var es=null,agent=null,agentList=[];
+  var es=null,agent=null,agentList=[],LOGO='__DONOVA_LOGO__';
   function el(t,css,txt){var e=document.createElement(t);e.setAttribute('style',css);if(txt!=null)e.textContent=txt;return e;}
   function msgs(){return document.getElementById('fc-chat-msgs');}
   function scroll(){var m=msgs();if(m)m.scrollTop=m.scrollHeight;}
@@ -460,8 +469,9 @@ const CHAT = `<script>
   function mount(){
     if(!document.body)return;
     if(!document.getElementById(TID)){
-      var t=el('button','position:fixed;right:20px;bottom:20px;z-index:2147483000;padding:8px 14px;border-radius:8px;border:1px solid #5df0a055;background:#0b0e14e6;color:#5df0a0;font:600 13px system-ui,sans-serif;cursor:pointer','agent');
+      var t=el('button','position:fixed;right:20px;bottom:20px;z-index:2147483000;padding:8px 14px;border-radius:8px;border:1px solid #5df0a055;background:#0b0e14e6;color:#5df0a0;font:600 13px system-ui,sans-serif;cursor:pointer;display:inline-flex;align-items:center;gap:6px','agent');
       t.id=TID;t.title='chat with the agent';
+      if(LOGO){var li=document.createElement('img');li.src=LOGO;li.alt='';li.setAttribute('style','height:12px;width:auto');t.insertBefore(li,t.firstChild);}
       t.onclick=function(){open()};
       document.body.appendChild(t);
     }
@@ -476,10 +486,11 @@ const CHAT = `<script>
 // them (donova/editnce/framecraft all use the "<word>-rebrand" marker).
 const OLD_SCRIPT_RE = /<script>\s*\/\/ \w+-rebrand[^\n]*[\s\S]*?<\/script>/g;
 
-// Marker hashes the injected payloads so ANY change to PATCHER/ANNOTATE
-// re-patches the bundle — a bumped-by-hand version string kept letting stale
-// scripts survive across edits.
-const MARKER = `donova-rebrand-${createHash("sha1").update(`${PATCHER}${ANNOTATE}${CHAT}`).digest("hex").slice(0, 10)}`;
+// Marker hashes the substituted payloads so ANY change — script text or the
+// embedded logo — re-patches the bundle.
+function markerFor(payloads: string): string {
+  return `donova-rebrand-${createHash("sha1").update(payloads).digest("hex").slice(0, 10)}`;
+}
 
 function studioUiDir(): string | null {
   try {
@@ -496,20 +507,43 @@ export function rebrandStudioUi(): boolean {
   const dir = studioUiDir();
   if (!dir) return false;
 
+  // Brand assets: dotted wordmark + cropped "d" glyph, committed under
+  // packages/cli/assets and shipped in the published tarball.
+  const readAsset = (name: string): string => {
+    try {
+      return readFileSync(new URL(`../assets/${name}`, import.meta.url)).toString("base64");
+    } catch {
+      return "";
+    }
+  };
+  const logoUri = readAsset("donova-dots.png");
+  const markUri = readAsset("donova-d.png");
+  const patcher = PATCHER.replaceAll("__DONOVA_LOGO__", logoUri ? `data:image/png;base64,${logoUri}` : "");
+  const chat = CHAT.replaceAll("__DONOVA_LOGO__", logoUri ? `data:image/png;base64,${logoUri}` : "");
+  const payloads = `${patcher}${ANNOTATE}${chat}`;
+  const marker = markerFor(payloads);
+
   const indexPath = join(dir, "index.html");
   if (existsSync(indexPath)) {
     const html = readFileSync(indexPath, "utf8");
-    if (!html.includes(MARKER)) {
+    if (!html.includes(marker)) {
       const branded = html
         .replace(OLD_SCRIPT_RE, "")
         .replace(/<!--\s*\w+-rebrand-[0-9a-f]+\s*-->/g, "")
         .replace(/<title>[^<]*<\/title>/, "<title>Donova Studio</title>")
-        .replace("</body>", `${PATCHER}\n${ANNOTATE}\n${CHAT}\n<!-- ${MARKER} -->\n</body>`);
+        .replace("</body>", `${patcher}\n${ANNOTATE}\n${chat}\n<!-- ${marker} -->\n</body>`);
       writeFileSync(indexPath, branded);
     }
   }
 
-  const faviconPath = join(dir, "favicon.svg");
-  if (existsSync(faviconPath)) writeFileSync(faviconPath, `${DONOVA_FAVICON}\n`);
+  if (markUri) {
+    const faviconPath = join(dir, "favicon.svg");
+    if (existsSync(faviconPath)) {
+      writeFileSync(
+        faviconPath,
+        `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><rect width="64" height="64" rx="14" fill="#0b0e14"/><image href="data:image/png;base64,${markUri}" x="8" y="8" width="48" height="48"/></svg>\n`,
+      );
+    }
+  }
   return true;
 }
