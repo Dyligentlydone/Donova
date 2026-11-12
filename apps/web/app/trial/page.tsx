@@ -69,8 +69,8 @@ export default function TrialPage() {
         <div className="max-w-md rounded-2xl border border-[#4a8fd8]/30 bg-[#4a8fd8]/5 p-8">
           <h2 className="text-2xl font-extrabold mb-3">Your free week is up</h2>
           <p className="text-white/60 mb-6">
-            Hope the edits landed. Keep everything going — every project, every
-            clip — for <b className="text-white">$11/mo</b>. Cancel anytime.
+            Keep your style guide, your videos, and your access —{" "}
+            <b className="text-white">$11/mo</b>, cancel anytime.
           </p>
           <Link
             href="/#pricing"

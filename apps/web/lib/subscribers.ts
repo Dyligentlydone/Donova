@@ -90,6 +90,25 @@ export function subscriberState(rec: SubscriberRecord | null): "paid" | "trial-a
   return "none";
 }
 
+export async function listSubscribers(): Promise<SubscriberRecord[]> {
+  const [files] = await bucket.getFiles({ prefix: "subscribers/" });
+  const records = await Promise.all(
+    files
+      .filter((f) => f.name.endsWith(".json"))
+      .map(async (f) => {
+        try {
+          const [buf] = await f.download();
+          return JSON.parse(buf.toString()) as SubscriberRecord;
+        } catch {
+          return null;
+        }
+      }),
+  );
+  return records
+    .filter((r): r is SubscriberRecord => !!r?.email)
+    .sort((a, b) => (b.trialEndsAt ?? 0) - (a.trialEndsAt ?? 0));
+}
+
 export async function isSubscriber(email: string): Promise<boolean> {
   const e = email.trim().toLowerCase();
   if (OWNER_EMAILS.includes(e)) return true;
