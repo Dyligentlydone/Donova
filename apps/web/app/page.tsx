@@ -2,10 +2,10 @@
 
 import HelcimModal from "@/components/HelcimModal";
 import Navbar from "@/components/Navbar";
-import { ArrowRight, Check, Cpu, Layers, ShieldCheck, Sparkles, Wand2, Zap } from "lucide-react";
+import { ArrowRight, Check, Palette, ShieldCheck, Sparkles, Timer, Type, Zap } from "lucide-react";
 import Image from "next/image";
-import Link from "next/link";
 import { useState } from "react";
+import { STUDIO_URL } from "../lib/studioUrl";
 
 export default function Home() {
   const [modalOpen, setModalOpen] = useState(false);
@@ -19,17 +19,16 @@ export default function Home() {
         <div className="text-center max-w-3xl mx-auto mb-12">
           <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full border border-[#4a8fd8]/30 bg-[#4a8fd8]/10 text-[#4a8fd8] text-xs font-mono font-medium mb-6">
             <Sparkles className="w-3.5 h-3.5" />
-            Vibe Editing on Google Cloud · $11 / month
+            Your AI video editor · $11 / month
           </div>
 
           <h1 className="text-4xl sm:text-6xl font-extrabold tracking-tight leading-[1.1] mb-6">
-            Learn &amp; get the tools to <span className="text-[#4a8fd8]">automate editing videos</span> like
-            a professional.
+            Edit videos by just <span className="text-[#4a8fd8]">telling it what you want.</span>
           </h1>
 
           <p className="text-lg sm:text-xl text-white/70 leading-relaxed mb-8 max-w-2xl mx-auto">
-            Upload your raw talking clips. Tell your AI editor what you want. Donova applies your custom style
-            bible, cuts the dead air, keys your background, and renders ready-to-post MP4s in minutes.
+            Drop in your raw clips. Describe the edit in plain English. Donova cuts the pauses, adds captions
+            in your style, and hands you videos ready for TikTok, Reels, and Shorts.
           </p>
 
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
@@ -41,12 +40,12 @@ export default function Home() {
               START EDITING — $11 / MO
               <ArrowRight className="w-4 h-4" />
             </button>
-            <Link
-              href="/studio"
+            <a
+              href={STUDIO_URL}
               className="w-full sm:w-auto border border-white/20 text-white/80 hover:text-white font-bold text-sm px-8 py-4 rounded-xl hover:border-white/40 transition-colors text-center"
             >
-              Open Studio Editor →
-            </Link>
+              See the Studio →
+            </a>
           </div>
         </div>
 
@@ -63,7 +62,7 @@ export default function Home() {
             />
           </div>
           <p className="text-center text-white/40 text-xs mt-4 font-mono tracking-widest">
-            THE 1-MINUTE CLOUD WORKFLOW IN ACTION
+            RAW CLIP → FINISHED VIDEO · WATCH IT HAPPEN
           </p>
         </div>
 
@@ -71,35 +70,34 @@ export default function Home() {
         <div id="features" className="grid md:grid-cols-2 lg:grid-cols-4 gap-6 mb-24">
           <div className="rounded-2xl border border-white/10 bg-white/[0.02] p-6 hover:border-[#4a8fd8]/40 transition-colors">
             <div className="w-10 h-10 rounded-xl bg-[#4a8fd8]/10 border border-[#4a8fd8]/30 flex items-center justify-center text-[#4a8fd8] mb-4">
-              <Wand2 className="w-5 h-5" />
+              <Palette className="w-5 h-5" />
             </div>
-            <h3 className="font-bold text-white text-lg mb-2">Style Bible</h3>
+            <h3 className="font-bold text-white text-lg mb-2">Learns your style</h3>
             <p className="text-sm text-white/60 leading-relaxed">
-              Teach it your fonts, pacing, and caption aesthetic once in{" "}
-              <code className="text-[#4a8fd8]">style.md</code>. Every future video reflects your signature
-              look.
+              Show it one edit — it remembers your fonts, colors, pacing, and caption look. Every video after
+              feels like yours.
             </p>
           </div>
 
           <div className="rounded-2xl border border-white/10 bg-white/[0.02] p-6 hover:border-[#4a8fd8]/40 transition-colors">
             <div className="w-10 h-10 rounded-xl bg-[#4a8fd8]/10 border border-[#4a8fd8]/30 flex items-center justify-center text-[#4a8fd8] mb-4">
-              <Layers className="w-5 h-5" />
+              <Type className="w-5 h-5" />
             </div>
-            <h3 className="font-bold text-white text-lg mb-2">MODNet Cutouts</h3>
+            <h3 className="font-bold text-white text-lg mb-2">Text behind you</h3>
             <p className="text-sm text-white/60 leading-relaxed">
-              Deep-learning human segmentation creates soft, natural hair and shoulder alpha mattes for
-              text-behind-subject effects without green screens.
+              The signature creator look — captions that slide behind your head — happens automatically. No
+              green screen needed.
             </p>
           </div>
 
           <div className="rounded-2xl border border-white/10 bg-white/[0.02] p-6 hover:border-[#4a8fd8]/40 transition-colors">
             <div className="w-10 h-10 rounded-xl bg-[#4a8fd8]/10 border border-[#4a8fd8]/30 flex items-center justify-center text-[#4a8fd8] mb-4">
-              <Cpu className="w-5 h-5" />
+              <Timer className="w-5 h-5" />
             </div>
-            <h3 className="font-bold text-white text-lg mb-2">Google Cloud Renders</h3>
+            <h3 className="font-bold text-white text-lg mb-2">Done in minutes</h3>
             <p className="text-sm text-white/60 leading-relaxed">
-              No fan noise or battery drain. Frame-accurate renders execute on high-speed headless Cloud Run
-              worker containers in seconds.
+              Exports happen on our computers, not yours. Your laptop stays fast and quiet — grab a coffee,
+              your video&apos;s ready.
             </p>
           </div>
 
@@ -107,10 +105,9 @@ export default function Home() {
             <div className="w-10 h-10 rounded-xl bg-[#4a8fd8]/10 border border-[#4a8fd8]/30 flex items-center justify-center text-[#4a8fd8] mb-4">
               <Zap className="w-5 h-5" />
             </div>
-            <h3 className="font-bold text-white text-lg mb-2">Auto Donova</h3>
+            <h3 className="font-bold text-white text-lg mb-2">Hands-free mode</h3>
             <p className="text-sm text-white/60 leading-relaxed">
-              Drop clips in your raw folder and walk away. Auto mode inspects, cuts, layers, and places
-              exported MP4s directly into your renders hub.
+              Drop clips in a folder and walk away. Come back to finished videos ready to post.
             </p>
           </div>
         </div>
@@ -121,9 +118,9 @@ export default function Home() {
           className="max-w-4xl mx-auto rounded-3xl border border-white/10 bg-white/[0.02] p-8 sm:p-12 mb-24"
         >
           <div className="text-center mb-10">
-            <p className="text-xs uppercase tracking-widest text-[#4a8fd8] font-mono mb-2">THE WORKFLOW</p>
+            <p className="text-xs uppercase tracking-widest text-[#4a8fd8] font-mono mb-2">HOW IT WORKS</p>
             <h2 className="text-2xl sm:text-3xl font-extrabold text-white">
-              From phone footage to export in 4 steps
+              From raw clip to posted video in 4 steps
             </h2>
           </div>
 
@@ -133,9 +130,9 @@ export default function Home() {
                 1
               </div>
               <div>
-                <h4 className="font-bold text-white mb-1">Drop in raw clips</h4>
+                <h4 className="font-bold text-white mb-1">Drop in your clips</h4>
                 <p className="text-sm text-white/60">
-                  Upload raw phone footage to your secure cloud bucket with zero local storage requirements.
+                  Upload straight from your phone or computer — nothing to install, works in your browser.
                 </p>
               </div>
             </div>
@@ -145,9 +142,9 @@ export default function Home() {
                 2
               </div>
               <div>
-                <h4 className="font-bold text-white mb-1">Describe your edit</h4>
+                <h4 className="font-bold text-white mb-1">Say what you want</h4>
                 <p className="text-sm text-white/60">
-                  Say &quot;hook with big gold text behind me, tight jump cuts, and synced captions.&quot;
+                  &quot;Cut the ums and pauses, big text behind me on the hook, captions the whole way.&quot;
                 </p>
               </div>
             </div>
@@ -157,10 +154,10 @@ export default function Home() {
                 3
               </div>
               <div>
-                <h4 className="font-bold text-white mb-1">Live Studio Review</h4>
+                <h4 className="font-bold text-white mb-1">Watch it happen</h4>
                 <p className="text-sm text-white/60">
-                  Preview changes in real time in the Donova Studio player. Tweak timing or add annotations
-                  with one click.
+                  See every change live in your browser. Don&apos;t like something? Just say so — it
+                  adjusts.
                 </p>
               </div>
             </div>
@@ -170,10 +167,9 @@ export default function Home() {
                 4
               </div>
               <div>
-                <h4 className="font-bold text-white mb-1">Cloud Render &amp; Download</h4>
+                <h4 className="font-bold text-white mb-1">Download &amp; post</h4>
                 <p className="text-sm text-white/60">
-                  Export directly on Google Cloud Run. Download high-bitrate 1080x1920 MP4s ready for TikTok,
-                  Reels, or Shorts.
+                  Get a finished vertical video sized for TikTok, Reels, and Shorts. That&apos;s it.
                 </p>
               </div>
             </div>
@@ -187,8 +183,8 @@ export default function Home() {
               Creator All-Access
             </div>
 
-            <h3 className="text-2xl font-bold text-white mt-2 mb-1">Donova Cloud</h3>
-            <p className="text-xs text-white/50 mb-6">Complete AI video editing suite</p>
+            <h3 className="text-2xl font-bold text-white mt-2 mb-1">Donova</h3>
+            <p className="text-xs text-white/50 mb-6">Everything you need to post daily</p>
 
             <div className="flex items-baseline justify-center gap-1 mb-6">
               <span className="text-5xl font-black text-[#4a8fd8]">$11</span>
@@ -198,25 +194,23 @@ export default function Home() {
             <ul className="space-y-3.5 text-sm text-left mb-8 max-w-xs mx-auto text-white/80">
               <li className="flex items-center gap-3">
                 <Check className="w-4 h-4 text-[#4a8fd8] shrink-0" />
-                <span>Unlimited cloud video exports</span>
+                <span>Unlimited finished videos</span>
               </li>
               <li className="flex items-center gap-3">
                 <Check className="w-4 h-4 text-[#4a8fd8] shrink-0" />
-                <span>MODNet AI background removal</span>
+                <span>Text-behind-you effect, built in</span>
               </li>
               <li className="flex items-center gap-3">
                 <Check className="w-4 h-4 text-[#4a8fd8] shrink-0" />
-                <span>
-                  Personal Style Bible (<code className="text-xs text-[#4a8fd8]">style.md</code>)
-                </span>
+                <span>Your style, remembered — every edit gets more you</span>
               </li>
               <li className="flex items-center gap-3">
                 <Check className="w-4 h-4 text-[#4a8fd8] shrink-0" />
-                <span>Google Cloud Storage asset hosting</span>
+                <span>Your footage stays in your private workspace</span>
               </li>
               <li className="flex items-center gap-3">
                 <Check className="w-4 h-4 text-[#4a8fd8] shrink-0" />
-                <span>Auto Donova drop-to-edit mode</span>
+                <span>Hands-free mode: drop a clip, get a video</span>
               </li>
               <li className="flex items-center gap-3">
                 <Check className="w-4 h-4 text-[#4a8fd8] shrink-0" />
@@ -229,12 +223,12 @@ export default function Home() {
               onClick={() => setModalOpen(true)}
               className="w-full bg-[#4a8fd8] text-black font-extrabold text-sm tracking-widest py-4 rounded-xl hover:bg-[#6aa7f0] transition-all shadow-[0_0_25px_rgba(74,143,216,0.25)]"
             >
-              SUBSCRIBE WITH HELCIM — $11/MO
+              START EDITING — $11/MO
             </button>
 
             <div className="flex items-center justify-center gap-1.5 text-[11px] text-white/40 mt-4">
               <ShieldCheck className="w-3.5 h-3.5 text-[#4a8fd8]" />
-              Interchange-Plus secure billing · No commitments
+              Secure checkout · Cancel anytime · No contracts
             </div>
           </div>
         </div>
@@ -251,7 +245,7 @@ export default function Home() {
               height={26}
               className="h-6 w-auto opacity-70"
             />
-            <span>· Next-Gen Cloud Video Editor</span>
+            <span>· Your AI video editor</span>
           </div>
           <div>© {new Date().getFullYear()} Donova. All rights reserved.</div>
         </div>

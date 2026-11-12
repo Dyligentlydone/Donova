@@ -111,18 +111,18 @@ function gatedPage(): string {
     font:600 10px/1.6 ui-monospace,monospace;letter-spacing:.1em}
 </style></head><body><div class="wrap">
   <img class="logo" src="${WEB_APP_URL}/donova-logo.png" alt="Donova">
-  <div><span class="badge">DONOVA STUDIO · AI VIDEO EDITOR · $11/MO</span></div>
-  <h1>Vibe-edit your footage.<br><span class="gold">The editor lives behind this door.</span></h1>
-  <p class="sub">You're looking at the hosted Donova Studio — a full timeline editor with an
-  AI editing agent that learns your style, cuts dead air, writes captions, and renders on
-  Google Cloud. It's live right now on this URL — for subscribers.</p>
+  <div><span class="badge">DONOVA STUDIO · YOUR AI VIDEO EDITOR · $11/MO</span></div>
+  <h1>Edit videos by just<br><span class="gold">telling it what you want.</span></h1>
+  <p class="sub">You're looking at Donova Studio — the actual editor, live on this URL.
+  Drop in clips, describe the edit in plain English, and it cuts the pauses, adds
+  captions in your style, and hands you videos ready to post. Subscribers only.</p>
   <div class="phone"><video src="${WEB_APP_URL}/demo.mp4" autoplay muted loop playsinline></video></div>
-  <p class="caption">THE 1-MINUTE CLOUD WORKFLOW</p>
+  <p class="caption">RAW CLIP → FINISHED VIDEO · WATCH IT HAPPEN</p>
   <div class="grid">
-    ${pillar("Style Bible", "Teach it your fonts, pacing, and caption look once in <code>style.md</code>. Every future edit reflects your signature.")}
-    ${pillar("AI Edit Agent", "Describe the cut in plain language — dead-air removal, punch-ins, captions, b-roll — the agent edits the real timeline.")}
-    ${pillar("Cloud Renders", "No fan noise or battery drain. Frame-accurate headless-Chrome + FFmpeg renders on Cloud Run in seconds.")}
-    ${pillar("Auto Donova", "Drop raw clips in a folder and walk away. Inspects, cuts, layers, and exports finished MP4s to your renders hub.")}
+    ${pillar("Learns your style", "Show it one edit — it remembers your fonts, colors, pacing, and caption look. Every video after feels like yours.")}
+    ${pillar("Text behind you", "The signature creator look — captions that slide behind your head — happens automatically. No green screen needed.")}
+    ${pillar("Done in minutes", "Exports happen on our computers, not yours. Your laptop stays fast and quiet — grab a coffee, your video's ready.")}
+    ${pillar("Hands-free mode", "Drop clips in a folder and walk away. Come back to finished videos ready to post.")}
   </div>
   <a class="cta" href="${WEB_APP_URL}/#pricing">Subscribe — $11/mo →</a>
   <p class="member">Already subscribed?
