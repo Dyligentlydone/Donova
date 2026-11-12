@@ -166,30 +166,30 @@ function desktopPage(): string {
     text-transform:uppercase;text-decoration:none;padding:16px 30px;border-radius:12px;white-space:nowrap;
     box-shadow:0 0 30px rgba(74,143,216,.3)}
   .open:hover{background:#6aa7f0}
-  .folders{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:18px}
-  .card{border:1px solid rgba(255,255,255,.09);border-radius:18px;background:rgba(255,255,255,.02);
-    overflow:hidden;display:flex;flex-direction:column;min-height:220px}
-  .card .head{display:flex;align-items:center;justify-content:space-between;
-    padding:16px 18px;border-bottom:1px solid rgba(255,255,255,.07)}
-  .card .head h3{font-size:14px;font-weight:700;color:#fff;display:flex;align-items:center;gap:9px}
-  .card .head h3 .ico{font-size:17px}
-  .count{font:600 10px/1 ui-monospace,monospace;letter-spacing:.1em;color:rgba(245,241,232,.4);
-    border:1px solid rgba(255,255,255,.12);border-radius:99px;padding:4px 9px}
-  .files{list-style:none;padding:8px 0;flex:1;overflow-y:auto;max-height:260px}
-  .files li{display:flex;align-items:center;gap:10px;padding:9px 18px;font-size:13px;
-    color:rgba(245,241,232,.75)}
+  .folders{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:22px}
+  .folder{display:flex;flex-direction:column;align-items:center;gap:4px;user-select:none}
+  .folder .ico{width:128px;height:auto;cursor:pointer;transition:transform .12s,filter .12s;
+    filter:drop-shadow(0 6px 14px rgba(0,0,0,.45))}
+  .folder:hover .ico{transform:scale(1.04)}
+  .folder.over .ico{transform:scale(1.08);
+    filter:drop-shadow(0 0 22px rgba(122,178,255,.55))}
+  .folder.busy .ico{opacity:.55;transform:none}
+  .folder .lbl{color:#fff;font-size:14px;font-weight:600;letter-spacing:-.01em;
+    text-shadow:0 1px 3px rgba(0,0,0,.7);cursor:pointer}
+  .folder .cnt{color:rgba(245,241,232,.45);font-size:11px;font-family:ui-monospace,monospace;
+    letter-spacing:.06em;min-height:14px}
+  .files{list-style:none;padding:6px 0;margin-top:8px;width:100%;overflow-y:auto;max-height:190px;
+    border-top:1px solid rgba(255,255,255,.07)}
+  .files li{display:flex;align-items:center;gap:10px;padding:8px 10px;font-size:13px;
+    color:rgba(245,241,232,.75);border-radius:8px}
   .files li:hover{background:rgba(255,255,255,.03)}
   .files .name{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
   .files .sz{color:rgba(245,241,232,.3);font-size:11px;font-family:ui-monospace,monospace;white-space:nowrap}
   .files a.dl{color:#4a8fd8;text-decoration:none;font-size:11px;font-weight:700;
     letter-spacing:.08em;white-space:nowrap}
   .files a.dl:hover{color:#6aa7f0}
-  .empty{padding:26px 18px;color:rgba(245,241,232,.35);font-size:13px;text-align:center}
-  .drop{margin:0 14px 14px;border:1.5px dashed rgba(74,143,216,.35);border-radius:12px;
-    padding:16px;text-align:center;color:rgba(74,143,216,.8);font-size:12px;cursor:pointer;
-    transition:border-color .15s}
-  .drop:hover,.drop.over{border-color:#4a8fd8;background:rgba(74,143,216,.06)}
-  .drop input{display:none}
+  .empty{padding:20px 12px;color:rgba(245,241,232,.32);font-size:12.5px;text-align:center}
+  .folder input{display:none}
   .other{margin-top:26px}
   .other summary{cursor:pointer;color:rgba(245,241,232,.5);font-size:13px;margin-bottom:8px}
   .foot{margin-top:40px;color:rgba(245,241,232,.3);font-size:12px;text-align:center}
@@ -201,26 +201,33 @@ function desktopPage(): string {
   <div class="hero">
     <div>
       <h1>Your video workspace</h1>
-      <p>Drop raw clips in <b>raw footage</b>, style references in <b>inspo</b> —
-      finished videos land in <b>donova videos</b>. Open Studio to edit.</p>
+      <p>Drop raw clips on <b>Raw Footage</b>, style references on <b>Inspo</b> —
+      finished videos land in <b>Donova Videos</b>. Click any folder to browse your computer.</p>
     </div>
     <a class="open" href="/studio">Open Studio →</a>
   </div>
-  <div class="folders">
-    <div class="card">
-      <div class="head"><h3><span class="ico">🎬</span> raw footage</h3><span class="count" id="c-raw">0</span></div>
-      <ul class="files" id="f-raw"><li class="empty">Drop clips below or in Studio's assets.</li></ul>
-      <label class="drop" id="drop">+ Upload a clip<input id="pick" type="file" accept="video/*" multiple></label>
+  <svg width="0" height="0" style="position:absolute"><defs>
+    <linearGradient id="gBack" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#4f93da"/><stop offset="1" stop-color="#3a76bb"/>
+    </linearGradient>
+    <linearGradient id="gFront" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#7fb4ea"/><stop offset=".12" stop-color="#6ba3e2"/><stop offset="1" stop-color="#4a87d2"/>
+    </linearGradient>
+  </defs></svg>
+  <div class="folders" id="folders"></div>
+  <template id="tpl-folder">
+    <div class="folder">
+      <svg class="ico" viewBox="0 0 128 104">
+        <path d="M14 34 L14 20 Q14 12 22 12 L46 12 L56 20 L106 20 Q114 20 114 28 L114 40 L14 40 Z" fill="url(#gBack)"/>
+        <rect x="6" y="30" width="116" height="66" rx="10" fill="url(#gFront)" stroke="rgba(0,0,0,0.14)" stroke-width="1.5"/>
+        <rect x="6" y="30" width="116" height="11" rx="5.5" fill="rgba(255,255,255,0.14)"/>
+      </svg>
+      <span class="lbl"></span>
+      <span class="cnt"></span>
+      <input type="file" accept="video/*" multiple>
+      <ul class="files"></ul>
     </div>
-    <div class="card">
-      <div class="head"><h3><span class="ico">✨</span> inspo</h3><span class="count" id="c-inspo">0</span></div>
-      <ul class="files" id="f-inspo"><li class="empty">Videos whose style you love — your agent learns from these.</li></ul>
-    </div>
-    <div class="card">
-      <div class="head"><h3><span class="ico">🎞️</span> donova videos</h3><span class="count" id="c-videos">0</span></div>
-      <ul class="files" id="f-videos"><li class="empty">Finished videos land here — download and post.</li></ul>
-    </div>
-  </div>
+  </template>
   <details class="other"><summary>Project files</summary><ul class="files" id="f-other"></ul></details>
   <p class="foot">Files sync automatically while Studio is open.</p>
 </div>
@@ -233,35 +240,49 @@ function item(f,dl){
     '<span class="sz">'+fmt(f.size)+'</span>'+
     (dl?'<a class="dl" href="/api/desktop/download?rel='+encodeURIComponent(f.rel)+'">DOWNLOAD</a>':'')+'</li>';
 }
+var FOLDERS=[
+  {key:'raw footage',label:'Raw Footage',hint:'Drop clips here or click to browse — everything you film lives in this folder.'},
+  {key:'inspo',label:'Inspo',hint:'Videos whose style you love — your agent learns from these.'},
+  {key:'donova videos',label:'Donova Videos',hint:'Finished videos land here — download and post.',downloads:true},
+];
+var tpl=document.getElementById('tpl-folder'),mount=document.getElementById('folders'),nodes={};
+FOLDERS.forEach(function(fd){
+  var node=tpl.content.firstElementChild.cloneNode(true);
+  node.dataset.folder=fd.key;
+  node.querySelector('.lbl').textContent=fd.label;
+  var pick=node.querySelector('input'),cnt=node.querySelector('.cnt'),list=node.querySelector('.files');
+  list.innerHTML='<li class="empty">'+fd.hint+'</li>';
+  function send(file){
+    node.classList.add('busy');cnt.textContent='uploading '+file.name+'…';
+    fetch('/api/desktop/upload?name='+encodeURIComponent(file.name)+'&folder='+encodeURIComponent(fd.key),{method:'POST',body:file})
+      .then(function(){node.classList.remove('busy');paint();})
+      .catch(function(){node.classList.remove('busy');cnt.textContent='upload failed — try again';});
+  }
+  node.querySelector('.ico').addEventListener('click',function(){pick.click();});
+  node.querySelector('.lbl').addEventListener('click',function(){pick.click();});
+  pick.addEventListener('change',function(){Array.from(pick.files).forEach(send);pick.value='';});
+  ['dragover','dragenter'].forEach(function(ev){node.addEventListener(ev,function(e){e.preventDefault();node.classList.add('over');});});
+  ['dragleave','drop'].forEach(function(ev){node.addEventListener(ev,function(e){e.preventDefault();node.classList.remove('over');
+    if(ev==='drop'&&e.dataTransfer&&e.dataTransfer.files)Array.from(e.dataTransfer.files).forEach(send);});});
+  mount.appendChild(node);nodes[fd.key]={cnt:cnt,list:list,dl:!!fd.downloads};
+});
 function paint(){
   fetch('/api/desktop/files').then(function(r){return r.json();}).then(function(d){
-    var groups={raw:[],inspo:[],videos:[],other:[]};
+    var groups={};Object.keys(nodes).forEach(function(k){groups[k]=[];});
+    var other=[];
     (d.files||[]).forEach(function(f){
-      if(f.folder==='raw footage')groups.raw.push(f);
-      else if(f.folder==='inspo')groups.inspo.push(f);
-      else if(f.folder==='donova videos'||f.rel.indexOf('renders/')===0)groups.videos.push(f);
-      else groups.other.push(f);
+      if(groups[f.folder])groups[f.folder].push(f);
+      else if(f.rel.indexOf('renders/')===0)groups['donova videos'].push(f);
+      else other.push(f);
     });
-    document.getElementById('c-raw').textContent=groups.raw.length;
-    document.getElementById('c-inspo').textContent=groups.inspo.length;
-    document.getElementById('c-videos').textContent=groups.videos.length;
-    if(groups.raw.length)document.getElementById('f-raw').innerHTML=groups.raw.map(function(f){return item(f,false);}).join('');
-    if(groups.inspo.length)document.getElementById('f-inspo').innerHTML=groups.inspo.map(function(f){return item(f,false);}).join('');
-    if(groups.videos.length)document.getElementById('f-videos').innerHTML=groups.videos.map(function(f){return item(f,true);}).join('');
-    document.getElementById('f-other').innerHTML=groups.other.map(function(f){return item(f,false);}).join('')||'<li class="empty">Nothing yet.</li>';
+    Object.keys(nodes).forEach(function(k){
+      var n=nodes[k],fs=groups[k];
+      n.cnt.textContent=fs.length===1?'1 item':fs.length+' items';
+      if(fs.length)n.list.innerHTML=fs.map(function(f){return item(f,n.dl);}).join('');
+    });
+    document.getElementById('f-other').innerHTML=other.map(function(f){return item(f,false);}).join('')||'<li class="empty">Nothing yet.</li>';
   });
 }
-var drop=document.getElementById('drop'),pick=document.getElementById('pick');
-function send(file){
-  drop.textContent='Uploading '+file.name+'…';
-  fetch('/api/desktop/upload?name='+encodeURIComponent(file.name),{method:'POST',body:file})
-    .then(function(){drop.textContent='+ Upload a clip';paint();})
-    .catch(function(){drop.textContent='Upload failed — try again';});
-}
-pick.addEventListener('change',function(){Array.from(pick.files).forEach(send);});
-['dragover','dragenter'].forEach(function(ev){drop.addEventListener(ev,function(e){e.preventDefault();drop.classList.add('over');});});
-['dragleave','drop'].forEach(function(ev){drop.addEventListener(ev,function(e){e.preventDefault();drop.classList.remove('over');
-  if(ev==='drop'&&e.dataTransfer&&e.dataTransfer.files)Array.from(e.dataTransfer.files).forEach(send);});});
 paint();
 </script></body></html>`;
 }
@@ -341,7 +362,11 @@ async function handleDesktopApi(req: IncomingMessage, res: ServerResponse): Prom
     const name = (url.searchParams.get("name") || `clip-${Date.now()}.mp4`)
       .replace(/[/\\]+/g, "-")
       .slice(0, 140);
-    const rel = `raw footage/${name}`;
+    const folderParam = url.searchParams.get("folder") || "raw footage";
+    const folder = (USER_FOLDERS as readonly string[]).includes(folderParam)
+      ? folderParam
+      : "raw footage";
+    const rel = `${folder}/${name}`;
     const dest = join(PROJECT_DIR, rel);
     mkdirSync(dirname(dest), { recursive: true });
     await new Promise<void>((ok, fail) => {
