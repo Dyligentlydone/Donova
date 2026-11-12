@@ -319,7 +319,13 @@ async function listProjectTree(): Promise<ProjectFile[]> {
         updated: f.metadata.updated ?? "",
       };
     })
-    .filter((f) => f.rel && !f.rel.endsWith("/") && !f.rel.startsWith("."))
+    .filter(
+      (f) =>
+        f.rel &&
+        !f.rel.endsWith("/") &&
+        !f.rel.startsWith(".") &&
+        !(f.rel.split("/").pop() || "").startsWith("."),
+    )
     .sort((a, b) => b.updated.localeCompare(a.updated));
 }
 
