@@ -122,9 +122,8 @@ export async function openFrameSource(opts: RenderToFramesOpts): Promise<FrameSo
   const page: Page = await browser.newPage();
   page.setDefaultTimeout(30_000);
 
-  await page.goto(opts.url, { waitUntil: "load", timeout: 60_000 });
-  await page.evaluate(getRuntimeSource());
-  await page.waitForFunction("window.__playerReady === true", { timeout: 15_000 });
+  page.on("pageerror", (err) => console.error("[browser pageerror]", err));
+  page.on("console", (msg) => console.log("[browser console]", msg.text()));
 
   const capture = new CaptureSession(page, {
     width: opts.width,
@@ -138,6 +137,24 @@ export async function openFrameSource(opts: RenderToFramesOpts): Promise<FrameSo
   });
   await capture.init();
   if (beginFrameOk) await capture.enableBeginFrame();
+
+  await page.goto(opts.url, { waitUntil: "load", timeout: 60_000 });
+  await page.evaluate(getRuntimeSource());
+
+  try {
+    await page.waitForFunction("window.__playerReady === true", { timeout: 15_000, polling: 16 });
+  } catch (waitErr) {
+    const diag = await page
+      .evaluate(() => ({
+        hasFc: typeof (window as unknown as { __fc?: unknown }).__fc !== "undefined",
+        playerReady: (window as unknown as { __playerReady?: unknown }).__playerReady,
+        timelines: Object.keys((window as unknown as { __timelines?: Record<string, unknown> }).__timelines || {}),
+        scripts: Array.from(document.scripts).map((s) => s.src || "inline"),
+      }))
+      .catch((e) => ({ evalErr: String(e) }));
+    console.error("[__playerReady timeout]", JSON.stringify(diag));
+    throw new Error(`__playerReady timeout: ${String(waitErr)}; diag: ${JSON.stringify(diag)}`);
+  }
 
   const startFrame = opts.startFrame ?? 0;
   const endFrame = opts.endFrame ?? Math.round(opts.duration * opts.fps);

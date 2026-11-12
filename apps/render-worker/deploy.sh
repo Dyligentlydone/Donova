@@ -24,11 +24,12 @@ echo "======================================================"
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 cd "$ROOT_DIR"
 
-echo "Step 1/3: Submitting Docker build to Google Cloud Build..."
+echo "Step 1/3: Submitting Docker build to Google Cloud Build (E2_HIGHCPU_8)..."
 gcloud builds submit \
   --project="${PROJECT_ID}" \
-  --tag="${IMAGE_TAG}" \
-  -f apps/render-worker/Dockerfile .
+  --config=apps/render-worker/cloudbuild.yaml \
+  --substitutions=_IMAGE_TAG="${IMAGE_TAG}" \
+  .
 
 echo "Step 2/3: Deploying Cloud Run Service (donova-render-worker)..."
 gcloud run deploy donova-render-worker \

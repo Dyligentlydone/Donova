@@ -29,6 +29,9 @@ export function deterministicFlags(): string[] {
     "--disable-sync",
     "--disable-translate",
     "--metrics-recording-only",
+    ...(process.platform === "linux"
+      ? ["--no-sandbox", "--disable-setuid-sandbox", "--disable-dev-shm-usage"]
+      : []),
   ];
 }
 

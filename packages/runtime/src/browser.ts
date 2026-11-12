@@ -858,7 +858,10 @@ async function waitReady(): Promise<void> {
       sleep(2500),
     ]);
   }
-  await new Promise<void>((r) => requestAnimationFrame(() => requestAnimationFrame(() => r())));
+  await Promise.race([
+    new Promise<void>((r) => requestAnimationFrame(() => requestAnimationFrame(() => r()))),
+    sleep(100),
+  ]);
   w.__renderReady = true;
 }
 

@@ -23,6 +23,8 @@ COPY package.json pnpm-workspace.yaml turbo.json tsconfig.base.json biome.json .
 COPY packages ./packages
 COPY apps/render-worker ./apps/render-worker
 COPY registry ./registry
+COPY skills ./skills
+COPY LICENSE-hyperframes ./LICENSE-hyperframes
 
 RUN corepack enable && corepack prepare pnpm@9.15.0 --activate \
   && pnpm install --frozen-lockfile=false \
