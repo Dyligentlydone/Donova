@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import Image from "next/image";
+import { STUDIO_URL } from "../lib/studioUrl";
 
 interface NavbarProps {
   onSubscribe?: () => void;
@@ -33,19 +34,19 @@ export default function Navbar({ onSubscribe, isSubscriber }: NavbarProps) {
           <a href="#pricing" className="hover:text-white transition-colors">
             Pricing
           </a>
-          <Link href="/studio" className="hover:text-[#d7b73f] transition-colors">
+          <a href={STUDIO_URL} className="hover:text-[#d7b73f] transition-colors">
             Studio
-          </Link>
+          </a>
         </div>
 
         <div className="flex items-center gap-3">
           {isSubscriber ? (
-            <Link
-              href="/studio"
+            <a
+              href={STUDIO_URL}
               className="bg-[#d7b73f] text-black font-bold text-xs uppercase tracking-wider px-4 py-2.5 rounded-lg hover:bg-[#e9cf6b] transition-colors"
             >
               Open Studio →
-            </Link>
+            </a>
           ) : (
             <button
               onClick={onSubscribe}

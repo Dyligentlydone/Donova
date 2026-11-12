@@ -1,13 +1,41 @@
 # STATUS — what exists today (read before building)
 
-Last updated: 2026-11-12 (hosted Studio on Cloud Run — see §-8). Update this file whenever you finish an MV task.
+Last updated: 2026-11-12 (real Studio service on Cloud Run — see §-9). Update this file whenever you finish an MV task.
+
+## -9. Real Studio as a Cloud Run service (apps/studio-service)
+
+The hosted Studio now runs the SAME code as local `donova studio`: a supervisor
+(`apps/studio-service/src/index.ts`) materializes `projects/default/` from GCS into
+`/tmp/studio-project`, launches `donova studio <dir> --port 3001 --no-open` (which
+rebrands + boots upstream `hyperframes preview`), proxies `0.0.0.0:$PORT →
+127.0.0.1:3001` (HTTP + WS upgrade), and every 8s uploads changed files back to GCS.
+
+- Service `donova-studio`, image `donova-images/studio-service`, CPU 4 / 8Gi /
+  timeout 3600 / **max-instances=1** (a second instance would fork project state) /
+  min-instances=1 (avoids ~15s cold boot).
+- `--allow-unauthenticated` for now — obscure URL is the only gate, same posture as
+  the rest until auth lands. URL: `https://donova-studio-712078215622.us-central1.run.app`.
+- Web links (`Navbar`, `/dashboard`) resolve `lib/studioUrl.ts` → `NEXT_PUBLIC_STUDIO_URL`
+  with the deployed URL baked as default.
+- Because the service has chrome+ffmpeg, the SPA's OWN render/export/check routes
+  work natively — no worker hop needed for Studio exports.
+- Verified live: SPA title "Donova Studio" (rebrand patcher ran), `/api/projects`,
+  `/api/environment/ffmpeg` `{"ok":true}`, `/api/fonts`, SPA assets, SSE `/api/events`,
+  and the 8s GCS write-back loop (verified locally; same code path in service).
+- Known limits: one shared project (`projects/default/`); deletes don't propagate to
+  GCS (only mtime-based pushes); /tmp is RAM so project media budget ≈ container mem;
+  SPA features that need HeyGen auth stay inert exactly like local.
+
+The §-8 routes/UI (`/studio` page + `/api/*` in apps/web) still exist and work as the
+legacy lightweight editor; the primary Studio link now goes to the service.
 
 ## -8. Hosted Studio on Google Cloud Run (single-project, pre-auth)
 
-`apps/web` now embeds the real Studio UI (`packages/studio-server/src/ui/index.html` →
-`public/studio/index.html`, served at `/studio`) backed by a GCS project store — NOT
-the upstream multi-project React SPA (that build was removed; it expected a different
-`/api/*` surface).
+`apps/web` embeds the legacy single-file Studio UI
+(`packages/studio-server/src/ui/index.html` → `public/studio/index.html`, served at
+`/studio`) backed by a GCS project store — NOT the upstream multi-project React SPA.
+Superseded for primary use by §-9; kept because the chat-panel agent surface still
+lives only in this UI.
 
 - Project state: GCS `projects/default/` prefix in `donova-renders-<project>` bucket;
   `lib/project.ts` is the store (read/write/list/stream + `/tmp` mirror for the agent).
