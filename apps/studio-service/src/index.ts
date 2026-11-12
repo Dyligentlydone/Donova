@@ -28,6 +28,7 @@ const SYNC_MS = Number(process.env.SYNC_MS) || 8000;
 const CLI_BIN = process.env.DONOVA_CLI || "/app/packages/cli/bin/donova.mjs";
 const SKIP_PUSH = /(^|\/)(node_modules|\.git|dist)(\/|$)/;
 const GATE_SECRET = process.env.STUDIO_GATE_SECRET || "";
+const USER_FOLDERS = ["inspo", "raw footage", "donova videos"] as const;
 const SESSION_COOKIE = "__donova_session";
 const WEB_APP_URL = process.env.WEB_APP_URL || "https://donova-web-712078215622.us-central1.run.app";
 
@@ -132,6 +133,139 @@ function gatedPage(): string {
 </div></body></html>`;
 }
 
+/** Injected into upstream HTML pages: clicking the donova wordmark goes home
+ * to the workspace. Cloud-only — the local rebrand patcher is untouched. */
+const LOGO_HOME_SNIPPET = `<script>
+document.addEventListener('click',function(e){
+  var n=e.target;
+  if(n.closest&&n.closest('img[alt="donova"]')){e.preventDefault();location.href='/';return;}
+  while(n&&n!==document){
+    if(n.tagName==='SPAN'&&n.textContent&&n.textContent.trim()==='donova'){location.href='/';return;}
+    n=n.parentElement;
+  }
+},true);
+</script><style>img[alt="donova"]{cursor:pointer}</style>
+`;
+
+function desktopPage(): string {
+  return `<!DOCTYPE html><html><head><meta charset="utf-8"><title>Donova — Your Workspace</title>
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<style>
+  *{box-sizing:border-box;margin:0}
+  body{background:#0a0a0f;color:#f5f1e8;font:400 15px/1.65 system-ui,-apple-system,sans-serif;min-height:100vh}
+  .wrap{max-width:1040px;margin:0 auto;padding:48px 24px 80px}
+  .top{display:flex;align-items:center;justify-content:space-between;margin-bottom:44px}
+  .top img{height:30px;width:auto}
+  .top .hint{color:rgba(245,241,232,.4);font-size:12px;font-family:ui-monospace,monospace;letter-spacing:.1em}
+  .hero{display:flex;align-items:center;justify-content:space-between;gap:24px;
+    border:1px solid rgba(74,143,216,.35);border-radius:20px;padding:28px 30px;margin-bottom:28px;
+    background:linear-gradient(135deg,rgba(74,143,216,.12),rgba(74,143,216,.03))}
+  .hero h1{font-size:26px;font-weight:800;letter-spacing:-.02em;color:#fff;margin-bottom:6px}
+  .hero p{color:rgba(245,241,232,.55);font-size:14px}
+  .open{background:#4a8fd8;color:#0a0a0f;font-weight:800;font-size:13px;letter-spacing:.12em;
+    text-transform:uppercase;text-decoration:none;padding:16px 30px;border-radius:12px;white-space:nowrap;
+    box-shadow:0 0 30px rgba(74,143,216,.3)}
+  .open:hover{background:#6aa7f0}
+  .folders{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:18px}
+  .card{border:1px solid rgba(255,255,255,.09);border-radius:18px;background:rgba(255,255,255,.02);
+    overflow:hidden;display:flex;flex-direction:column;min-height:220px}
+  .card .head{display:flex;align-items:center;justify-content:space-between;
+    padding:16px 18px;border-bottom:1px solid rgba(255,255,255,.07)}
+  .card .head h3{font-size:14px;font-weight:700;color:#fff;display:flex;align-items:center;gap:9px}
+  .card .head h3 .ico{font-size:17px}
+  .count{font:600 10px/1 ui-monospace,monospace;letter-spacing:.1em;color:rgba(245,241,232,.4);
+    border:1px solid rgba(255,255,255,.12);border-radius:99px;padding:4px 9px}
+  .files{list-style:none;padding:8px 0;flex:1;overflow-y:auto;max-height:260px}
+  .files li{display:flex;align-items:center;gap:10px;padding:9px 18px;font-size:13px;
+    color:rgba(245,241,232,.75)}
+  .files li:hover{background:rgba(255,255,255,.03)}
+  .files .name{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .files .sz{color:rgba(245,241,232,.3);font-size:11px;font-family:ui-monospace,monospace;white-space:nowrap}
+  .files a.dl{color:#4a8fd8;text-decoration:none;font-size:11px;font-weight:700;
+    letter-spacing:.08em;white-space:nowrap}
+  .files a.dl:hover{color:#6aa7f0}
+  .empty{padding:26px 18px;color:rgba(245,241,232,.35);font-size:13px;text-align:center}
+  .drop{margin:0 14px 14px;border:1.5px dashed rgba(74,143,216,.35);border-radius:12px;
+    padding:16px;text-align:center;color:rgba(74,143,216,.8);font-size:12px;cursor:pointer;
+    transition:border-color .15s}
+  .drop:hover,.drop.over{border-color:#4a8fd8;background:rgba(74,143,216,.06)}
+  .drop input{display:none}
+  .other{margin-top:26px}
+  .other summary{cursor:pointer;color:rgba(245,241,232,.5);font-size:13px;margin-bottom:8px}
+  .foot{margin-top:40px;color:rgba(245,241,232,.3);font-size:12px;text-align:center}
+</style></head><body><div class="wrap">
+  <div class="top">
+    <img src="${WEB_APP_URL}/donova-logo.png" alt="Donova">
+    <span class="hint">YOUR WORKSPACE</span>
+  </div>
+  <div class="hero">
+    <div>
+      <h1>Your video workspace</h1>
+      <p>Drop raw clips in <b>raw footage</b>, style references in <b>inspo</b> —
+      finished videos land in <b>donova videos</b>. Open Studio to edit.</p>
+    </div>
+    <a class="open" href="/studio">Open Studio →</a>
+  </div>
+  <div class="folders">
+    <div class="card">
+      <div class="head"><h3><span class="ico">🎬</span> raw footage</h3><span class="count" id="c-raw">0</span></div>
+      <ul class="files" id="f-raw"><li class="empty">Drop clips below or in Studio's assets.</li></ul>
+      <label class="drop" id="drop">+ Upload a clip<input id="pick" type="file" accept="video/*" multiple></label>
+    </div>
+    <div class="card">
+      <div class="head"><h3><span class="ico">✨</span> inspo</h3><span class="count" id="c-inspo">0</span></div>
+      <ul class="files" id="f-inspo"><li class="empty">Videos whose style you love — your agent learns from these.</li></ul>
+    </div>
+    <div class="card">
+      <div class="head"><h3><span class="ico">🎞️</span> donova videos</h3><span class="count" id="c-videos">0</span></div>
+      <ul class="files" id="f-videos"><li class="empty">Finished videos land here — download and post.</li></ul>
+    </div>
+  </div>
+  <details class="other"><summary>Project files</summary><ul class="files" id="f-other"></ul></details>
+  <p class="foot">Files sync automatically while Studio is open.</p>
+</div>
+<script>
+if(location.hash&&location.hash.indexOf('#project')===0){location.replace('/studio'+location.hash);}
+var esc=function(s){var d=document.createElement('div');d.textContent=s;return d.innerHTML;};
+var fmt=function(n){return n>1e9?(n/1e9).toFixed(1)+' GB':n>1e6?(n/1e6).toFixed(1)+' MB':n>1e3?(n/1e3).toFixed(0)+' KB':n+' B';};
+function item(f,dl){
+  return '<li><span class="name">'+esc(f.rel.slice(f.rel.indexOf('/')+1))+'</span>'+
+    '<span class="sz">'+fmt(f.size)+'</span>'+
+    (dl?'<a class="dl" href="/api/desktop/download?rel='+encodeURIComponent(f.rel)+'">DOWNLOAD</a>':'')+'</li>';
+}
+function paint(){
+  fetch('/api/desktop/files').then(function(r){return r.json();}).then(function(d){
+    var groups={raw:[],inspo:[],videos:[],other:[]};
+    (d.files||[]).forEach(function(f){
+      if(f.folder==='raw footage')groups.raw.push(f);
+      else if(f.folder==='inspo')groups.inspo.push(f);
+      else if(f.folder==='donova videos'||f.rel.indexOf('renders/')===0)groups.videos.push(f);
+      else groups.other.push(f);
+    });
+    document.getElementById('c-raw').textContent=groups.raw.length;
+    document.getElementById('c-inspo').textContent=groups.inspo.length;
+    document.getElementById('c-videos').textContent=groups.videos.length;
+    if(groups.raw.length)document.getElementById('f-raw').innerHTML=groups.raw.map(function(f){return item(f,false);}).join('');
+    if(groups.inspo.length)document.getElementById('f-inspo').innerHTML=groups.inspo.map(function(f){return item(f,false);}).join('');
+    if(groups.videos.length)document.getElementById('f-videos').innerHTML=groups.videos.map(function(f){return item(f,true);}).join('');
+    document.getElementById('f-other').innerHTML=groups.other.map(function(f){return item(f,false);}).join('')||'<li class="empty">Nothing yet.</li>';
+  });
+}
+var drop=document.getElementById('drop'),pick=document.getElementById('pick');
+function send(file){
+  drop.textContent='Uploading '+file.name+'…';
+  fetch('/api/desktop/upload?name='+encodeURIComponent(file.name),{method:'POST',body:file})
+    .then(function(){drop.textContent='+ Upload a clip';paint();})
+    .catch(function(){drop.textContent='Upload failed — try again';});
+}
+pick.addEventListener('change',function(){Array.from(pick.files).forEach(send);});
+['dragover','dragenter'].forEach(function(ev){drop.addEventListener(ev,function(e){e.preventDefault();drop.classList.add('over');});});
+['dragleave','drop'].forEach(function(ev){drop.addEventListener(ev,function(e){e.preventDefault();drop.classList.remove('over');
+  if(ev==='drop'&&e.dataTransfer&&e.dataTransfer.files)Array.from(e.dataTransfer.files).forEach(send);});});
+paint();
+</script></body></html>`;
+}
+
 function handleGate(req: IncomingMessage, res: ServerResponse): boolean {
   if (req.url === "/health") {
     res.writeHead(200, { "content-type": "application/json" });
@@ -157,10 +291,81 @@ function handleGate(req: IncomingMessage, res: ServerResponse): boolean {
     }
     return true;
   }
-  if (cookieSession(req)) return false; // valid session → proxy through
+  if (cookieSession(req)) return false; // valid session → continue to routing
   res.writeHead(401, { "content-type": "text/html" });
   res.end(gatedPage());
   return true;
+}
+
+interface ProjectFile {
+  key: string;
+  rel: string;
+  folder: string;
+  size: number;
+  updated: string;
+}
+
+async function listProjectTree(): Promise<ProjectFile[]> {
+  const [files] = await bucket.getFiles({ prefix: PROJECT_PREFIX });
+  return files
+    .map((f) => {
+      const rel = f.name.slice(PROJECT_PREFIX.length);
+      const folder = rel.includes("/") ? rel.slice(0, rel.indexOf("/")) : "";
+      return {
+        key: f.name,
+        rel,
+        folder,
+        size: Number(f.metadata.size ?? 0),
+        updated: f.metadata.updated ?? "",
+      };
+    })
+    .filter((f) => f.rel && !f.rel.endsWith("/") && !f.rel.startsWith("."))
+    .sort((a, b) => b.updated.localeCompare(a.updated));
+}
+
+async function handleDesktopApi(req: IncomingMessage, res: ServerResponse): Promise<boolean> {
+  const url = new URL(req.url || "/", "http://internal");
+  if (url.pathname === "/api/desktop/files" && req.method === "GET") {
+    const files = await listProjectTree();
+    res.writeHead(200, { "content-type": "application/json" });
+    res.end(JSON.stringify({ files }));
+    return true;
+  }
+  if (url.pathname === "/api/desktop/upload" && req.method === "POST") {
+    const name = (url.searchParams.get("name") || `clip-${Date.now()}.mp4`)
+      .replace(/[/\\]+/g, "-")
+      .slice(0, 140);
+    const rel = `raw footage/${name}`;
+    const dest = join(PROJECT_DIR, rel);
+    mkdirSync(dirname(dest), { recursive: true });
+    await new Promise<void>((ok, fail) => {
+      const w = createWriteStream(dest);
+      req.pipe(w).on("finish", ok).on("error", fail);
+    });
+    try {
+      await bucket.upload(dest, { destination: PROJECT_PREFIX + rel });
+    } catch (err) {
+      console.error("upload push failed:", err);
+    }
+    res.writeHead(200, { "content-type": "application/json" });
+    res.end(JSON.stringify({ ok: true, rel }));
+    return true;
+  }
+  if (url.pathname === "/api/desktop/download" && req.method === "GET") {
+    const rel = url.searchParams.get("rel") || "";
+    if (!rel || rel.includes("..")) {
+      res.writeHead(400).end("bad rel");
+      return true;
+    }
+    const [signed] = await bucket.file(PROJECT_PREFIX + rel).getSignedUrl({
+      action: "read",
+      expires: Date.now() + 15 * 60 * 1000,
+    });
+    res.writeHead(302, { location: signed });
+    res.end();
+    return true;
+  }
+  return false;
 }
 
 const storage = new Storage();
@@ -202,6 +407,19 @@ style="color:#f5f1e8;font:700 72px system-ui;text-align:center">New Donova proje
   };
   for (const [k, v] of Object.entries(seeds)) {
     await bucket.file(PROJECT_PREFIX + k).save(v);
+  }
+}
+
+/** Keep the local-machine folder names users already know from `donova init`:
+ * inspo/ · raw footage/ · donova videos/ — as real dirs in /tmp and .keep
+ * markers in GCS so the folders survive re-materialization. */
+async function ensureUserFolders(): Promise<void> {
+  for (const name of USER_FOLDERS) {
+    const local = join(PROJECT_DIR, name);
+    mkdirSync(local, { recursive: true });
+    const key = `${PROJECT_PREFIX}${name}/.keep`;
+    const [exists] = await bucket.file(key).exists();
+    if (!exists) await bucket.file(key).save("donova user folder\n");
   }
 }
 
@@ -275,17 +493,39 @@ function launchStudio(): ChildProcess {
 }
 
 function proxyOnce(req: IncomingMessage, res: ServerResponse) {
+  // Likely-HTML requests (no file extension) get buffered so the logo-home
+  // snippet can be injected; strip accept-encoding so we inject plain text.
+  const lastSeg = (req.url || "/").split("?")[0].split("/").pop() || "";
+  const expectHtml = !lastSeg.includes(".");
+  const headers = { ...req.headers, host: `127.0.0.1:${INTERNAL_PORT}` };
+  if (expectHtml) delete headers["accept-encoding"];
+
   const upstream = httpRequest(
     {
       host: "127.0.0.1",
       port: INTERNAL_PORT,
       path: req.url,
       method: req.method,
-      headers: { ...req.headers, host: `127.0.0.1:${INTERNAL_PORT}` },
+      headers,
     },
     (up) => {
-      res.writeHead(up.statusCode ?? 502, up.headers);
-      up.pipe(res);
+      const isHtml = String(up.headers["content-type"] || "").includes("text/html");
+      if (!expectHtml || !isHtml) {
+        res.writeHead(up.statusCode ?? 502, up.headers);
+        up.pipe(res);
+        return;
+      }
+      const chunks: Buffer[] = [];
+      up.on("data", (c: Buffer) => chunks.push(c));
+      up.on("end", () => {
+        let html = Buffer.concat(chunks).toString("utf8");
+        html = html.replace("</body>", `${LOGO_HOME_SNIPPET}</body>`);
+        const h = { ...up.headers };
+        delete h["content-length"];
+        delete h["content-encoding"];
+        res.writeHead(up.statusCode ?? 502, h);
+        res.end(html);
+      });
     },
   );
   upstream.on("error", (err) => {
@@ -298,6 +538,7 @@ function proxyOnce(req: IncomingMessage, res: ServerResponse) {
 async function main() {
   mkdirSync(PROJECT_DIR, { recursive: true });
   await seedIfEmpty();
+  await ensureUserFolders();
   const pulled = await pullProject();
   console.log(`project materialized: ${pulled} files from gs://${BUCKET_NAME}/${PROJECT_PREFIX}`);
   lastPush = Date.now();
@@ -308,7 +549,27 @@ async function main() {
 
   const server = createServer((req, res) => {
     if (handleGate(req, res)) return;
-    proxyOnce(req, res);
+    const url = new URL(req.url || "/", "http://internal");
+    // workspace desktop at the root for authed users; Studio lives at /studio
+    if (req.method === "GET" && url.pathname === "/") {
+      res.writeHead(200, { "content-type": "text/html" });
+      res.end(desktopPage());
+      return;
+    }
+    void handleDesktopApi(req, res)
+      .then((handled) => {
+        if (handled) return;
+        if (url.pathname === "/studio" || url.pathname === "/studio/") {
+          req.url = "/";
+        } else if (url.pathname.startsWith("/studio/")) {
+          req.url = url.pathname.slice("/studio".length) + url.search;
+        }
+        proxyOnce(req, res);
+      })
+      .catch((err) => {
+        res.writeHead(500, { "content-type": "text/plain" });
+        res.end(`error: ${err instanceof Error ? err.message : String(err)}`);
+      });
   });
   server.on("upgrade", (req, socket, head) => {
     if (GATE_SECRET && !cookieSession(req)) {

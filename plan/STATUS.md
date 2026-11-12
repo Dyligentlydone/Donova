@@ -23,6 +23,17 @@ rebrands + boots upstream `hyperframes preview`), proxies `0.0.0.0:$PORT →
   "Open Studio" buttons go through it — non-subscribers get the subscribe flow.
 - Verified: anonymous → 401 gate page on every path incl. /api/*; master token →
   302 + session cookie → full SPA/API; fake email → 403 not-subscribed.
+- **Workspace desktop**: authed `GET /` serves a folder-home screen (inspo ·
+  raw footage · donova videos cards, live file lists, upload dropzone →
+  `POST /api/desktop/upload`, signed-download links → `/api/desktop/download`).
+  Studio SPA moved to `/studio` (proxy strips the prefix); the donova wordmark
+  click → `/` via a snippet injected into proxied HTML at the proxy layer —
+  the shared rebrand patcher + local `donova studio` are untouched.
+  `GET /#project/...` deep links forward to `/studio#...` via desktop JS.
+- **Folder parity**: uploads (web `/api/upload` + desktop) land in
+  `raw footage/`; renders (`lib/jobs.ts` outputKey) land in
+  `donova videos/` inside the project prefix; all three folders get `.keep`
+  seeded at boot so they exist from day one.
 - URL: `https://donova-studio-712078215622.us-central1.run.app`.
 - Web links (`Navbar`, `/dashboard`) resolve `lib/studioUrl.ts` → `NEXT_PUBLIC_STUDIO_URL`
   with the deployed URL baked as default.

@@ -14,7 +14,7 @@ export async function POST(req: Request) {
     }
 
     const cleanName = file.name.replace(/[^a-zA-Z0-9._-]/g, "_");
-    const fileKey = `projects/default/media/${Date.now()}_${cleanName}`;
+    const fileKey = `projects/default/raw footage/${Date.now()}_${cleanName}`;
     const bytes = Buffer.from(await file.arrayBuffer());
 
     const bucket = storage.bucket(DEFAULT_BUCKET);
@@ -28,7 +28,7 @@ export async function POST(req: Request) {
     return NextResponse.json({
       ok: true,
       fileKey,
-      projectPath: `media/${Date.now()}_${cleanName}`,
+      projectPath: `raw footage/${Date.now()}_${cleanName}`,
       size: bytes.length,
       name: file.name,
     });

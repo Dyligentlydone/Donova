@@ -33,7 +33,7 @@ export async function startRenderJob(opts: {
   quality?: "draft" | "standard" | "high";
 }): Promise<Job> {
   const id = `job-${Date.now()}-${Math.floor(Math.random() * 1e6)}`;
-  const outputKey = `renders/${id}.mp4`;
+  const outputKey = `projects/default/donova videos/${id}.mp4`;
   const job: Job = { id, status: "queued", outputKey };
   jobs.set(id, job);
 
