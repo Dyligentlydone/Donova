@@ -39,20 +39,73 @@ export async function recordSubscriber(email: string, checkoutToken?: string): P
   );
 }
 
-export async function isSubscriber(email: string): Promise<boolean> {
-  const e = email.trim().toLowerCase();
-  if (OWNER_EMAILS.includes(e)) return true;
+export interface SubscriberRecord {
+  email?: string;
+  status?: string;
+  plan?: string;
+  /** Epoch ms — trial records only. Missing/absent = no expiry (paid). */
+  trialEndsAt?: number;
+  activatedAt?: string;
+}
+
+export async function getSubscriber(email: string): Promise<SubscriberRecord | null> {
   try {
-    const [buf] = await bucket.file(subscriberKey(e)).download();
-    const rec = JSON.parse(buf.toString()) as { status?: string };
-    return rec.status === "active";
+    const [buf] = await bucket.file(subscriberKey(email.trim().toLowerCase())).download();
+    return JSON.parse(buf.toString()) as SubscriberRecord;
   } catch {
-    return false;
+    return null;
   }
 }
 
-export function studioLink(email: string, ttlMs = 5 * 60 * 1000): string {
-  const payload = Buffer.from(`${email.trim().toLowerCase()}|${Date.now() + ttlMs}`).toString("base64url");
+/**
+ * First claim wins: returns the existing record when the email already has
+ * one (paid or trial — the trial clock does not restart). Only creates a new
+ * 7-day trial record for an email we've never seen.
+ */
+export async function recordTrial(email: string): Promise<{ rec: SubscriberRecord; created: boolean }> {
+  const e = email.trim().toLowerCase();
+  const existing = await getSubscriber(e);
+  if (existing) return { rec: existing, created: false };
+  const rec: SubscriberRecord = {
+    email: e,
+    status: "trial",
+    plan: "trial",
+    trialEndsAt: Date.now() + 7 * 24 * 60 * 60 * 1000,
+    activatedAt: new Date().toISOString(),
+  };
+  await bucket
+    .file(subscriberKey(e))
+    .save(JSON.stringify(rec), { contentType: "application/json" });
+  return { rec, created: true };
+}
+
+export function subscriberState(rec: SubscriberRecord | null): "paid" | "trial-active" | "trial-ended" | "none" {
+  if (!rec) return "none";
+  if (rec.status === "active") return "paid";
+  if (rec.status === "trial") {
+    return typeof rec.trialEndsAt === "number" && rec.trialEndsAt > Date.now()
+      ? "trial-active"
+      : "trial-ended";
+  }
+  return "none";
+}
+
+export async function isSubscriber(email: string): Promise<boolean> {
+  const e = email.trim().toLowerCase();
+  if (OWNER_EMAILS.includes(e)) return true;
+  const state = subscriberState(await getSubscriber(e));
+  return state === "paid" || state === "trial-active";
+}
+
+/**
+ * Signed Studio URL. `sessionExpMs` caps the Studio session lifetime (used
+ * to expire trials exactly when the trial ends); the Studio service defaults
+ * to its own 30-day cap when absent.
+ */
+export function studioLink(email: string, opts?: { ttlMs?: number; sessionExpMs?: number }): string {
+  const { ttlMs = 5 * 60 * 1000, sessionExpMs } = opts ?? {};
+  const parts = `${email.trim().toLowerCase()}|${Date.now() + ttlMs}${sessionExpMs ? `|${sessionExpMs}` : ""}`;
+  const payload = Buffer.from(parts).toString("base64url");
   const sig = createHmac("sha256", SECRET).update(payload).digest("hex");
   return `${STUDIO_URL}/?t=${payload}.${sig}`;
 }

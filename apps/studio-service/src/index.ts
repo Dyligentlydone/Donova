@@ -45,8 +45,14 @@ function sign(email: string, expiryMs: number): string {
   return `${payload}.${sig}`;
 }
 
-function verify(token: string): string | null {
-  if (!GATE_SECRET) return "gate-disabled";
+/** Decoded gate/session token: email + optional session-expiry hint (trial end). */
+interface TokenInfo {
+  email: string;
+  sessionExp?: number;
+}
+
+function verify(token: string): TokenInfo | null {
+  if (!GATE_SECRET) return { email: "gate-disabled" };
   const dot = token.lastIndexOf(".");
   if (dot <= 0) return null;
   const payload = token.slice(0, dot);
@@ -55,16 +61,16 @@ function verify(token: string): string | null {
   const a = Buffer.from(sig);
   const b = Buffer.from(expect);
   if (a.length !== b.length || !timingSafeEqual(a, b)) return null;
-  const raw = Buffer.from(payload, "base64url").toString();
-  const sep = raw.lastIndexOf("|");
-  if (sep <= 0) return null;
-  const email = raw.slice(0, sep);
-  const expiry = Number(raw.slice(sep + 1));
+  const parts = Buffer.from(payload, "base64url").toString().split("|");
+  if (parts.length < 2) return null;
+  const email = parts[0];
+  const expiry = Number(parts[1]);
+  const sessionExp = parts.length > 2 ? Number(parts[2]) : undefined;
   if (!email.includes("@") || !Number.isFinite(expiry) || expiry < Date.now()) return null;
-  return email;
+  return { email, sessionExp: Number.isFinite(sessionExp) ? sessionExp : undefined };
 }
 
-function cookieSession(req: IncomingMessage): string | null {
+function cookieSession(req: IncomingMessage): TokenInfo | null {
   const header = req.headers.cookie || "";
   const match = header.match(new RegExp(`(?:^|;\\s*)${SESSION_COOKIE}=([^;\\s]+)`));
   return match ? verify(decodeURIComponent(match[1])) : null;
@@ -297,13 +303,17 @@ function handleGate(req: IncomingMessage, res: ServerResponse): boolean {
   const token = url.searchParams.get("t");
   if (token) {
     // owner path: the raw gate secret itself is a master token
-    const email = GATE_SECRET && token === GATE_SECRET ? "owner@donova.local" : verify(token);
-    if (email) {
+    const info: TokenInfo | null =
+      GATE_SECRET && token === GATE_SECRET ? { email: "owner@donova.local" } : verify(token);
+    if (info) {
       url.searchParams.delete("t");
-      const session = sign(email, Date.now() + 30 * 24 * 60 * 60 * 1000);
+      // session lives until the token's sessionExp hint (trial end) or 30d, whichever is sooner
+      const sessionExp = Math.min(info.sessionExp ?? Infinity, Date.now() + 30 * 24 * 60 * 60 * 1000);
+      const maxAge = Math.max(1, Math.floor((sessionExp - Date.now()) / 1000));
+      const session = sign(info.email, sessionExp);
       res.writeHead(302, {
         location: url.pathname + url.search,
-        "set-cookie": `${SESSION_COOKIE}=${session}; Max-Age=${30 * 24 * 60 * 60}; Path=/; HttpOnly; Secure; SameSite=Lax`,
+        "set-cookie": `${SESSION_COOKIE}=${session}; Max-Age=${maxAge}; Path=/; HttpOnly; Secure; SameSite=Lax`,
       });
       res.end();
     } else {
