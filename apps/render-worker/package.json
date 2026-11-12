@@ -1,0 +1,24 @@
+{
+  "name": "@donova/render-worker",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "scripts": {
+    "build": "tsup src/index.ts --format esm --dts --clean",
+    "start": "node dist/index.js",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@donova/contract": "workspace:*",
+    "@donova/engine": "workspace:*",
+    "@donova/producer": "workspace:*",
+    "@google-cloud/storage": "7.15.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.15.0",
+    "tsup": "^8.3.5",
+    "typescript": "5.7.3"
+  }
+}
