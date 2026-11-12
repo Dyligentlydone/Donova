@@ -7,7 +7,8 @@ coverage/
 .env
 .env.*
 !.env.example
-renders/
+/renders/
+!apps/web/app/api/renders/
 .donova-cache/
 _analysis/
 fixtures/**/__out__/

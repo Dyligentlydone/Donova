@@ -12,8 +12,9 @@ coverage
 *.mp4
 *.webm
 *.mov
-renders
-**/renders
+/renders
+packages/*/renders
+apps/render-worker/renders
 *.tgz
 *.tar.gz
 *.zip
