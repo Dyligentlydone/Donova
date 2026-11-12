@@ -10,7 +10,7 @@ COPY apps/web ./apps/web
 
 RUN corepack enable && corepack prepare pnpm@9.15.0 --activate \
   && pnpm install --frozen-lockfile=false --prod=false \
-  && pnpm --filter @donova/web build
+  && pnpm --filter @donova/web... build
 
 ENV NODE_ENV=production
 EXPOSE 8080

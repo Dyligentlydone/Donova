@@ -1,20 +1,11 @@
 "use client";
 
-import { useState } from "react";
+import HelcimModal from "@/components/HelcimModal";
+import Navbar from "@/components/Navbar";
+import { ArrowRight, Check, Cpu, Layers, ShieldCheck, Sparkles, Wand2, Zap } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
-import Navbar from "@/components/Navbar";
-import HelcimModal from "@/components/HelcimModal";
-import {
-  Check,
-  Sparkles,
-  Zap,
-  Wand2,
-  Cpu,
-  Layers,
-  ArrowRight,
-  ShieldCheck,
-} from "lucide-react";
+import { useState } from "react";
 
 export default function Home() {
   const [modalOpen, setModalOpen] = useState(false);
@@ -32,19 +23,18 @@ export default function Home() {
           </div>
 
           <h1 className="text-4xl sm:text-6xl font-extrabold tracking-tight leading-[1.1] mb-6">
-            Learn &amp; get the tools to{" "}
-            <span className="text-[#d7b73f]">automate editing videos</span> like a
-            professional.
+            Learn &amp; get the tools to <span className="text-[#d7b73f]">automate editing videos</span> like
+            a professional.
           </h1>
 
           <p className="text-lg sm:text-xl text-white/70 leading-relaxed mb-8 max-w-2xl mx-auto">
-            Upload your raw talking clips. Tell your AI editor what you want. Donova applies
-            your custom style bible, cuts the dead air, keys your background, and renders
-            ready-to-post MP4s in minutes.
+            Upload your raw talking clips. Tell your AI editor what you want. Donova applies your custom style
+            bible, cuts the dead air, keys your background, and renders ready-to-post MP4s in minutes.
           </p>
 
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
             <button
+              type="button"
               onClick={() => setModalOpen(true)}
               className="w-full sm:w-auto bg-[#d7b73f] text-black font-extrabold text-sm tracking-widest px-8 py-4 rounded-xl hover:bg-[#e9cf6b] transition-all transform hover:-translate-y-0.5 shadow-[0_0_30px_rgba(215,183,63,0.3)] flex items-center justify-center gap-2"
             >
@@ -52,10 +42,10 @@ export default function Home() {
               <ArrowRight className="w-4 h-4" />
             </button>
             <Link
-              href="/dashboard"
+              href="/studio"
               className="w-full sm:w-auto border border-white/20 text-white/80 hover:text-white font-bold text-sm px-8 py-4 rounded-xl hover:border-white/40 transition-colors text-center"
             >
-              Launch Studio Workspace
+              Open Studio Editor →
             </Link>
           </div>
         </div>
@@ -85,7 +75,9 @@ export default function Home() {
             </div>
             <h3 className="font-bold text-white text-lg mb-2">Style Bible</h3>
             <p className="text-sm text-white/60 leading-relaxed">
-              Teach it your fonts, pacing, and caption aesthetic once in <code className="text-[#d7b73f]">style.md</code>. Every future video reflects your signature look.
+              Teach it your fonts, pacing, and caption aesthetic once in{" "}
+              <code className="text-[#d7b73f]">style.md</code>. Every future video reflects your signature
+              look.
             </p>
           </div>
 
@@ -95,7 +87,8 @@ export default function Home() {
             </div>
             <h3 className="font-bold text-white text-lg mb-2">MODNet Cutouts</h3>
             <p className="text-sm text-white/60 leading-relaxed">
-              Deep-learning human segmentation creates soft, natural hair and shoulder alpha mattes for text-behind-subject effects without green screens.
+              Deep-learning human segmentation creates soft, natural hair and shoulder alpha mattes for
+              text-behind-subject effects without green screens.
             </p>
           </div>
 
@@ -105,7 +98,8 @@ export default function Home() {
             </div>
             <h3 className="font-bold text-white text-lg mb-2">Google Cloud Renders</h3>
             <p className="text-sm text-white/60 leading-relaxed">
-              No fan noise or battery drain. Frame-accurate renders execute on high-speed headless Cloud Run worker containers in seconds.
+              No fan noise or battery drain. Frame-accurate renders execute on high-speed headless Cloud Run
+              worker containers in seconds.
             </p>
           </div>
 
@@ -115,17 +109,19 @@ export default function Home() {
             </div>
             <h3 className="font-bold text-white text-lg mb-2">Auto Donova</h3>
             <p className="text-sm text-white/60 leading-relaxed">
-              Drop clips in your raw folder and walk away. Auto mode inspects, cuts, layers, and places exported MP4s directly into your renders hub.
+              Drop clips in your raw folder and walk away. Auto mode inspects, cuts, layers, and places
+              exported MP4s directly into your renders hub.
             </p>
           </div>
         </div>
 
         {/* ── HOW IT WORKS ── */}
-        <div id="how-it-works" className="max-w-4xl mx-auto rounded-3xl border border-white/10 bg-white/[0.02] p-8 sm:p-12 mb-24">
+        <div
+          id="how-it-works"
+          className="max-w-4xl mx-auto rounded-3xl border border-white/10 bg-white/[0.02] p-8 sm:p-12 mb-24"
+        >
           <div className="text-center mb-10">
-            <p className="text-xs uppercase tracking-widest text-[#d7b73f] font-mono mb-2">
-              THE WORKFLOW
-            </p>
+            <p className="text-xs uppercase tracking-widest text-[#d7b73f] font-mono mb-2">THE WORKFLOW</p>
             <h2 className="text-2xl sm:text-3xl font-extrabold text-white">
               From phone footage to export in 4 steps
             </h2>
@@ -163,7 +159,8 @@ export default function Home() {
               <div>
                 <h4 className="font-bold text-white mb-1">Live Studio Review</h4>
                 <p className="text-sm text-white/60">
-                  Preview changes in real time in the Donova Studio player. Tweak timing or add annotations with one click.
+                  Preview changes in real time in the Donova Studio player. Tweak timing or add annotations
+                  with one click.
                 </p>
               </div>
             </div>
@@ -175,7 +172,8 @@ export default function Home() {
               <div>
                 <h4 className="font-bold text-white mb-1">Cloud Render &amp; Download</h4>
                 <p className="text-sm text-white/60">
-                  Export directly on Google Cloud Run. Download high-bitrate 1080x1920 MP4s ready for TikTok, Reels, or Shorts.
+                  Export directly on Google Cloud Run. Download high-bitrate 1080x1920 MP4s ready for TikTok,
+                  Reels, or Shorts.
                 </p>
               </div>
             </div>
@@ -208,7 +206,9 @@ export default function Home() {
               </li>
               <li className="flex items-center gap-3">
                 <Check className="w-4 h-4 text-[#d7b73f] shrink-0" />
-                <span>Personal Style Bible (<code className="text-xs text-[#d7b73f]">style.md</code>)</span>
+                <span>
+                  Personal Style Bible (<code className="text-xs text-[#d7b73f]">style.md</code>)
+                </span>
               </li>
               <li className="flex items-center gap-3">
                 <Check className="w-4 h-4 text-[#d7b73f] shrink-0" />
@@ -225,6 +225,7 @@ export default function Home() {
             </ul>
 
             <button
+              type="button"
               onClick={() => setModalOpen(true)}
               className="w-full bg-[#d7b73f] text-black font-extrabold text-sm tracking-widest py-4 rounded-xl hover:bg-[#e9cf6b] transition-all shadow-[0_0_25px_rgba(215,183,63,0.25)]"
             >

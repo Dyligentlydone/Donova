@@ -50,8 +50,8 @@ export function startHttpServer(port = Number(process.env.PORT || 8080)) {
         return json(res, 400, { error: "Invalid JSON body" });
       }
 
-      if (!params.bundleKey && !params.bundleUrl) {
-        return json(res, 400, { error: "Missing bundleKey or bundleUrl" });
+      if (!params.bundleKey && !params.bundleUrl && !params.projectPrefix) {
+        return json(res, 400, { error: "Missing bundleKey, bundleUrl, or projectPrefix" });
       }
       if (!params.outputKey && !params.uploadUrl) {
         return json(res, 400, { error: "Missing outputKey or uploadUrl" });

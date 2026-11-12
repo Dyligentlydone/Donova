@@ -1,5 +1,5 @@
-import { NextResponse } from "next/server";
 import { initializeHelcimCheckout } from "@/lib/helcim";
+import { NextResponse } from "next/server";
 
 export async function POST(req: Request) {
   try {

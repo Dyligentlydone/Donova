@@ -40,6 +40,7 @@ gcloud run deploy donova-render-worker \
   --memory=4Gi \
   --timeout=3600 \
   --concurrency=1 \
+  --set-env-vars="DONOVA_BUCKET=${DONOVA_BUCKET:-donova-renders-${PROJECT_ID}}" \
   --no-allow-unauthenticated
 
 echo "Step 3/3: Creating/Updating Cloud Run Job (donova-render-job)..."

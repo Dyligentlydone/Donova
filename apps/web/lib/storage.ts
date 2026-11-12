@@ -1,16 +1,7 @@
 import { Storage } from "@google-cloud/storage";
 
 const DEFAULT_BUCKET = process.env.DONOVA_BUCKET || "donova-renders-donova-514500";
-const WORKER_URL =
-  process.env.DONOVA_WORKER_URL || "https://donova-render-worker-2hsglzbnna-uc.a.run.app";
-
-let gcsInstance: Storage | null = null;
-function getStorage(): Storage {
-  if (!gcsInstance) {
-    gcsInstance = new Storage();
-  }
-  return gcsInstance;
-}
+const WORKER_URL = process.env.DONOVA_WORKER_URL || "https://donova-render-worker-2hsglzbnna-uc.a.run.app";
 
 /** Fetches Google Cloud Run service-to-service IAM ID token via metadata server */
 async function getCloudRunIdentityToken(targetUrl: string): Promise<string | null> {
@@ -33,9 +24,12 @@ export interface CloudRenderParams {
   bucket?: string;
   bundleKey?: string;
   bundleUrl?: string;
+  /** GCS prefix holding an unpacked project tree — used by hosted Studio renders. */
+  projectPrefix?: string;
   outputKey: string;
   composition?: string;
   fps?: number;
+  quality?: "draft" | "standard" | "high";
 }
 
 export interface CloudRenderResponse {
@@ -48,9 +42,7 @@ export interface CloudRenderResponse {
   error?: string;
 }
 
-export async function triggerCloudRender(
-  params: CloudRenderParams,
-): Promise<CloudRenderResponse> {
+export async function triggerCloudRender(params: CloudRenderParams): Promise<CloudRenderResponse> {
   const bucket = params.bucket || DEFAULT_BUCKET;
   const headers: Record<string, string> = {
     "Content-Type": "application/json",
@@ -58,7 +50,7 @@ export async function triggerCloudRender(
 
   const idToken = await getCloudRunIdentityToken(WORKER_URL);
   if (idToken) {
-    headers["Authorization"] = `Bearer ${idToken}`;
+    headers.Authorization = `Bearer ${idToken}`;
   }
 
   const res = await fetch(`${WORKER_URL}/render`, {
@@ -68,9 +60,11 @@ export async function triggerCloudRender(
       bucket,
       bundleKey: params.bundleKey,
       bundleUrl: params.bundleUrl,
+      projectPrefix: params.projectPrefix,
       outputKey: params.outputKey,
       composition: params.composition || "index.html",
       fps: params.fps || 30,
+      quality: params.quality,
     }),
   });
 

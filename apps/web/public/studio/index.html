@@ -1,0 +1,295 @@
+<!doctype html>
+<meta charset="utf-8" />
+<title>Donova Studio</title>
+<style>
+  :root { --bg:#0f1216; --panel:#161b22; --line:#262d38; --text:#e6edf3; --dim:#8b98a9; --acc:#4f8cff; }
+  * { box-sizing: border-box; }
+  body { margin:0; background:var(--bg); color:var(--text); font:13px/1.45 system-ui; height:100vh; display:grid;
+         grid-template-columns: 1fr 300px 320px; grid-template-rows: 1fr 220px;
+         grid-template-areas: "canvas inspector sidebar" "timeline inspector sidebar"; }
+  #canvas { grid-area:canvas; display:flex; align-items:center; justify-content:center; overflow:hidden; position:relative; }
+  #stage { position:relative; transform-origin:center; }
+  iframe { border:0; display:block; background:#000; }
+  #inspector { grid-area:inspector; background:var(--panel); border-left:1px solid var(--line); overflow-y:auto; padding:12px; }
+  #timeline { grid-area:timeline; background:var(--panel); border-top:1px solid var(--line); overflow:auto; position:relative; }
+  h3 { margin:0 0 10px; font-size:11px; text-transform:uppercase; letter-spacing:.08em; color:var(--dim); }
+  .row { display:flex; gap:6px; margin-bottom:8px; align-items:center; }
+  label { color:var(--dim); width:70px; flex:none; font-size:11px; }
+  input, select { background:#0d1117; border:1px solid var(--line); color:var(--text); border-radius:4px; padding:4px 6px; width:100%; font:12px system-ui; }
+  button { background:#21262e; border:1px solid var(--line); color:var(--text); border-radius:5px; padding:5px 10px; cursor:pointer; }
+  button.primary { background:var(--acc); border-color:var(--acc); color:#fff; }
+  button:hover { filter:brightness(1.2); }
+  .track { position:absolute; height:26px; border-radius:4px; background:#2d3a4f; border:1px solid #3d4d68; overflow:hidden;
+           white-space:nowrap; text-overflow:ellipsis; font-size:10px; padding:5px 6px; cursor:pointer; color:#cfd8e3; }
+  .track.sel { outline:2px solid var(--acc); }
+  #ruler { position:relative; height:20px; border-bottom:1px solid var(--line); cursor:ew-resize; }
+  .tick { position:absolute; top:12px; font-size:9px; color:var(--dim); border-left:1px solid var(--line); padding-left:3px; }
+  #cursor { position:absolute; top:0; bottom:0; width:1px; background:var(--acc); pointer-events:none; }
+  #bar { padding:6px 10px; display:flex; gap:8px; align-items:center; }
+  #status { color:var(--dim); font-size:11px; margin-left:auto; }
+  #sidebar { grid-area:sidebar; background:var(--panel); border-left:1px solid var(--line); display:flex; flex-direction:column; }
+  #side-tabs { display:flex; border-bottom:1px solid var(--line); }
+  #side-tabs button { flex:1; border:0; border-radius:0; background:none; padding:8px; color:var(--dim); font-size:11px; text-transform:uppercase; letter-spacing:.06em; }
+  #side-tabs button.on { color:var(--text); border-bottom:2px solid var(--acc); }
+  .tab-body { flex:1; overflow-y:auto; padding:10px; display:none; }
+  .tab-body.on { display:flex; flex-direction:column; }
+  #chat-log { flex:1; overflow-y:auto; display:flex; flex-direction:column; gap:8px; }
+  .msg { border-radius:8px; padding:7px 10px; max-width:92%; line-height:1.4; white-space:pre-wrap; }
+  .msg.user { background:#2d3a4f; align-self:flex-end; }
+  .msg.agent { background:#1c2230; border:1px solid var(--line); align-self:flex-start; }
+  .msg .meta { font-size:10px; color:var(--dim); margin-top:4px; }
+  .msg .meta button { font-size:10px; padding:2px 6px; }
+  #chat-bar { display:flex; gap:6px; margin-top:8px; }
+  #chat-input { flex:1; resize:none; height:44px; background:#0d1117; border:1px solid var(--line); color:var(--text); border-radius:4px; padding:6px; font:12px system-ui; }
+  #style-area { flex:1; background:#0d1117; border:1px solid var(--line); color:var(--text); border-radius:4px; padding:8px; font:12px/1.5 ui-monospace,monospace; resize:none; }
+  .asset { display:flex; justify-content:space-between; align-items:center; padding:6px 8px; border:1px solid var(--line); border-radius:5px; margin-bottom:5px; font-size:11px; }
+  .asset button { font-size:10px; padding:2px 8px; }
+</style>
+<div id="canvas"><div id="stage"><iframe id="frame"></iframe></div></div>
+<div id="inspector">
+  <h3>Inspector</h3>
+  <div id="insp-empty" style="color:var(--dim)">Select a clip in the timeline.</div>
+  <div id="insp" style="display:none">
+    <div class="row"><label>clip</label><input id="i-id" disabled></div>
+    <div class="row"><label>start</label><input id="i-start" type="number" step="0.05"></div>
+    <div class="row"><label>duration</label><input id="i-dur" type="number" step="0.05"></div>
+    <div class="row"><label>text</label><input id="i-text"></div>
+    <div class="row"><button id="apply" class="primary">Apply</button></div>
+  </div>
+  <h3 style="margin-top:16px">Actions</h3>
+  <div class="row"><button id="pick">Pick on canvas</button><button id="render" class="primary">Render MP4</button><button id="check">Check</button></div>
+  <div id="issues" style="margin-top:10px"></div>
+</div>
+<div id="sidebar">
+  <div id="side-tabs">
+    <button data-tab="chat" class="on">Agent</button>
+    <button data-tab="style">Style</button>
+    <button data-tab="assets">Assets</button>
+  </div>
+  <div class="tab-body on" id="tab-chat">
+    <div id="chat-log">
+      <div class="msg agent">Describe the edit you want — e.g. "transcribe the footage", "cut the dead air", "add captions", "add a stat card".</div>
+    </div>
+    <div id="chat-bar"><textarea id="chat-input" placeholder="vibe edit…"></textarea><button id="chat-send" class="primary">Send</button></div>
+  </div>
+  <div class="tab-body" id="tab-style">
+    <h3>style.md — this project's taste</h3>
+    <textarea id="style-area" spellcheck="false" placeholder="# Style\nCaptions: one word, high contrast…"></textarea>
+    <div class="row" style="margin-top:8px"><button id="style-save" class="primary">Save style</button><span id="style-status" style="color:var(--dim);font-size:11px"></span></div>
+  </div>
+  <div class="tab-body" id="tab-assets">
+    <h3>Blocks</h3><div id="asset-blocks"></div>
+    <h3 style="margin-top:14px">Media</h3><div id="asset-media"></div>
+  </div>
+</div>
+<div id="timeline">
+  <div id="bar"><button id="play">▶</button><span id="tc">0.00</span><span id="status"></span></div>
+  <div id="ruler"></div>
+  <div id="tracks" style="position:relative;height:120px"></div>
+  <div id="cursor"></div>
+</div>
+<script>
+const $ = (s) => document.querySelector(s);
+let spec=null, compUrl='', selected=null, dur=1, playing=false, raf=0, t=0;
+const frame=$('#frame');
+const px = (s) => 60 + s*80; // 80px per second
+const seek = async (tt) => { t=Math.max(0,Math.min(tt,dur)); await frame.contentWindow.__fc?.renderSeek(t); $('#tc').textContent=t.toFixed(2)+'s'; $('#cursor').style.left=px(t)+'px'; };
+// Seeks coalesce: while one renderSeek is in flight only the newest target is kept,
+// so dragging the playhead never queues a backlog of stale frames.
+let seekBusy=false, pendingT=null;
+const seekTo = async (tt) => {
+  pendingT=Math.max(0,Math.min(tt,dur)); if(seekBusy)return; seekBusy=true;
+  while(pendingT!==null){ const v=pendingT; pendingT=null; await seek(v); }
+  seekBusy=false;
+};
+async function loadSpec(){
+  const r = await fetch('/api/spec?file=index.html').then(r=>r.json());
+  spec = r.spec; compUrl = r.compositionUrl;
+  dur = spec.duration || 1;
+  frame.style.width = spec.width+'px'; frame.style.height = spec.height+'px';
+  frame.src = compUrl;
+  buildTimeline();
+}
+frame.addEventListener('load', async () => {
+  await new Promise(r=>{const i=setInterval(()=>{if(frame.contentWindow.__playerReady){clearInterval(i);r();}},50);});
+  const st = Math.min($('#canvas').clientWidth/spec.width*.9, $('#canvas').clientHeight/spec.height*.9, 1);
+  $('#stage').style.transform=`scale(${st})`; $('#stage').style.width=spec.width+'px'; $('#stage').style.height=spec.height+'px';
+  // The runtime boots at t=0 before __playerReady — no initial seek needed here
+  // (an extra one could land after an early user click and stomp it).
+});
+function buildTimeline(){
+  const r=$('#ruler'), tr=$('#tracks'); r.innerHTML=''; tr.innerHTML='';
+  for(let s=0;s<=Math.ceil(dur);s++){const d=document.createElement('div');d.className='tick';d.style.left=px(s)+'px';d.textContent=s+'s';r.appendChild(d);}
+  spec.clips.forEach((c,i)=>{
+    const el=document.createElement('div');el.className='track'+(selected===c.id?' sel':'');
+    el.style.left=px(c.timing.start)+'px';el.style.width=Math.max(20,c.timing.duration*80-4)+'px';el.style.top=(8+i*30)+'px';
+    el.textContent=(c.media.tag||'clip')+' · '+(c.textSnippet||c.id);
+    el.onclick=()=>select(c.id);
+    // Drag to retime (writes data-start via the mutation API).
+    el.onmousedown=(e)=>{
+      e.preventDefault(); const x0=e.clientX, s0=c.timing.start;
+      const mv=(ev)=>{const ns=Math.max(0,Math.round((s0+(ev.clientX-x0)/80)*100)/100);el.style.left=px(ns)+'px';el.dataset.ns=ns;};
+      const up=async(ev)=>{
+        document.removeEventListener('mousemove',mv);document.removeEventListener('mouseup',up);
+        const ns=Math.max(0,Math.round((s0+(ev.clientX-x0)/80)*100)/100);
+        if(Math.abs(ns-s0)>0.01){
+          await fetch('/api/mutation',{method:'POST',headers:{'Content-Type':'application/json'},
+            body:JSON.stringify({file:'index.html',mutations:[{op:'setAttr',domIndex:c.domIndex,attr:'data-start',value:String(ns)}]})});
+          frame.contentWindow.location.reload();loadSpec();
+        }
+      };
+      document.addEventListener('mousemove',mv);document.addEventListener('mouseup',up);
+    };
+    tr.appendChild(el);
+  });
+}
+function select(id){
+  selected=id; const c=spec.clips.find(x=>x.id===id); if(!c)return;
+  $('#insp-empty').style.display='none'; $('#insp').style.display='block';
+  $('#i-id').value=c.id; $('#i-start').value=c.timing.start; $('#i-dur').value=c.timing.duration;
+  $('#i-text').value=c.textSnippet||'';
+  buildTimeline();
+}
+$('#apply').onclick=async()=>{
+  const c=spec.clips.find(x=>x.id===selected); if(!c)return;
+  const mutations=[{op:'setAttr',domIndex:c.domIndex,attr:'data-start',value:$('#i-start').value},
+                   {op:'setAttr',domIndex:c.domIndex,attr:'data-duration',value:$('#i-dur').value}];
+  if($('#i-text').value && $('#i-text').value!==(c.textSnippet||''))
+    mutations.push({op:'setText',domIndex:c.domIndex,value:$('#i-text').value});
+  await fetch('/api/mutation',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({file:'index.html',mutations})});
+  frame.contentWindow.location.reload(); loadSpec();
+};
+$('#play').onclick=()=>togglePlay();
+function togglePlay(){
+  playing=!playing; $('#play').textContent=playing?'⏸':'▶'; let last=performance.now();
+  const tick=async(n)=>{ if(!playing)return; const dt=(n-last)/1000; last=n; await seekTo(t+dt>dur?0:t+dt); if(playing)raf=requestAnimationFrame(tick); };
+  if(playing)raf=requestAnimationFrame(tick); else cancelAnimationFrame(raf);
+}
+document.addEventListener('keydown',(e)=>{
+  if(e.code==='Space' && !/^(INPUT|TEXTAREA|SELECT)$/.test(e.target.tagName)){ e.preventDefault(); togglePlay(); }
+});
+// Scrub: press anywhere on the ruler or empty track area to move the playhead;
+// drag to scrub continuously. Clip blocks keep their own click/drag handlers.
+const tl=$('#timeline');
+const tlT=(e)=>{ const r=tl.getBoundingClientRect(); return (e.clientX-r.left+tl.scrollLeft-60)/80; };
+tl.addEventListener('mousedown',(e)=>{
+  if(e.target.closest('.track,#bar'))return;
+  e.preventDefault();
+  seekTo(tlT(e));
+  const mv=(ev)=>seekTo(tlT(ev));
+  const up=()=>{ document.removeEventListener('mousemove',mv); document.removeEventListener('mouseup',up); };
+  document.addEventListener('mousemove',mv); document.addEventListener('mouseup',up);
+});
+$('#render').onclick=async()=>{
+  $('#status').textContent='rendering…';
+  const {id}=await fetch('/api/render',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({out:'out.mp4'})}).then(r=>r.json());
+  const poll=setInterval(async()=>{
+    const j=await fetch('/api/render/'+id).then(r=>r.json());
+    $('#status').textContent=j.status+(j.progress?` ${j.progress[0]}/${j.progress[1]}`:'');
+    if(j.status==='done'||j.status==='error'){clearInterval(poll);$('#status').textContent=j.status==='done'?'done → '+j.out:'error: '+j.error;}
+  },500);
+};
+// Canvas pick: click an element inside the composition to select its clip.
+let picking=false, pickEl=null, pickHandler=null;
+$('#pick').onclick=()=>{
+  picking=!picking; $('#pick').classList.toggle('primary',picking);
+  const doc=frame.contentDocument; if(!doc)return;
+  if(picking){
+    pickEl=doc.createElement('div');
+    pickEl.style.cssText='position:fixed;pointer-events:none;border:2px solid #4f8cff;z-index:2147483647;display:none';
+    doc.body.appendChild(pickEl);
+    const timed=[...doc.querySelectorAll('[data-start]')];
+    const idxOf=(el)=>{const c=el.closest('[data-start]');return c?timed.indexOf(c):-1;};
+    pickHandler=(e)=>{
+      const i=idxOf(e.target); if(i<0)return;
+      e.preventDefault();e.stopPropagation();
+      const c=spec.clips[i]; if(c){select(c.id);seek(c.timing.start);}
+      picking=false;$('#pick').classList.remove('primary');pickEl.remove();doc.removeEventListener('mousemove',hover,true);doc.removeEventListener('click',pickHandler,true);
+    };
+    const hover=(e)=>{
+      const i=idxOf(e.target); if(i<0){pickEl.style.display='none';return;}
+      const r=e.target.closest('[data-start]').getBoundingClientRect();
+      pickEl.style.display='block';pickEl.style.left=r.left+'px';pickEl.style.top=r.top+'px';pickEl.style.width=r.width+'px';pickEl.style.height=r.height+'px';
+    };
+    doc.addEventListener('mousemove',hover,true);doc.addEventListener('click',pickHandler,true);
+  } else { pickEl?.remove(); }
+};
+$('#check').onclick=async()=>{
+  const {issues}=await fetch('/api/lint?file=index.html').then(r=>r.json());
+  $('#issues').innerHTML=issues.map(i=>`<div style="color:${i.severity==='error'?'#ff7b72':i.severity==='warn'?'#e3b341':'#8b98a9'}">• ${i.rule}: ${i.message}</div>`).join('')||'<span style="color:#3fb950">clean</span>';
+};
+
+/* ------------------------------- sidebar -------------------------------- */
+document.querySelectorAll('#side-tabs button').forEach(b=>b.onclick=()=>{
+  document.querySelectorAll('#side-tabs button').forEach(x=>x.classList.toggle('on',x===b));
+  document.querySelectorAll('.tab-body').forEach(t=>t.classList.toggle('on',t.id==='tab-'+b.dataset.tab));
+});
+
+function chatMsg(cls,html,meta){
+  const d=document.createElement('div');d.className='msg '+cls;d.innerHTML=html;
+  if(meta){const m=document.createElement('div');m.className='meta';m.innerHTML=meta;d.appendChild(m);}
+  const log=$('#chat-log');log.appendChild(d);log.scrollTop=log.scrollHeight;return d;
+}
+async function sendChat(){
+  const inp=$('#chat-input'),text=inp.value.trim();if(!text)return;
+  inp.value='';chatMsg('user',text.replace(/</g,'&lt;'));
+  const pending=chatMsg('agent','<i style="color:var(--dim)">working…</i>');
+  try{
+    const turn=await fetch('/api/chat',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({message:text})}).then(r=>r.json());
+    pending.innerHTML=(turn.reply||'(no reply)').replace(/</g,'&lt;');
+    const changed=(turn.changes||[]).map(c=>c.file).join(', ');
+    pending.querySelector('.meta')?.remove();
+    const m=document.createElement('div');m.className='meta';
+    m.innerHTML=(turn.tools||[]).join(' · ')+(changed?` — changed ${changed}`:'')+(turn.changes?.length?` <button data-turn="${turn.id}">undo turn</button>`:'');
+    m.querySelector('button')?.addEventListener('click',async()=>{
+      const r=await fetch('/api/undo',{method:'POST'}).then(r=>r.json());
+      m.innerHTML=r.ok?`↩ restored ${r.restored.join(', ')}`:'nothing to undo';
+      frame.contentWindow.location.reload();loadSpec();
+    });
+    pending.appendChild(m);
+    if(turn.changes?.length){frame.contentWindow.location.reload();loadSpec();}
+  }catch(e){pending.innerHTML='error: '+e;}
+}
+$('#chat-send').onclick=sendChat;
+$('#chat-input').addEventListener('keydown',e=>{if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();sendChat();}});
+
+async function loadStyle(){
+  const r=await fetch('/api/style').then(r=>r.json());
+  $('#style-area').value=r.content??'';
+}
+$('#style-save').onclick=async()=>{
+  await fetch('/api/style',{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify({content:$('#style-area').value})});
+  $('#style-status').textContent='saved';setTimeout(()=>$('#style-status').textContent='',1500);
+};
+
+async function loadAssets(){
+  const r=await fetch('/api/assets').then(r=>r.json());
+  const ins=async(file,snippet)=>{
+    const f=await fetch('/api/file?path=index.html').then(r=>r.json());
+    const html=f.content.replace(/<\/div>\s*<\/body>|<\/div>\s*$/,m=>snippet+'\n'+m);
+    await fetch('/api/file',{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify({path:'index.html',content:html})});
+    frame.contentWindow.location.reload();loadSpec();
+  };
+  $('#asset-blocks').innerHTML='';
+  for(const b of r.blocks){
+    const d=document.createElement('div');d.className='asset';
+    d.innerHTML=`<span>${b}</span>`;
+    const btn=document.createElement('button');btn.textContent='insert';
+    btn.onclick=()=>ins(null,`  <div class="clip" data-start="0" data-duration="3" data-composition-src="compositions/${b}/index.html"></div>`);
+    d.appendChild(btn);$('#asset-blocks').appendChild(d);
+  }
+  if(!r.blocks.length)$('#asset-blocks').innerHTML='<span style="color:var(--dim);font-size:11px">run <code>fc add &lt;block&gt;</code> to install</span>';
+  $('#asset-media').innerHTML='';
+  for(const f of r.media){
+    const d=document.createElement('div');d.className='asset';
+    d.innerHTML=`<span style="overflow:hidden;text-overflow:ellipsis">${f}</span>`;
+    if(/\.(wav|mp3|m4a|ogg)$/i.test(f)){
+      const btn=document.createElement('button');btn.textContent='+ audio';
+      btn.onclick=()=>ins(null,`  <audio class="clip" data-start="0" src="${f}"></audio>`);
+      d.appendChild(btn);
+    }
+    $('#asset-media').appendChild(d);
+  }
+}
+loadSpec();loadStyle();loadAssets();
+</script>

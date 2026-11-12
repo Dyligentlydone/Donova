@@ -55,6 +55,18 @@ importers:
 
   apps/web:
     dependencies:
+      '@donova/contract':
+        specifier: workspace:*
+        version: link:../../packages/contract
+      '@donova/lint':
+        specifier: workspace:*
+        version: link:../../packages/lint
+      '@donova/runtime':
+        specifier: workspace:*
+        version: link:../../packages/runtime
+      '@donova/studio-server':
+        specifier: workspace:*
+        version: link:../../packages/studio-server
       '@google-cloud/storage':
         specifier: 7.15.0
         version: 7.15.0
@@ -64,6 +76,9 @@ importers:
       next:
         specifier: 15.5.25
         version: 15.5.25(@types/node@20.19.43)(react-dom@19.3.1(react@19.3.1))(react@19.3.1)
+      parse5:
+        specifier: ^7.2.1
+        version: 7.3.0
       react:
         specifier: ^19.0.0
         version: 19.3.1

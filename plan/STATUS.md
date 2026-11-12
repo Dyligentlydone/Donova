@@ -1,6 +1,34 @@
 # STATUS — what exists today (read before building)
 
-Last updated: 2026-11-07 (alpha-video frame extraction fixed — see §-7; Studio rebranded to "donova" — see §-5). Update this file whenever you finish an MV task.
+Last updated: 2026-11-12 (hosted Studio on Cloud Run — see §-8). Update this file whenever you finish an MV task.
+
+## -8. Hosted Studio on Google Cloud Run (single-project, pre-auth)
+
+`apps/web` now embeds the real Studio UI (`packages/studio-server/src/ui/index.html` →
+`public/studio/index.html`, served at `/studio`) backed by a GCS project store — NOT
+the upstream multi-project React SPA (that build was removed; it expected a different
+`/api/*` surface).
+
+- Project state: GCS `projects/default/` prefix in `donova-renders-<project>` bucket;
+  `lib/project.ts` is the store (read/write/list/stream + `/tmp` mirror for the agent).
+  Seeded on first access (index.html + style.md + donova.json, 1080x1920).
+- All local Studio endpoints exist as Next routes: `/api/spec|file|mutation|lint|files|
+  style|assets|chat|undo|turns|render`, `/project/*` (runtime-injected HTML + range
+  streaming), `/__fc-runtime.js` + `/__fc-gsap.js` (synced to public/ by
+  `scripts/sync-runtime.mjs` at build — dot-names can't be route segments).
+- The agent is the same `Agent` class via new `@donova/studio-server/agent` subpath
+  export; `lib/agent.ts` materializes text files to /tmp per op, then pushes changed
+  files + `.donova/turns.json` back to GCS. `runCmd` cloud subset: `check` (in-process
+  lint), `render`/`renderDraft` (worker), `timeline`; media commands reply "not
+  available in Donova Cloud yet". `ANTHROPIC_API_KEY` env enables the real tool loop.
+- Renders: `POST /api/render` → worker `POST /render` with `projectPrefix` (new worker
+  ingest mode — no zip); job status in-memory + `renders/jobs/<id>.json` GCS record;
+  download URLs are signed (bucket is private — plain GCS URLs 403).
+- Uploads land in `projects/default/media/` so they're immediately usable as
+  `media/<name>` in compositions.
+- Known gaps: no auth/users yet (single shared project — the URL IS the gate);
+  concurrent edits across instances can race (mutex only covers one instance); media
+  CLI commands need a worker-side implementation to work in-cloud.
 
 ## -7b. Cutout webms need dense keyframes (live-preview seekability)
 

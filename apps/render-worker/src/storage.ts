@@ -20,12 +20,42 @@ export interface DownloadBundleOpts {
   bucket?: string;
   bundleKey?: string;
   bundleUrl?: string;
+  /** GCS object prefix holding an unpacked project tree (e.g. "projects/default/"). */
+  projectPrefix?: string;
   destDir: string;
+}
+
+/** Downloads every object under a GCS prefix into destDir, preserving rel paths. */
+async function downloadProjectPrefix(
+  storage: Storage,
+  bucket: string,
+  prefix: string,
+  destDir: string,
+): Promise<void> {
+  const b = storage.bucket(bucket);
+  const [files] = await b.getFiles({ prefix });
+  const objects = files.filter((f) => !f.name.endsWith("/"));
+  if (objects.length === 0) {
+    throw new Error(`No project files found under gs://${bucket}/${prefix}`);
+  }
+  for (const f of objects) {
+    const rel = f.name.slice(prefix.length);
+    if (!rel || rel.includes("..")) continue;
+    const dest = join(destDir, rel);
+    if (!resolve(dest).startsWith(destDir)) continue;
+    await mkdir(dirname(dest), { recursive: true });
+    await f.download({ destination: dest });
+  }
 }
 
 export async function downloadAndExtractBundle(opts: DownloadBundleOpts): Promise<string> {
   const destDir = resolve(opts.destDir);
   await mkdir(destDir, { recursive: true });
+
+  if (opts.bucket && opts.projectPrefix) {
+    await downloadProjectPrefix(getStorage(), opts.bucket, opts.projectPrefix, destDir);
+    return destDir;
+  }
 
   const tempArchive = join(destDir, "__bundle_archive__");
 

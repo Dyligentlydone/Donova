@@ -1,19 +1,19 @@
 "use client";
 
-import { useState } from "react";
-import Link from "next/link";
-import Image from "next/image";
 import {
-  Upload,
-  Film,
-  Play,
+  ArrowLeft,
   CheckCircle,
   Download,
+  Film,
   Loader2,
-  Sparkles,
-  ArrowLeft,
+  Play,
   Server,
+  Sparkles,
+  Upload,
 } from "lucide-react";
+import Image from "next/image";
+import Link from "next/link";
+import { useState } from "react";
 
 export default function Dashboard() {
   const [file, setFile] = useState<File | null>(null);
@@ -49,7 +49,7 @@ export default function Dashboard() {
         throw new Error(data.error || "Failed to upload footage to GCS");
       }
 
-      setUploadedUrl(data.publicUrl);
+      setUploadedUrl(data.projectPath ?? data.fileKey);
     } catch (err: unknown) {
       alert(`Upload error: ${err instanceof Error ? err.message : String(err)}`);
     } finally {
@@ -90,7 +90,10 @@ export default function Dashboard() {
       {/* Top bar */}
       <header className="border-b border-white/10 bg-[#0e0e0e] px-6 py-4 flex items-center justify-between">
         <div className="flex items-center gap-4">
-          <Link href="/" className="text-white/60 hover:text-white flex items-center gap-1.5 text-xs font-mono">
+          <Link
+            href="/"
+            className="text-white/60 hover:text-white flex items-center gap-1.5 text-xs font-mono"
+          >
             <ArrowLeft className="w-4 h-4" /> Home
           </Link>
           <div className="h-4 w-px bg-white/20" />
@@ -117,38 +120,50 @@ export default function Dashboard() {
           <div>
             <h1 className="text-2xl sm:text-3xl font-extrabold text-white">Creator Studio Workspace</h1>
             <p className="text-sm text-white/60 mt-1">
-              Connected to Google Cloud Run · Bucket: <code className="text-[#d7b73f]">donova-renders-donova-514500</code>
+              Connected to Google Cloud Run · Bucket:{" "}
+              <code className="text-[#d7b73f]">donova-renders-donova-514500</code>
             </p>
           </div>
 
-          <button
-            onClick={handleTriggerRender}
-            disabled={rendering}
-            className="bg-[#d7b73f] text-black font-extrabold text-xs uppercase tracking-widest px-6 py-3 rounded-xl hover:bg-[#e9cf6b] disabled:opacity-50 transition-all flex items-center gap-2 shadow-[0_0_20px_rgba(215,183,63,0.25)]"
-          >
-            {rendering ? (
-              <>
-                <Loader2 className="w-4 h-4 animate-spin" />
-                RENDERING ON CLOUD RUN...
-              </>
-            ) : (
-              <>
-                <Sparkles className="w-4 h-4" />
-                EXPORT CLOUD EDIT (MP4)
-              </>
-            )}
-          </button>
+          <div className="flex items-center gap-3">
+            <Link
+              href="/studio"
+              className="bg-[#d7b73f] text-black font-extrabold text-xs uppercase tracking-widest px-6 py-3 rounded-xl hover:bg-[#e9cf6b] transition-all flex items-center gap-2 shadow-[0_0_20px_rgba(215,183,63,0.25)]"
+            >
+              <Film className="w-4 h-4" />
+              OPEN DONOVA STUDIO →
+            </Link>
+            <button
+              type="button"
+              onClick={handleTriggerRender}
+              disabled={rendering}
+              className="border border-white/20 text-white font-bold text-xs uppercase tracking-widest px-5 py-3 rounded-xl hover:border-white/40 transition-colors flex items-center gap-2"
+            >
+              {rendering ? (
+                <>
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                  RENDERING...
+                </>
+              ) : (
+                <>
+                  <Sparkles className="w-4 h-4" />
+                  TEST CLOUD EXPORT
+                </>
+              )}
+            </button>
+          </div>
         </div>
 
         {/* Status banner when render succeeds */}
-        {renderResult && renderResult.ok && (
+        {renderResult?.ok && (
           <div className="rounded-2xl border border-emerald-500/40 bg-emerald-500/10 p-6 mb-8 flex flex-col sm:flex-row items-center justify-between gap-4">
             <div className="flex items-center gap-3">
               <CheckCircle className="w-8 h-8 text-emerald-400 shrink-0" />
               <div>
                 <h3 className="font-bold text-white text-base">Video Rendered Successfully on Cloud Run!</h3>
                 <p className="text-xs text-white/70">
-                  {renderResult.frames} frames · {renderResult.duration}s runtime · Saved directly to Google Cloud Storage.
+                  {renderResult.frames} frames · {renderResult.duration}s runtime · Saved directly to Google
+                  Cloud Storage.
                 </p>
               </div>
             </div>
@@ -183,7 +198,8 @@ export default function Dashboard() {
                 <h2 className="font-bold text-lg text-white">Upload Raw Footage</h2>
               </div>
               <p className="text-xs text-white/60 mb-6">
-                Direct-to-cloud upload. Files stream straight to your Google Cloud Storage bucket via secure signed URLs.
+                Direct-to-cloud upload. Files stream straight to your Google Cloud Storage bucket via secure
+                signed URLs.
               </p>
 
               <label className="border-2 border-dashed border-white/20 hover:border-[#d7b73f]/60 rounded-xl p-8 flex flex-col items-center justify-center text-center cursor-pointer transition-colors block bg-black/40">
@@ -243,6 +259,7 @@ export default function Dashboard() {
 
             <div className="mt-6">
               <button
+                type="button"
                 onClick={handleTriggerRender}
                 disabled={rendering}
                 className="w-full bg-white/10 hover:bg-white/20 text-white font-bold text-xs uppercase tracking-wider py-3 rounded-xl transition-colors flex items-center justify-center gap-2"

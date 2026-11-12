@@ -33,18 +33,18 @@ export default function Navbar({ onSubscribe, isSubscriber }: NavbarProps) {
           <a href="#pricing" className="hover:text-white transition-colors">
             Pricing
           </a>
-          <Link href="/dashboard" className="hover:text-[#d7b73f] transition-colors">
-            Dashboard
+          <Link href="/studio" className="hover:text-[#d7b73f] transition-colors">
+            Studio
           </Link>
         </div>
 
         <div className="flex items-center gap-3">
           {isSubscriber ? (
             <Link
-              href="/dashboard"
+              href="/studio"
               className="bg-[#d7b73f] text-black font-bold text-xs uppercase tracking-wider px-4 py-2.5 rounded-lg hover:bg-[#e9cf6b] transition-colors"
             >
-              Go to Studio →
+              Open Studio →
             </Link>
           ) : (
             <button

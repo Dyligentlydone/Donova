@@ -1,5 +1,5 @@
-import { NextResponse } from "next/server";
 import { Storage } from "@google-cloud/storage";
+import { NextResponse } from "next/server";
 
 const DEFAULT_BUCKET = process.env.DONOVA_BUCKET || "donova-renders-donova-514500";
 const storage = new Storage();
@@ -14,7 +14,7 @@ export async function POST(req: Request) {
     }
 
     const cleanName = file.name.replace(/[^a-zA-Z0-9._-]/g, "_");
-    const fileKey = `uploads/${Date.now()}_${cleanName}`;
+    const fileKey = `projects/default/media/${Date.now()}_${cleanName}`;
     const bytes = Buffer.from(await file.arrayBuffer());
 
     const bucket = storage.bucket(DEFAULT_BUCKET);
@@ -25,12 +25,10 @@ export async function POST(req: Request) {
       resumable: bytes.length > 10 * 1024 * 1024,
     });
 
-    const publicUrl = `https://storage.googleapis.com/${DEFAULT_BUCKET}/${fileKey}`;
-
     return NextResponse.json({
       ok: true,
       fileKey,
-      publicUrl,
+      projectPath: `media/${Date.now()}_${cleanName}`,
       size: bytes.length,
       name: file.name,
     });

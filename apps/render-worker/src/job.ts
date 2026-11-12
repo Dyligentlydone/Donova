@@ -9,6 +9,8 @@ export interface RenderJobParams {
   bucket?: string;
   bundleKey?: string;
   bundleUrl?: string;
+  /** GCS prefix holding an unpacked project tree (alternative to a bundle archive). */
+  projectPrefix?: string;
   outputKey?: string;
   uploadUrl?: string;
   composition?: string;
@@ -41,11 +43,13 @@ export async function executeRenderJob(params: RenderJobParams): Promise<RenderJ
 
   try {
     // 1. Download & extract project bundle
+    const bucket = params.bucket ?? process.env.DONOVA_BUCKET;
     console.log(`[${jobId}] downloading bundle...`);
     await downloadAndExtractBundle({
-      bucket: params.bucket,
+      bucket,
       bundleKey: params.bundleKey,
       bundleUrl: params.bundleUrl,
+      projectPrefix: params.projectPrefix,
       destDir: projectExtractDir,
     });
 
@@ -87,7 +91,7 @@ export async function executeRenderJob(params: RenderJobParams): Promise<RenderJ
     console.log(`[${jobId}] uploading rendered output...`);
     const uploadRes: UploadResult = await uploadRenderOutput({
       filePath: outputFile,
-      bucket: params.bucket,
+      bucket,
       outputKey: params.outputKey,
       uploadUrl: params.uploadUrl,
     });

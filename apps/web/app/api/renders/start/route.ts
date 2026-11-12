@@ -1,5 +1,6 @@
-import { NextResponse } from "next/server";
+import { signedReadUrl } from "@/lib/project";
 import { triggerCloudRender } from "@/lib/storage";
+import { NextResponse } from "next/server";
 
 export async function POST(req: Request) {
   try {
@@ -27,7 +28,7 @@ export async function POST(req: Request) {
       size: res.size,
       frames: res.frames,
       duration: res.duration,
-      downloadUrl: `https://storage.googleapis.com/${process.env.DONOVA_BUCKET || "donova-renders-donova-514500"}/${targetOutput}`,
+      downloadUrl: await signedReadUrl(targetOutput, 60 * 60 * 1000),
     });
   } catch (err: unknown) {
     const msg = err instanceof Error ? err.message : String(err);

@@ -23,14 +23,11 @@ export function getHelcimToken(): string {
   return token;
 }
 
-export async function initializeHelcimCheckout(
-  params: HelcimInitParams = {},
-): Promise<HelcimInitResponse> {
+export async function initializeHelcimCheckout(params: HelcimInitParams = {}): Promise<HelcimInitResponse> {
   const apiToken = getHelcimToken();
   const amount = params.amount ?? 11.0;
   const currency = params.currency ?? "USD";
-  const invoiceNumber =
-    params.invoiceNumber ?? `DNV-SUB-${Date.now().toString(36).toUpperCase()}`;
+  const invoiceNumber = params.invoiceNumber ?? `DNV-SUB-${Date.now().toString(36).toUpperCase()}`;
 
   const body: Record<string, unknown> = {
     paymentType: "purchase",
