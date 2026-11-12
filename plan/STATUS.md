@@ -13,8 +13,17 @@ rebrands + boots upstream `hyperframes preview`), proxies `0.0.0.0:$PORT →
 - Service `donova-studio`, image `donova-images/studio-service`, CPU 4 / 8Gi /
   timeout 3600 / **max-instances=1** (a second instance would fork project state) /
   min-instances=1 (avoids ~15s cold boot).
-- `--allow-unauthenticated` for now — obscure URL is the only gate, same posture as
-  the rest until auth lands. URL: `https://donova-studio-712078215622.us-central1.run.app`.
+- `--allow-unauthenticated` at the infra level, but the service enforces an HMAC
+  session gate itself: `?t=<token>` (web-issued, 5min TTL) or `__donova_session`
+  cookie (30d); everything else → 401 gate page. `STUDIO_GATE_SECRET` env on both
+  services; the raw secret doubles as an owner master token.
+- Web side: `/api/studio-link` checks `subscribers/<sha256(email)>.json` in GCS
+  (written by `/api/billing/confirm` on Helcim checkout; `DONOVA_OWNER_EMAILS`
+  allowlist bypasses) then returns the signed Studio URL. Navbar + dashboard
+  "Open Studio" buttons go through it — non-subscribers get the subscribe flow.
+- Verified: anonymous → 401 gate page on every path incl. /api/*; master token →
+  302 + session cookie → full SPA/API; fake email → 403 not-subscribed.
+- URL: `https://donova-studio-712078215622.us-central1.run.app`.
 - Web links (`Navbar`, `/dashboard`) resolve `lib/studioUrl.ts` → `NEXT_PUBLIC_STUDIO_URL`
   with the deployed URL baked as default.
 - Because the service has chrome+ffmpeg, the SPA's OWN render/export/check routes

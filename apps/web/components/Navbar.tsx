@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import Image from "next/image";
-import { STUDIO_URL } from "../lib/studioUrl";
+import { openStudio } from "../lib/openStudio";
 
 interface NavbarProps {
   onSubscribe?: () => void;
@@ -10,6 +10,13 @@ interface NavbarProps {
 }
 
 export default function Navbar({ onSubscribe, isSubscriber }: NavbarProps) {
+  const handleStudio = async () => {
+    const result = await openStudio();
+    if (result !== "ok") {
+      if (onSubscribe) onSubscribe();
+      else window.location.href = "/#pricing";
+    }
+  };
   return (
     <nav className="fixed top-0 left-0 right-0 z-50 bg-[#0a0a0a]/80 backdrop-blur-md border-b border-white/10">
       <div className="max-w-6xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
@@ -34,19 +41,24 @@ export default function Navbar({ onSubscribe, isSubscriber }: NavbarProps) {
           <a href="#pricing" className="hover:text-white transition-colors">
             Pricing
           </a>
-          <a href={STUDIO_URL} className="hover:text-[#d7b73f] transition-colors">
+          <button
+            type="button"
+            onClick={() => void handleStudio()}
+            className="hover:text-[#d7b73f] transition-colors"
+          >
             Studio
-          </a>
+          </button>
         </div>
 
         <div className="flex items-center gap-3">
           {isSubscriber ? (
-            <a
-              href={STUDIO_URL}
+            <button
+              type="button"
+              onClick={() => void handleStudio()}
               className="bg-[#d7b73f] text-black font-bold text-xs uppercase tracking-wider px-4 py-2.5 rounded-lg hover:bg-[#e9cf6b] transition-colors"
             >
               Open Studio →
-            </a>
+            </button>
           ) : (
             <button
               onClick={onSubscribe}

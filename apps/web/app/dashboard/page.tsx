@@ -13,7 +13,7 @@ import {
 } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
-import { STUDIO_URL } from "../../lib/studioUrl";
+import { openStudio } from "../../lib/openStudio";
 import { useState } from "react";
 
 export default function Dashboard() {
@@ -127,13 +127,18 @@ export default function Dashboard() {
           </div>
 
           <div className="flex items-center gap-3">
-            <a
-              href={STUDIO_URL}
+            <button
+              type="button"
+              onClick={() => {
+                void openStudio().then((r) => {
+                  if (r !== "ok") window.location.href = "/#pricing";
+                });
+              }}
               className="bg-[#d7b73f] text-black font-extrabold text-xs uppercase tracking-widest px-6 py-3 rounded-xl hover:bg-[#e9cf6b] transition-all flex items-center gap-2 shadow-[0_0_20px_rgba(215,183,63,0.25)]"
             >
               <Film className="w-4 h-4" />
               OPEN DONOVA STUDIO →
-            </a>
+            </button>
             <button
               type="button"
               onClick={handleTriggerRender}

@@ -1,4 +1,5 @@
 import { spawn, type ChildProcess } from "node:child_process";
+import { createHmac, timingSafeEqual } from "node:crypto";
 import { createServer, request as httpRequest, type IncomingMessage, type ServerResponse } from "node:http";
 import { connect } from "node:net";
 import { createWriteStream, mkdirSync, readdirSync, statSync } from "node:fs";
@@ -26,6 +27,89 @@ const PUBLIC_PORT = Number(process.env.PORT) || 8080;
 const SYNC_MS = Number(process.env.SYNC_MS) || 8000;
 const CLI_BIN = process.env.DONOVA_CLI || "/app/packages/cli/bin/donova.mjs";
 const SKIP_PUSH = /(^|\/)(node_modules|\.git|dist)(\/|$)/;
+const GATE_SECRET = process.env.STUDIO_GATE_SECRET || "";
+const SESSION_COOKIE = "__donova_session";
+const WEB_APP_URL = process.env.WEB_APP_URL || "https://donova-web-712078215622.us-central1.run.app";
+
+/**
+ * Gate: only requests carrying a valid session pass to the Studio upstream.
+ * The web app issues short-lived tokens via /api/studio-link; the first
+ * request carries ?t=<token>, we validate + set a session cookie and 302 to
+ * the clean URL. Session cookies are themselves HMAC-signed (30d).
+ * Format: base64url(email|expiryMs) + "." + hmacSHA256hex(payload, secret).
+ */
+function sign(email: string, expiryMs: number): string {
+  const payload = Buffer.from(`${email}|${expiryMs}`).toString("base64url");
+  const sig = createHmac("sha256", GATE_SECRET).update(payload).digest("hex");
+  return `${payload}.${sig}`;
+}
+
+function verify(token: string): string | null {
+  if (!GATE_SECRET) return "gate-disabled";
+  const dot = token.lastIndexOf(".");
+  if (dot <= 0) return null;
+  const payload = token.slice(0, dot);
+  const sig = token.slice(dot + 1);
+  const expect = createHmac("sha256", GATE_SECRET).update(payload).digest("hex");
+  const a = Buffer.from(sig);
+  const b = Buffer.from(expect);
+  if (a.length !== b.length || !timingSafeEqual(a, b)) return null;
+  const raw = Buffer.from(payload, "base64url").toString();
+  const sep = raw.lastIndexOf("|");
+  if (sep <= 0) return null;
+  const email = raw.slice(0, sep);
+  const expiry = Number(raw.slice(sep + 1));
+  if (!email.includes("@") || !Number.isFinite(expiry) || expiry < Date.now()) return null;
+  return email;
+}
+
+function cookieSession(req: IncomingMessage): string | null {
+  const header = req.headers.cookie || "";
+  const match = header.match(new RegExp(`(?:^|;\\s*)${SESSION_COOKIE}=([^;\\s]+)`));
+  return match ? verify(decodeURIComponent(match[1])) : null;
+}
+
+function gatedPage(): string {
+  return `<!DOCTYPE html><html><head><meta charset="utf-8"><title>Donova Studio</title>
+<style>body{margin:0;min-height:100vh;display:flex;align-items:center;justify-content:center;
+background:#0a0a0f;color:#f5f1e8;font:400 15px/1.6 system-ui;text-align:center}
+a{color:#d7b73f}</style></head><body><div>
+<h1 style="font-size:20px;letter-spacing:-0.02em">Donova Studio</h1>
+<p>Studio access requires an active subscription.</p>
+<p><a href="${WEB_APP_URL}">Subscribe — $11/mo →</a></p>
+</div></body></html>`;
+}
+
+function handleGate(req: IncomingMessage, res: ServerResponse): boolean {
+  if (req.url === "/health") {
+    res.writeHead(200, { "content-type": "application/json" });
+    res.end(JSON.stringify({ ok: true, project: PROJECT_PREFIX }));
+    return true;
+  }
+  const url = new URL(req.url || "/", "http://internal");
+  const token = url.searchParams.get("t");
+  if (token) {
+    // owner path: the raw gate secret itself is a master token
+    const email = GATE_SECRET && token === GATE_SECRET ? "owner@donova.local" : verify(token);
+    if (email) {
+      url.searchParams.delete("t");
+      const session = sign(email, Date.now() + 30 * 24 * 60 * 60 * 1000);
+      res.writeHead(302, {
+        location: url.pathname + url.search,
+        "set-cookie": `${SESSION_COOKIE}=${session}; Max-Age=${30 * 24 * 60 * 60}; Path=/; HttpOnly; Secure; SameSite=Lax`,
+      });
+      res.end();
+    } else {
+      res.writeHead(401, { "content-type": "text/html" });
+      res.end(gatedPage());
+    }
+    return true;
+  }
+  if (cookieSession(req)) return false; // valid session → proxy through
+  res.writeHead(401, { "content-type": "text/html" });
+  res.end(gatedPage());
+  return true;
+}
 
 const storage = new Storage();
 const bucket = storage.bucket(BUCKET_NAME);
@@ -171,14 +255,14 @@ async function main() {
   console.log(`studio up on 127.0.0.1:${INTERNAL_PORT} — proxying :${PUBLIC_PORT}`);
 
   const server = createServer((req, res) => {
-    if (req.url === "/health") {
-      res.writeHead(200, { "content-type": "application/json" });
-      res.end(JSON.stringify({ ok: true, project: PROJECT_PREFIX }));
-      return;
-    }
+    if (handleGate(req, res)) return;
     proxyOnce(req, res);
   });
   server.on("upgrade", (req, socket, head) => {
+    if (GATE_SECRET && !cookieSession(req)) {
+      socket.destroy();
+      return;
+    }
     const up = connect({ host: "127.0.0.1", port: INTERNAL_PORT }, () => {
       up.write(`${req.method} ${req.url} HTTP/1.1\r\n`);
       for (const [k, v] of Object.entries(req.headers)) {

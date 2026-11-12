@@ -12,6 +12,16 @@ export async function POST(req: Request) {
 
     console.log("Helcim subscription payment confirmed for token:", checkoutToken);
 
+    // Server-side subscriber record — the Studio gate checks this, not the cookie.
+    if (email && String(email).includes("@")) {
+      try {
+        const { recordSubscriber } = await import("../../../../lib/subscribers");
+        await recordSubscriber(String(email), String(checkoutToken));
+      } catch (err) {
+        console.error("subscriber record write failed:", err);
+      }
+    }
+
     // Set an active subscriber cookie (valid for 30 days)
     const cookieStore = await cookies();
     cookieStore.set("donova_subscriber", "active", {
