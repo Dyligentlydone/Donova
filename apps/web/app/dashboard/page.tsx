@@ -122,7 +122,7 @@ export default function Dashboard() {
             <h1 className="text-2xl sm:text-3xl font-extrabold text-white">Creator Studio Workspace</h1>
             <p className="text-sm text-white/60 mt-1">
               Connected to Google Cloud Run · Bucket:{" "}
-              <code className="text-[#d7b73f]">donova-renders-donova-514500</code>
+              <code className="text-[#4a8fd8]">donova-renders-donova-514500</code>
             </p>
           </div>
 
@@ -134,7 +134,7 @@ export default function Dashboard() {
                   if (r !== "ok") window.location.href = "/#pricing";
                 });
               }}
-              className="bg-[#d7b73f] text-black font-extrabold text-xs uppercase tracking-widest px-6 py-3 rounded-xl hover:bg-[#e9cf6b] transition-all flex items-center gap-2 shadow-[0_0_20px_rgba(215,183,63,0.25)]"
+              className="bg-[#4a8fd8] text-black font-extrabold text-xs uppercase tracking-widest px-6 py-3 rounded-xl hover:bg-[#6aa7f0] transition-all flex items-center gap-2 shadow-[0_0_20px_rgba(74,143,216,0.25)]"
             >
               <Film className="w-4 h-4" />
               OPEN DONOVA STUDIO →
@@ -199,7 +199,7 @@ export default function Dashboard() {
           {/* Upload card */}
           <div className="rounded-2xl border border-white/10 bg-white/[0.02] p-6 flex flex-col justify-between">
             <div>
-              <div className="flex items-center gap-2 mb-2 text-[#d7b73f]">
+              <div className="flex items-center gap-2 mb-2 text-[#4a8fd8]">
                 <Upload className="w-5 h-5" />
                 <h2 className="font-bold text-lg text-white">Upload Raw Footage</h2>
               </div>
@@ -208,7 +208,7 @@ export default function Dashboard() {
                 signed URLs.
               </p>
 
-              <label className="border-2 border-dashed border-white/20 hover:border-[#d7b73f]/60 rounded-xl p-8 flex flex-col items-center justify-center text-center cursor-pointer transition-colors block bg-black/40">
+              <label className="border-2 border-dashed border-white/20 hover:border-[#4a8fd8]/60 rounded-xl p-8 flex flex-col items-center justify-center text-center cursor-pointer transition-colors block bg-black/40">
                 <input
                   type="file"
                   accept="video/*"
@@ -227,7 +227,7 @@ export default function Dashboard() {
             {uploadedUrl && (
               <div className="mt-4 p-3 bg-black/60 border border-white/10 rounded-xl text-xs flex items-center justify-between text-white/70">
                 <span className="truncate pr-2">✓ Staged in GCS</span>
-                <span className="text-[#d7b73f] font-mono shrink-0">Ready for Edit</span>
+                <span className="text-[#4a8fd8] font-mono shrink-0">Ready for Edit</span>
               </div>
             )}
           </div>
@@ -235,7 +235,7 @@ export default function Dashboard() {
           {/* Cloud Worker Card */}
           <div className="rounded-2xl border border-white/10 bg-white/[0.02] p-6 flex flex-col justify-between">
             <div>
-              <div className="flex items-center gap-2 mb-2 text-[#d7b73f]">
+              <div className="flex items-center gap-2 mb-2 text-[#4a8fd8]">
                 <Server className="w-5 h-5" />
                 <h2 className="font-bold text-lg text-white">Cloud Run Engine</h2>
               </div>
@@ -258,7 +258,7 @@ export default function Dashboard() {
                 </div>
                 <div className="flex justify-between py-1">
                   <span className="text-white/50">Output Target</span>
-                  <span className="text-[#d7b73f]">gs://donova-renders-donova-514500</span>
+                  <span className="text-[#4a8fd8]">gs://donova-renders-donova-514500</span>
                 </div>
               </div>
             </div>
@@ -272,7 +272,7 @@ export default function Dashboard() {
               >
                 {rendering ? (
                   <>
-                    <Loader2 className="w-4 h-4 animate-spin text-[#d7b73f]" />
+                    <Loader2 className="w-4 h-4 animate-spin text-[#4a8fd8]" />
                     Processing on Cloud Run...
                   </>
                 ) : (

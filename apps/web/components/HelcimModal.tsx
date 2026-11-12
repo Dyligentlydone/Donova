@@ -100,7 +100,7 @@ export default function HelcimModal({ isOpen, onClose }: HelcimModalProps) {
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md">
-      <div className="relative w-full max-w-md bg-[#121212] border border-[#d7b73f]/40 rounded-2xl shadow-2xl p-6 sm:p-8">
+      <div className="relative w-full max-w-md bg-[#121212] border border-[#4a8fd8]/40 rounded-2xl shadow-2xl p-6 sm:p-8">
         <button
           onClick={onClose}
           className="absolute top-4 right-4 text-white/40 hover:text-white transition-colors"
@@ -109,12 +109,12 @@ export default function HelcimModal({ isOpen, onClose }: HelcimModalProps) {
         </button>
 
         <div className="text-center mb-6">
-          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full border border-[#d7b73f]/30 bg-[#d7b73f]/10 text-[#d7b73f] text-xs font-mono mb-3">
+          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full border border-[#4a8fd8]/30 bg-[#4a8fd8]/10 text-[#4a8fd8] text-xs font-mono mb-3">
             <Lock className="w-3 h-3" /> Secure Checkout
           </div>
           <h2 className="text-2xl font-extrabold text-white">Join Donova Cloud</h2>
           <p className="text-sm text-white/60 mt-1">
-            Automate video editing like a pro for <span className="text-[#d7b73f] font-bold">$11/month</span>.
+            Automate video editing like a pro for <span className="text-[#4a8fd8] font-bold">$11/month</span>.
           </p>
         </div>
 
@@ -127,7 +127,7 @@ export default function HelcimModal({ isOpen, onClose }: HelcimModalProps) {
               value={name}
               onChange={(e) => setName(e.target.value)}
               placeholder="e.g. Alex Morgan"
-              className="w-full bg-black/60 border border-white/20 rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-[#d7b73f] transition-colors"
+              className="w-full bg-black/60 border border-white/20 rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-[#4a8fd8] transition-colors"
             />
           </div>
 
@@ -139,20 +139,20 @@ export default function HelcimModal({ isOpen, onClose }: HelcimModalProps) {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               placeholder="alex@example.com"
-              className="w-full bg-black/60 border border-white/20 rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-[#d7b73f] transition-colors"
+              className="w-full bg-black/60 border border-white/20 rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-[#4a8fd8] transition-colors"
             />
           </div>
 
           <div className="pt-2">
             <div className="flex justify-between items-center text-sm py-2 border-t border-b border-white/10 mb-4">
               <span className="text-white/70">Creator Monthly Plan</span>
-              <span className="text-[#d7b73f] font-extrabold text-base">$11.00 / mo</span>
+              <span className="text-[#4a8fd8] font-extrabold text-base">$11.00 / mo</span>
             </div>
 
             <button
               type="submit"
               disabled={loading}
-              className="w-full bg-[#d7b73f] text-black font-extrabold text-sm tracking-widest py-3.5 rounded-xl hover:bg-[#e9cf6b] disabled:opacity-50 transition-colors flex items-center justify-center gap-2 shadow-[0_0_25px_rgba(215,183,63,0.25)]"
+              className="w-full bg-[#4a8fd8] text-black font-extrabold text-sm tracking-widest py-3.5 rounded-xl hover:bg-[#6aa7f0] disabled:opacity-50 transition-colors flex items-center justify-center gap-2 shadow-[0_0_25px_rgba(74,143,216,0.25)]"
             >
               {loading ? (
                 <>

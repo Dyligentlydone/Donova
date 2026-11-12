@@ -21,7 +21,7 @@ export default function RootLayout({
       <head>
         <Script src="https://secure.helcim.app/helcim-pay/services/start.js" strategy="beforeInteractive" />
       </head>
-      <body className="bg-[#0a0a0a] text-white min-h-screen selection:bg-[#d7b73f] selection:text-black antialiased">
+      <body className="bg-[#0a0a0a] text-white min-h-screen selection:bg-[#4a8fd8] selection:text-black antialiased">
         {children}
       </body>
     </html>

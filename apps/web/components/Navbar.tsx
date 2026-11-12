@@ -44,7 +44,7 @@ export default function Navbar({ onSubscribe, isSubscriber }: NavbarProps) {
           <button
             type="button"
             onClick={() => void handleStudio()}
-            className="hover:text-[#d7b73f] transition-colors"
+            className="hover:text-[#4a8fd8] transition-colors"
           >
             Studio
           </button>
@@ -55,14 +55,14 @@ export default function Navbar({ onSubscribe, isSubscriber }: NavbarProps) {
             <button
               type="button"
               onClick={() => void handleStudio()}
-              className="bg-[#d7b73f] text-black font-bold text-xs uppercase tracking-wider px-4 py-2.5 rounded-lg hover:bg-[#e9cf6b] transition-colors"
+              className="bg-[#4a8fd8] text-black font-bold text-xs uppercase tracking-wider px-4 py-2.5 rounded-lg hover:bg-[#6aa7f0] transition-colors"
             >
               Open Studio →
             </button>
           ) : (
             <button
               onClick={onSubscribe}
-              className="bg-[#d7b73f] text-black font-extrabold text-xs uppercase tracking-widest px-4 py-2.5 rounded-lg hover:bg-[#e9cf6b] transition-colors shadow-[0_0_20px_rgba(215,183,63,0.2)]"
+              className="bg-[#4a8fd8] text-black font-extrabold text-xs uppercase tracking-widest px-4 py-2.5 rounded-lg hover:bg-[#6aa7f0] transition-colors shadow-[0_0_20px_rgba(74,143,216,0.2)]"
             >
               Subscribe — $11/mo
             </button>
