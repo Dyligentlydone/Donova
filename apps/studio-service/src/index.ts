@@ -70,13 +70,65 @@ function cookieSession(req: IncomingMessage): string | null {
 }
 
 function gatedPage(): string {
-  return `<!DOCTYPE html><html><head><meta charset="utf-8"><title>Donova Studio</title>
-<style>body{margin:0;min-height:100vh;display:flex;align-items:center;justify-content:center;
-background:#0a0a0f;color:#f5f1e8;font:400 15px/1.6 system-ui;text-align:center}
-a{color:#d7b73f}</style></head><body><div>
-<h1 style="font-size:20px;letter-spacing:-0.02em">Donova Studio</h1>
-<p>Studio access requires an active subscription.</p>
-<p><a href="${WEB_APP_URL}">Subscribe — $11/mo →</a></p>
+  const pillar = (title: string, body: string) => `<div class="pillar">
+  <h3>${title}</h3><p>${body}</p></div>`;
+  return `<!DOCTYPE html><html><head><meta charset="utf-8"><title>Donova Studio — AI Video Editor</title>
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<style>
+  *{box-sizing:border-box;margin:0}
+  body{background:#0a0a0f;color:#f5f1e8;font:400 15px/1.65 system-ui,-apple-system,sans-serif;
+       min-height:100vh}
+  .wrap{max-width:960px;margin:0 auto;padding:64px 24px 80px;text-align:center}
+  .logo{height:34px;width:auto;margin-bottom:26px}
+  .badge{display:inline-block;padding:6px 14px;border:1px solid rgba(215,183,63,.3);
+    background:rgba(215,183,63,.08);color:#d7b73f;border-radius:99px;
+    font:600 11px/1 ui-monospace,monospace;letter-spacing:.08em;margin-bottom:22px}
+  h1{font-size:clamp(30px,5vw,52px);font-weight:800;letter-spacing:-.03em;
+     line-height:1.08;color:#fff;margin-bottom:16px}
+  h1 .gold{color:#d7b73f}
+  .sub{color:rgba(245,241,232,.55);max-width:560px;margin:0 auto 40px;font-size:16px}
+  .phone{width:min(300px,72vw);margin:0 auto 14px;border-radius:28px;overflow:hidden;
+    border:2px solid rgba(215,183,63,.5);box-shadow:0 0 80px rgba(215,183,63,.18);background:#000}
+  .phone video{display:block;width:100%;aspect-ratio:9/16;object-fit:cover}
+  .caption{color:rgba(245,241,232,.35);font:500 10px/1 ui-monospace,monospace;
+    letter-spacing:.18em;margin-bottom:56px}
+  .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));
+    gap:16px;text-align:left;margin-bottom:56px}
+  .pillar{border:1px solid rgba(255,255,255,.09);border-radius:16px;padding:20px;
+    background:rgba(255,255,255,.02)}
+  .pillar h3{color:#fff;font-size:15px;margin-bottom:8px}
+  .pillar p{color:rgba(245,241,232,.55);font-size:13px;line-height:1.55}
+  .pillar code{color:#d7b73f;font-family:ui-monospace,monospace}
+  .cta{display:inline-block;background:#d7b73f;color:#000;font-weight:800;font-size:13px;
+    letter-spacing:.12em;text-transform:uppercase;text-decoration:none;
+    padding:16px 36px;border-radius:12px;margin-bottom:14px;
+    box-shadow:0 0 30px rgba(215,183,63,.25)}
+  .cta:hover{background:#e9cf6b}
+  .member{color:rgba(245,241,232,.4);font-size:13px}
+  .member a{color:#d7b73f;text-decoration:none}
+  .locked{display:inline-block;margin-left:8px;padding:3px 10px;border-radius:99px;
+    border:1px solid rgba(255,255,255,.15);color:rgba(245,241,232,.5);
+    font:600 10px/1.6 ui-monospace,monospace;letter-spacing:.1em}
+</style></head><body><div class="wrap">
+  <img class="logo" src="${WEB_APP_URL}/donova-logo.png" alt="Donova">
+  <div><span class="badge">DONOVA STUDIO · AI VIDEO EDITOR · $11/MO</span></div>
+  <h1>Vibe-edit your footage.<br><span class="gold">The editor lives behind this door.</span></h1>
+  <p class="sub">You're looking at the hosted Donova Studio — a full timeline editor with an
+  AI editing agent that learns your style, cuts dead air, writes captions, and renders on
+  Google Cloud. It's live right now on this URL — for subscribers.</p>
+  <div class="phone"><video src="${WEB_APP_URL}/demo.mp4" autoplay muted loop playsinline></video></div>
+  <p class="caption">THE 1-MINUTE CLOUD WORKFLOW</p>
+  <div class="grid">
+    ${pillar("Style Bible", "Teach it your fonts, pacing, and caption look once in <code>style.md</code>. Every future edit reflects your signature.")}
+    ${pillar("AI Edit Agent", "Describe the cut in plain language — dead-air removal, punch-ins, captions, b-roll — the agent edits the real timeline.")}
+    ${pillar("Cloud Renders", "No fan noise or battery drain. Frame-accurate headless-Chrome + FFmpeg renders on Cloud Run in seconds.")}
+    ${pillar("Auto Donova", "Drop raw clips in a folder and walk away. Inspects, cuts, layers, and exports finished MP4s to your renders hub.")}
+  </div>
+  <a class="cta" href="${WEB_APP_URL}/#pricing">Subscribe — $11/mo →</a>
+  <p class="member">Already subscribed?
+    <a href="${WEB_APP_URL}">Open it from your account →</a>
+    <span class="locked">401 · SESSION REQUIRED</span>
+  </p>
 </div></body></html>`;
 }
 

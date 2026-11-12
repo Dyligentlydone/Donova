@@ -12,6 +12,7 @@ coverage
 *.mp4
 *.webm
 *.mov
+!apps/web/public/demo.mp4
 /renders
 packages/*/renders
 apps/render-worker/renders
