@@ -43,6 +43,15 @@ import { fileURLToPath } from "node:url";
 const SIDECAR_PORT_OFFSET = 1000;
 const SIDECAR_VERSION = 5;
 
+/**
+ * Cloud mode (hosted Studio): DONOVA_CLOUD=1 pins the agent to the
+ * service-configured endpoint — donova.json's `agent`, /agent/setup and
+ * /agent/select are ignored so no user input can point the bridge at an
+ * arbitrary cmd (shell exec in a shared container) or a stored key shared
+ * across instances. /auto and /stop are disabled too.
+ */
+const CLOUD = Boolean(process.env.DONOVA_CLOUD ?? process.env.EDITNCE_CLOUD ?? process.env.FC_CLOUD);
+
 export function annotatePort(studioPort: number): number {
   return studioPort + SIDECAR_PORT_OFFSET;
 }
@@ -299,6 +308,23 @@ export function runAgentJob(
 
 /** Resolve the configured agent, honoring presets, custom cmds, HTTP endpoints. */
 function resolveAgent(projectDir: string): AgentSpec | null {
+  const envUrl = agentEnv("AGENT_URL");
+  if (CLOUD) {
+    // hosted: only the service-configured endpoint may answer — no user-
+    // supplied cmd (would be shell exec in a shared container) or stored keys
+    if (!envUrl) return null;
+    const keyEnv = agentKeyEnv();
+    return {
+      name: "endpoint",
+      label: `${agentEnv("AGENT_MODEL") ?? "model"} @ ${envUrl}`,
+      kind: "http",
+      url: envUrl,
+      model: agentEnv("AGENT_MODEL"),
+      key: keyEnv ? process.env[keyEnv] : undefined,
+      keyEnv,
+      edits: true,
+    };
+  }
   const pick = (sel: string): AgentSpec | null =>
     preset(sel) ?? (sel.trim() ? { name: "custom", label: sel, kind: "cli", cmd: sel, edits: true } : null);
   if (sessionAgent) return pick(sessionAgent);
@@ -322,7 +348,6 @@ function resolveAgent(projectDir: string): AgentSpec | null {
   }
   const env = agentEnv("AGENT") ?? agentEnv("AGENT_CMD");
   if (env) return pick(env);
-  const envUrl = agentEnv("AGENT_URL");
   if (envUrl) {
     const keyEnv = agentKeyEnv();
     return {
@@ -385,6 +410,19 @@ function apiConfigured(name: string): {
 /** Everything the chat picker needs: presets w/ install/setup state, configured entries, active. */
 function listAgents(projectDir: string): ListedAgent[] {
   const active = resolveAgent(projectDir);
+  if (CLOUD) {
+    return active
+      ? [
+          {
+            name: "endpoint",
+            label: "Donova agent",
+            kind: "api",
+            detected: true,
+            active: true,
+          },
+        ]
+      : [];
+  }
   const out: ListedAgent[] = AGENT_PRESETS.map((p) => ({
     name: p.name,
     label: p.label,
@@ -431,10 +469,20 @@ function buildPrompt(projectDir: string, body: ChatBody): string {
   let prompt = [
     `You are editing the video composition in the current directory (${projectDir}).`,
     `It is a HyperFrames/Donova HTML composition: timed elements carry data-start/data-duration, visuals carry class="clip", motion lives in a paused GSAP root timeline on window.__timelines. Only deterministic edits.`,
-    "The user just sent this request from the Studio dashboard:",
-    "",
-    body.message ?? "",
   ].join("\n");
+  // The user's style bible is the durable preference store — inline it every
+  // turn (8KB cap, same as the cloud agent) so edits reflect their style and
+  // write_file updates carry the existing content forward instead of
+  // clobbering it. This is what "the agent pulls from my style library"
+  // actually means on the wire.
+  try {
+    const stylePath = join(projectDir, "style.md");
+    if (existsSync(stylePath)) {
+      const style = readFileSync(stylePath, "utf8").slice(0, 8192);
+      prompt += `\n\nThe user's style bible (style.md) — follow it for every visual/caption/sound choice, and preserve its content if you update it:\n\n${style}`;
+    }
+  } catch {}
+  prompt += `\n\nThe user just sent this request from the Studio dashboard:\n\n${body.message ?? ""}`;
   if (body.annotation) {
     const safe = body.annotation.replace(/[^a-zA-Z0-9._/-]/g, "");
     const path = join(projectDir, safe);
@@ -445,7 +493,7 @@ function buildPrompt(projectDir: string, body: ChatBody): string {
   return `${prompt}\n\nApply the edit, then report concisely what you changed.`;
 }
 
-function startJob(projectDir: string, spec: AgentSpec, prompt: string): string {
+function startJob(projectDir: string, spec: AgentSpec, prompt: string, userMessage?: string): string {
   const id = `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`;
   const job = {
     lines: [] as string[],
@@ -472,7 +520,7 @@ function startJob(projectDir: string, spec: AgentSpec, prompt: string): string {
     job.listeners = [];
   };
   if (spec.kind === "http" && spec.url) {
-    runHttpJob(projectDir, spec, prompt, broadcast, finish);
+    runHttpJob(projectDir, spec, prompt, broadcast, finish, userMessage);
     return id;
   }
   const cmd = spec.cmd ?? "";
@@ -536,7 +584,9 @@ const AGENT_TOOLS = [
     type: "function",
     function: {
       name: "run_command",
-      description: "Run a shell command in the project dir (e.g. npx donova check, ffmpeg probes)",
+      description: CLOUD
+        ? `Run the donova CLI in the project dir, e.g. 'node ${process.env.DONOVA_BIN || "donova"} check' or 'node ${process.env.DONOVA_BIN || "donova"} captions'. Only donova commands are allowed — no shell, pipes, redirects, or other binaries.`
+        : "Run a shell command in the project dir (e.g. npx donova check, ffmpeg probes)",
       parameters: { type: "object", properties: { cmd: { type: "string" } }, required: ["cmd"] },
     },
   },
@@ -547,7 +597,15 @@ function safePath(projectDir: string, p: string): string | null {
   return full.startsWith(resolve(projectDir)) ? full : null;
 }
 
-function runTool(projectDir: string, name: string, args: Record<string, unknown>): string {
+interface ToolCtx {
+  changes: { file: string; before: string | null; after: string | null }[];
+}
+
+/** Imported footage and rendered binaries are read-only to the agent —
+ * same guard the cloud Agent applies (assets/, media/, media extensions). */
+const MEDIA_EXT = /\.(mov|mp4|webm|mkv|avi|mp3|wav|m4a|ogg|png|jpe?g|webp|heic|aiff?|flac)$/i;
+
+function runTool(projectDir: string, name: string, args: Record<string, unknown>, ctx?: ToolCtx): string {
   try {
     if (name === "read_file") {
       const full = safePath(projectDir, String(args.path ?? ""));
@@ -555,10 +613,16 @@ function runTool(projectDir: string, name: string, args: Record<string, unknown>
       return readFileSync(full, "utf8").slice(0, 12000);
     }
     if (name === "write_file") {
-      const full = safePath(projectDir, String(args.path ?? ""));
+      const rel = String(args.path ?? "");
+      const full = safePath(projectDir, rel);
       if (!full) return "error: path outside project";
+      if (rel.startsWith("assets/") || rel.startsWith("media/") || MEDIA_EXT.test(rel)) {
+        return `error: write_file to ${rel} refused — media/asset files are read-only`;
+      }
+      const before = existsSync(full) ? readFileSync(full, "utf8") : null;
       mkdirSync(join(full, ".."), { recursive: true });
       writeFileSync(full, String(args.content ?? ""));
+      ctx?.changes.push({ file: rel, before, after: String(args.content ?? "") });
       return "ok";
     }
     if (name === "list_files") {
@@ -567,7 +631,30 @@ function runTool(projectDir: string, name: string, args: Record<string, unknown>
       return execSync(`ls -la ${JSON.stringify(full)}`, { encoding: "utf8" }).slice(0, 6000);
     }
     if (name === "run_command") {
-      return execSync(String(args.cmd ?? ""), {
+      const cmd = String(args.cmd ?? "");
+      if (CLOUD) {
+        // Shared container: allow only the donova CLI (check/probe/captions
+        // etc.) — a prompt-injected `npx evil-pkg` or `gcloud` would run with
+        // the service account. File inspection is covered by the other tools.
+        const bin = process.env.DONOVA_BIN || "donova";
+        const launcher = new RegExp(
+          `^(donova|npx donova|node ${bin.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")})\\s`,
+        );
+        const okCmd = launcher.test(cmd) && /^[a-zA-Z0-9 ._\-/:+*?,=]+$/.test(cmd) && !cmd.includes("..");
+        if (!okCmd) return "error: command not allowed in cloud mode";
+        const env = { ...process.env };
+        for (const k of Object.keys(env)) {
+          if (/key|secret|token|password/i.test(k)) delete env[k];
+        }
+        return execSync(cmd, {
+          cwd: projectDir,
+          encoding: "utf8",
+          timeout: 60_000,
+          stdio: ["ignore", "pipe", "pipe"],
+          env,
+        }).slice(0, 8000);
+      }
+      return execSync(cmd, {
         cwd: projectDir,
         encoding: "utf8",
         timeout: 60_000,
@@ -587,10 +674,44 @@ interface ChatMessage {
   tool_call_id?: string;
 }
 
+/** Turn history — same shape + location (.donova/turns.json) the cloud Agent
+ * writes, so Studio chats and dashboard chats share one memory. */
+interface SidecarTurn {
+  id: string;
+  at: string;
+  message: string;
+  reply: string;
+  changes: { file: string; before: string | null; after: string | null }[];
+  tools: string[];
+  usage?: { inputTokens: number; outputTokens: number };
+}
+
+function readTurns(projectDir: string): SidecarTurn[] {
+  try {
+    const parsed = JSON.parse(readFileSync(join(projectDir, ".donova", "turns.json"), "utf8")) as unknown;
+    // Both shapes exist: Agent writes Turn[], studio-service seeds {turns:[]}.
+    if (Array.isArray(parsed)) return parsed as SidecarTurn[];
+    return ((parsed as { turns?: SidecarTurn[] }).turns ?? []) as SidecarTurn[];
+  } catch {
+    return [];
+  }
+}
+
+function appendTurn(projectDir: string, turn: SidecarTurn): void {
+  try {
+    const turns = readTurns(projectDir);
+    turns.push(turn);
+    mkdirSync(join(projectDir, ".donova"), { recursive: true });
+    writeFileSync(join(projectDir, ".donova", "turns.json"), JSON.stringify(turns.slice(-50), null, 2));
+  } catch {}
+}
+
 /**
  * Agent over any OpenAI-compatible /chat/completions endpoint, with a
  * read/write/list/run tool loop so it can actually edit the composition —
  * not just reply. Streams progress lines ("› write_file index.html").
+ * Replays the last 10 turns so "make it bigger"-style follow-ups have a
+ * referent, and appends the finished turn to .donova/turns.json.
  */
 async function runHttpJob(
   projectDir: string,
@@ -598,10 +719,36 @@ async function runHttpJob(
   prompt: string,
   broadcast: (chunk: string) => void,
   finish: (code: number | null) => void,
+  userMessage?: string,
 ): Promise<void> {
   const headers: Record<string, string> = { "content-type": "application/json" };
   if (spec.key) headers.authorization = `Bearer ${spec.key}`;
-  const messages: ChatMessage[] = [{ role: "user", content: prompt }];
+  const prior: ChatMessage[] = readTurns(projectDir)
+    .slice(-10)
+    .flatMap((t) => [
+      { role: "user", content: t.message },
+      { role: "assistant", content: t.reply },
+    ]);
+  const messages: ChatMessage[] = [...prior, { role: "user", content: prompt }];
+  const ctx: ToolCtx = { changes: [] };
+  const tools: string[] = [];
+  const usage = { inputTokens: 0, outputTokens: 0 };
+  let reply = "";
+  let code = 1;
+  const persist = () => {
+    appendTurn(projectDir, {
+      id: `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`,
+      at: new Date().toISOString(),
+      message: userMessage ?? prompt,
+      reply,
+      changes: ctx.changes,
+      tools,
+      usage:
+        usage.inputTokens + usage.outputTokens > 0
+          ? { inputTokens: usage.inputTokens, outputTokens: usage.outputTokens }
+          : undefined,
+    });
+  };
   for (let round = 0; round < 15; round++) {
     let msg: ChatMessage | undefined;
     try {
@@ -617,21 +764,30 @@ async function runHttpJob(
       });
       const j = (await r.json()) as {
         choices?: { message?: ChatMessage }[];
+        usage?: { prompt_tokens?: number; completion_tokens?: number };
         error?: { message?: string };
       };
+      usage.inputTokens += j.usage?.prompt_tokens ?? 0;
+      usage.outputTokens += j.usage?.completion_tokens ?? 0;
       if (!r.ok) {
         broadcast(`error ${r.status}: ${j.error?.message ?? JSON.stringify(j).slice(0, 400)}`);
+        reply = `error ${r.status}: ${j.error?.message ?? "endpoint error"}`;
+        persist();
         finish(1);
         return;
       }
       msg = j.choices?.[0]?.message;
     } catch (err) {
       broadcast(`endpoint unreachable: ${String(err)}`);
+      reply = `endpoint unreachable: ${String(err)}`;
+      persist();
       finish(1);
       return;
     }
     if (!msg) {
       broadcast("(empty reply)");
+      code = 0;
+      persist();
       finish(0);
       return;
     }
@@ -643,17 +799,22 @@ async function runHttpJob(
           args = JSON.parse(call.function.arguments || "{}") as Record<string, unknown>;
         } catch {}
         broadcast(`› ${call.function.name} ${String(args.path ?? args.cmd ?? "").slice(0, 80)}\n`);
-        const result = runTool(projectDir, call.function.name, args);
+        tools.push(call.function.name);
+        const result = runTool(projectDir, call.function.name, args, ctx);
         messages.push({ role: "tool", tool_call_id: call.id, content: result });
       }
       continue;
     }
-    broadcast(msg.content ?? "(done)");
+    reply = msg.content ?? "";
+    broadcast(reply || "(done)");
+    persist();
     finish(0);
     return;
   }
   broadcast("(stopped: tool-call limit reached)");
-  finish(1);
+  reply = "(stopped: tool-call limit reached)";
+  persist();
+  finish(code);
 }
 
 // --- request handling -------------------------------------------------------
@@ -672,6 +833,11 @@ function handle(projectDir: string, req: IncomingMessage, res: ServerResponse): 
     return;
   }
   if (req.method === "POST" && req.url === "/stop") {
+    if (CLOUD) {
+      res.writeHead(403, { "content-type": "application/json" });
+      res.end(JSON.stringify({ ok: false, error: "managed" }));
+      return;
+    }
     res.writeHead(200).end("bye");
     setTimeout(() => process.exit(0), 100);
     return;
@@ -713,6 +879,11 @@ function handle(projectDir: string, req: IncomingMessage, res: ServerResponse): 
     return;
   }
   if (req.method === "POST" && req.url === "/agent/setup") {
+    if (CLOUD) {
+      res.writeHead(403, { "content-type": "application/json" });
+      res.end(JSON.stringify({ ok: false, error: "managed" }));
+      return;
+    }
     let raw = "";
     req.on("data", (c) => {
       raw += c;
@@ -744,6 +915,12 @@ function handle(projectDir: string, req: IncomingMessage, res: ServerResponse): 
     return;
   }
   if (req.method === "POST" && req.url === "/agent/select") {
+    if (CLOUD) {
+      const sel = resolveAgent(projectDir);
+      res.writeHead(200, { "content-type": "application/json" });
+      res.end(JSON.stringify({ ok: true, agent: sel?.name ?? null, cmd: sel?.cmd ?? sel?.url ?? null }));
+      return;
+    }
     let raw = "";
     req.on("data", (c) => {
       raw += c;
@@ -796,6 +973,11 @@ function handle(projectDir: string, req: IncomingMessage, res: ServerResponse): 
     return;
   }
   if (req.method === "GET" && req.url === "/auto") {
+    if (CLOUD) {
+      res.writeHead(200, { "content-type": "application/json" });
+      res.end(JSON.stringify({ ok: true, enabled: false, running: false }));
+      return;
+    }
     void (async () => {
       const { autoStatus, findWorkspace } = await import("./watch.js");
       const st = await autoStatus(projectDir);
@@ -817,6 +999,11 @@ function handle(projectDir: string, req: IncomingMessage, res: ServerResponse): 
     return;
   }
   if (req.method === "POST" && req.url === "/auto") {
+    if (CLOUD) {
+      res.writeHead(200, { "content-type": "application/json" });
+      res.end(JSON.stringify({ ok: false, error: "auto is desktop-only for now" }));
+      return;
+    }
     let raw = "";
     req.on("data", (c) => {
       raw += c;
@@ -852,7 +1039,7 @@ function handle(projectDir: string, req: IncomingMessage, res: ServerResponse): 
           res.end(JSON.stringify({ ok: false, error: "no-agent" }));
           return;
         }
-        const jobId = startJob(projectDir, spec, buildPrompt(projectDir, body));
+        const jobId = startJob(projectDir, spec, buildPrompt(projectDir, body), body.message);
         res.writeHead(200, { "content-type": "application/json" });
         res.end(
           JSON.stringify({ ok: true, jobId, cmd: spec.cmd ?? spec.url, name: spec.name, edits: spec.edits }),

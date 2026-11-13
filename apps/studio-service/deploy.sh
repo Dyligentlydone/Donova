@@ -34,6 +34,19 @@ echo "Step 2/2: Deploying Cloud Run Service (${SERVICE_NAME})..."
 # referenced by name so deploys can never drop it. Rotate with:
 #   printf '<new>' | gcloud secrets versions add studio-gate-secret --data-file=-
 ENV_VARS="DONOVA_BUCKET=${DONOVA_BUCKET:-donova-renders-${PROJECT_ID}},PROJECT_PREFIX=${PROJECT_PREFIX:-projects/default/}"
+# In-Studio agent chat (the bottom-right pill → sidecar /agent/* → OpenAI-
+# compatible tool loop against the user's tree). DONOVA_CLOUD=1 pins the
+# endpoint + disables setup/select/auto so nothing user-controlled can reach
+# a shell or a cross-user key store inside the shared container.
+ENV_VARS="${ENV_VARS},DONOVA_CLOUD=1,DONOVA_AGENT_URL=https://openrouter.ai/api/v1/chat/completions,DONOVA_AGENT_MODEL=deepseek/deepseek-v4.1-flash,DONOVA_AGENT_KEY_ENV=DONOVA_LLM_API_KEY"
+[ -n "${DONOVA_OWNER_EMAILS:-}" ] && ENV_VARS="${ENV_VARS},DONOVA_OWNER_EMAILS=${DONOVA_OWNER_EMAILS}"
+
+SECRETS="STUDIO_GATE_SECRET=studio-gate-secret:latest"
+if gcloud secrets describe openrouter-api-key --project="${PROJECT_ID}" >/dev/null 2>&1; then
+  SECRETS="${SECRETS},DONOVA_LLM_API_KEY=openrouter-api-key:latest"
+else
+  echo "  (openrouter-api-key secret not found — Studio agent chat disabled)"
+fi
 
 gcloud run deploy "${SERVICE_NAME}" \
   --project="${PROJECT_ID}" \
@@ -46,7 +59,7 @@ gcloud run deploy "${SERVICE_NAME}" \
   --min-instances=1 \
   --max-instances=1 \
   --set-env-vars="${ENV_VARS}" \
-  --set-secrets="STUDIO_GATE_SECRET=studio-gate-secret:latest" \
+  --set-secrets="${SECRETS}" \
   --allow-unauthenticated
 
 echo

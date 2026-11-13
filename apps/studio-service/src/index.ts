@@ -8,6 +8,7 @@ import { connect } from "node:net";
 import { homedir } from "node:os";
 import { dirname, join, relative } from "node:path";
 import { Storage } from "@google-cloud/storage";
+import { recordStudioChat, studioChatGate } from "./chatGate.js";
 
 /**
  * Donova Studio cloud service — runs the real rebranded Studio (the same
@@ -888,6 +889,48 @@ async function main() {
     void handleDesktopApi(req, res, inst)
       .then((handled) => {
         if (handled) return;
+        // /agent-bridge/* — the chat pill / annotate overlay / auto toggle
+        // injected into the Studio page. Local `donova studio` hits the
+        // sidecar on 127.0.0.1:studioPort+1000; here the same sidecar runs
+        // per-instance on inst.port+1000, reached same-origin through this
+        // proxy. Chat sends are quota-checked against the subscriber record.
+        if (url.pathname === "/agent-bridge" || url.pathname.startsWith("/agent-bridge/")) {
+          const sub = url.pathname.slice("/agent-bridge".length) || "/";
+          if (!inst.booted && !inst.boot) {
+            void ensureInstance(inst).catch((err) => console.error(`[${inst.uid}] boot failed:`, err));
+          }
+          const forward = async () => {
+            inst.lastTouched = Date.now();
+            if (req.method === "POST" && sub === "/agent/chat") {
+              const gate = await studioChatGate(session.email);
+              if (!gate.allowed) {
+                res.writeHead(429, { "content-type": "application/json" });
+                res.end(JSON.stringify({ ok: false, error: gate.reason }));
+                return;
+              }
+              recordStudioChat(session.email).catch((err) =>
+                console.error(`[${inst.uid}] chat usage write failed:`, err),
+              );
+            }
+            req.url = sub + url.search;
+            proxyOnce(req, res, inst.port + 1000);
+          };
+          if (inst.booted) {
+            forward().catch((err) => {
+              if (!res.headersSent) res.writeHead(500, { "content-type": "text/plain" });
+              res.end(`agent-bridge error: ${err instanceof Error ? err.message : err}`);
+            });
+          } else if (inst.boot) {
+            void inst.boot.then(forward).catch((err) => {
+              if (!res.headersSent) res.writeHead(503, { "content-type": "text/plain" });
+              res.end(`workspace failed to start: ${err instanceof Error ? err.message : err}`);
+            });
+          } else {
+            res.writeHead(503, { "content-type": "application/json" });
+            res.end(JSON.stringify({ ok: false, error: "booting" }));
+          }
+          return;
+        }
         if (url.pathname === "/studio" || url.pathname === "/studio/") {
           req.url = "/" + url.search;
         } else if (url.pathname.startsWith("/studio/")) {

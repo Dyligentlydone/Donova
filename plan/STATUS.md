@@ -21,6 +21,66 @@ tokens/mo, owners uncapped — counters on the GCS subscriber record, enforced
 in `/api/chat` (429 `{code:"CHAT_LIMIT"}`), `chatRemaining` returned per
 response.
 
+## -9f. In-Studio chat bridge: the bottom-right pill now works hosted (2026-11-13)
+
+The injected Studio chat pill (`donova-rebrand-chat-v1` in rebrand.ts) was
+dead in prod: it computes `base = http://127.0.0.1:(location.port+1000)` —
+on the run.app URL location.port is empty → the widget hit the *user's own
+laptop*. Now `local ? 127.0.0.1:port+1000 : '/agent-bridge'` (same for the
+annotate overlay + auto pill). studio-service proxies `/agent-bridge/*` →
+the per-instance sidecar on `inst.port+1000`, after the same signed-session
+gate; `POST /agent/chat` passes `chatGate.ts` (shared subscriber record —
+dashboard + Studio chats draw from one pool; trial 25 lifetime, paid
+300/mo + 4M tokens, owners uncapped).
+Cloud mode (`DONOVA_CLOUD=1`, set in deploy.sh): sidecar pins the env-
+configured endpoint (`DONOVA_AGENT_URL/MODEL/KEY_ENV` → OpenRouter OpenAI-
+compat tool loop, `DONOVA_LLM_API_KEY` = mounted `openrouter-api-key`
+secret); `/agent/setup` + `/stop` 403, `/agent/select` returns the pinned
+endpoint (no local CLIs), `/auto` reports disabled; `run_command` allows
+only `node $DONOVA_BIN …` (no shell/pipes — a prompt-injected `npx evil`
+would run with the service account).
+Sidecar tool loop now matches the cloud Agent contract: style.md inlined
+every prompt (8KB), last-10-turns replay from `.donova/turns.json` (shared
+file — Studio + dashboard chats share memory), Turn appended per chat
+(changes/tools/usage), write_file refuses assets/media paths.
+Verified: cloud-mode sidecar smoke test — tool calls for donova-CLI only,
+style rules (1280×720/monospace/cyan/0.3s) applied, turns.json written.
+**Deploy:** `bash apps/studio-service/deploy.sh` (rebuilds CLI chunk in
+image — annotate hash changes with the sidecar code).
+
+## -9e. Pre-launch audit: four agent blockers fixed (2026-11-13)
+
+Audit before trial launch found and fixed:
+- **style.md never reached the model** — ctx.styleMd was loaded (GCS/disk)
+  but the prompt only said "present (N chars)". Now inlined (8KB cap) so the
+  agent applies the style bible to every edit and preserves it on write_file.
+  Prompt clarified: durable prefs carry forward, one-off overrides excluded.
+- **first-chat crash for Studio users** — studio-service seeded
+  `.donova/turns.json` as `{turns:[]}` vs Agent.load's `Turn[]` → `.push`
+  TypeError → 500. load() now normalizes both shapes; seed writes `[]`.
+- **cloud agent had no memory** — buildAgent per chat reset this.history;
+  load() now replays last 10 turns (message+reply) into context.
+- **no chat surface** — hosted Studio runs upstream `hyperframes preview`
+  (no chat panel; upstream agent is HeyGen-OAuth-gated and inert), and the
+  dashboard had no chat UI. `ChatPanel` added to the dashboard: send/undo/
+  history feed/chatRemaining — hits the fully-wired /api/chat.
+
+**Architecture reality check:** `donova studio` locally AND hosted Studio run
+the upstream `hyperframes preview` server+UI — our `packages/studio-server`
+only serves `donova studio --local`. The upstream agent path is HeyGen-auth-
+gated → inert for our users. The user-facing "agent pulls my style.md" flow is
+the external-agent path (AI tool + CLI + skills reading style.md from disk);
+the built-in cloud agent now matches it via inlined styleMd.
+
+**Audit-verified safe:** signed account cookie + live GCS entitlement check on
+every route; path traversal guards (safeRel/localPath/worker); Stripe webhook
+signature; trial rate-limit (5/IP/day); upload 256MB cap; worker IAM-locked;
+secrets never in repo. **Open follow-ups:** renders/start accepts arbitrary
+bundleKey/bundleUrl (cost-abuse vector — rate-limit it); no max-instances or
+session affinity on web (per-container mirrors diverge — fine at trial scale);
+chat usage counters are best-effort across containers; past_due Stripe
+accounts keep access during card retry.
+
 ## -9d. Billing: Helcim → Stripe (2026-11-13)
 
 Billing now runs on Stripe (live mode). `HelcimModal`+`lib/helcim.ts`+

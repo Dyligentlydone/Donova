@@ -303,8 +303,9 @@ const ANNOTATE = `<script>
         png=c.toDataURL('image/png');
       }
     }catch(e){}
-    var port=(+location.port||80)+1000;
-    fetch('http://127.0.0.1:'+port+'/annotate',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({t:t,comp:comp?{w:+comp.getAttribute('data-width'),h:+comp.getAttribute('data-height')}:null,marks:marks.map(function(m){return {type:m.tool,color:m.color,from:m.pts[0],to:m.to,pts:m.pts.length>2?m.pts:undefined}}),note:note,png:png})})
+    var local=/^(localhost|127\.0\.0\.1|\[::1\])$/.test(location.hostname);
+    var base=local?('http://127.0.0.1:'+((+location.port||80)+1000)):'/agent-bridge';
+    fetch(base+'/annotate',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({t:t,comp:comp?{w:+comp.getAttribute('data-width'),h:+comp.getAttribute('data-height')}:null,marks:marks.map(function(m){return {type:m.tool,color:m.color,from:m.pts[0],to:m.to,pts:m.pts.length>2?m.pts:undefined}}),note:note,png:png})})
       .then(function(r){return r.json()})
       .then(function(j){
         if(!j.ok){toast('save failed: '+(j.error||'?'));return;}
@@ -334,7 +335,7 @@ const ANNOTATE = `<script>
 const CHAT = `<script>
 // donova-rebrand-chat-v1
 (function(){
-  var PID='fc-chat',TID='fc-chat-pill',port=(+location.port||80)+1000,base='http://127.0.0.1:'+port;
+  var PID='fc-chat',TID='fc-chat-pill',local=/^(localhost|127\.0\.0\.1|\[::1\])$/.test(location.hostname),base=local?('http://127.0.0.1:'+((+location.port||80)+1000)):'/agent-bridge';
   var es=null,agent=null,agentList=[],LOGO='__DONOVA_LOGO__';
   function el(t,css,txt){var e=document.createElement(t);e.setAttribute('style',css);if(txt!=null)e.textContent=txt;return e;}
   function msgs(){return document.getElementById('fc-chat-msgs');}
@@ -490,7 +491,7 @@ const CHAT = `<script>
 const AUTO = `<script>
 // donova-rebrand-auto-v2
 (function(){
-  var ID='fc-auto-pill',port=(+location.port||80)+1000,base='http://127.0.0.1:'+port;
+  var ID='fc-auto-pill',local=/^(localhost|127\.0\.0\.1|\[::1\])$/.test(location.hostname),base=local?('http://127.0.0.1:'+((+location.port||80)+1000)):'/agent-bridge';
   var st={enabled:false,running:false,down:false};
   function exportBtn(){
     var bs=document.querySelectorAll('button');
