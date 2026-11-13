@@ -42,7 +42,16 @@ export async function snapshotTimes(
     browser = await puppeteer.launch({
       executablePath: chrome.executablePath,
       headless: chrome.headless === "shell" ? ("shell" as never) : true,
-      args: ["--mute-audio", "--no-first-run", "--force-color-profile=srgb", "--hide-scrollbars"],
+      args: [
+        "--mute-audio",
+        "--no-first-run",
+        "--force-color-profile=srgb",
+        "--hide-scrollbars",
+        // containers run as root — chromium refuses to start without these
+        ...(process.platform === "linux"
+          ? ["--no-sandbox", "--disable-setuid-sandbox", "--disable-dev-shm-usage"]
+          : []),
+      ],
       defaultViewport: { width: spec.width, height: spec.height, deviceScaleFactor: 1 },
     });
     const page = await browser.newPage();

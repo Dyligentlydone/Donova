@@ -37,7 +37,15 @@ export async function checkProject(
       browser = await puppeteer.launch({
         executablePath: chrome.executablePath,
         headless: chrome.headless === "shell" ? ("shell" as never) : true,
-        args: ["--mute-audio", "--no-first-run", "--force-color-profile=srgb"],
+        args: [
+          "--mute-audio",
+          "--no-first-run",
+          "--force-color-profile=srgb",
+          // containers run as root — chromium refuses to start without these
+          ...(process.platform === "linux"
+            ? ["--no-sandbox", "--disable-setuid-sandbox", "--disable-dev-shm-usage"]
+            : []),
+        ],
         defaultViewport: { width: 640, height: 360 },
       });
       const page = await browser.newPage();

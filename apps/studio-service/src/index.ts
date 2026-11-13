@@ -167,9 +167,14 @@ function ensureInstance(inst: UserInstance): Promise<void> {
     mkdirSync(inst.dir, { recursive: true });
     await seedIfEmpty(inst.prefix);
     await ensureUserFolders(inst.prefix, inst.dir);
-    const pulled = await pullProject(inst.prefix, inst.dir);
-    inst.knownPaths = new Set(walkFiles(inst.dir).map((p) => relative(inst.dir, p).split("\\").join("/")));
-    console.log(`[${inst.uid}] materialized ${pulled} files`);
+    // Pull only on first materialize. On re-boot the local tree is
+    // authoritative — it may hold agent edits the push tick hasn't caught
+    // yet, and re-pulling would clobber them with the older GCS copy.
+    if (inst.knownPaths.size === 0) {
+      const pulled = await pullProject(inst.prefix, inst.dir);
+      inst.knownPaths = new Set(walkFiles(inst.dir).map((p) => relative(inst.dir, p).split("\\").join("/")));
+      console.log(`[${inst.uid}] materialized ${pulled} files`);
+    }
     inst.proc = launchStudio(inst);
     inst.lastPush = Date.now();
     await waitForPort(inst.port, 240000).catch((err) => {
@@ -1012,7 +1017,10 @@ async function main() {
 
   setInterval(() => {
     for (const inst of instances.values()) {
-      if (!inst.booted) continue;
+      // Push for any materialized tree, not just booted ones — the preview
+      // process can die mid-session while the sidecar (agent edits) lives
+      // on, and un-pushed edits must still reach GCS.
+      if (inst.knownPaths.size === 0) continue;
       pushChanges(inst).then((n) => {
         if (n > 0) console.log(`[${inst.uid}] synced ${n} changed file(s) → GCS`);
       });
