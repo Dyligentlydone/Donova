@@ -13,8 +13,9 @@ import {
 } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
-import { openStudio } from "../../lib/openStudio";
 import { useState } from "react";
+import ChatPanel from "../../components/ChatPanel";
+import { openStudio } from "../../lib/openStudio";
 
 export default function Dashboard() {
   const [file, setFile] = useState<File | null>(null);
@@ -194,6 +195,12 @@ export default function Dashboard() {
             Render failed: {renderResult.error}
           </div>
         )}
+
+        {/* AI chat — the vibe-edit surface. Talks to the cloud agent at
+            /api/chat (DeepSeek via OpenRouter + render-worker verbs). */}
+        <div className="mb-8">
+          <ChatPanel />
+        </div>
 
         <div className="grid md:grid-cols-2 gap-8">
           {/* Upload card */}

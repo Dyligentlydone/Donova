@@ -9,8 +9,8 @@ import { join } from "node:path";
  *   calls → executed server-side → turn recorded for undo.
  *
  * Tools are the same verbs as the CLI: check, snapshot, captions, cuts,
- * scaffold, add, probe, timeline, renderDraft, writeFile, mutateHtml,
- * updateStyle. Raw footage is never touched.
+ * scaffold, add, probe, timeline, renderDraft, writeFile, mutateHtml.
+ * Raw footage is never touched.
  */
 
 export interface TurnChange {
@@ -82,13 +82,14 @@ function systemPrompt(ctx: AgentContext): string {
 - Never modify source footage files under media/.
 - Composition rules: timed elements use class="clip" + data-start + data-duration; no Date.now/Math.random/network fetch in compositions; one paused root timeline on window.__timelines.
 - Blocks live in compositions/<name>/index.html, referenced with data-composition-src + data-composition-id on a .clip div and customized via data-var-* attributes. Run "add" first to install a block.
-- Durable user preferences ("always", "never", or repeated corrections) go into style.md via write_file — describe them in words, don't restate the whole file.
+- Durable user preferences ("always", "never", or repeated corrections) go into style.md via write_file — carry forward the existing content shown below and append; never write a new preference at the cost of existing ones. One-off overrides do NOT go into style.md.
 - Keep replies to the user short: what changed + what to look at.
 - Prefer draft renders for iteration.
 Project state:
 - duration: ${ctx.duration}s
 - files: ${ctx.files.join(", ")}
-- style.md: ${ctx.styleMd ? `present (${ctx.styleMd.length} chars)` : "absent"}
+style.md (the user's style bible — apply it to every edit and keep it current):
+${ctx.styleMd ? ctx.styleMd.slice(0, 8000) : "(no style.md yet — write one when the user states a durable preference)"}
 Current index.html:
 ${ctx.indexHtml}`;
 }
@@ -267,11 +268,22 @@ export class Agent {
   async load(): Promise<void> {
     if (existsSync(this.turnsFile)) {
       try {
-        this.turns = JSON.parse(await readFile(this.turnsFile, "utf8")) as Turn[];
+        // Both shapes exist in the wild: the agent writes Turn[], studio-service
+        // seeds {turns:[]}. Normalize or the first chat crashes on .push.
+        const parsed = JSON.parse(await readFile(this.turnsFile, "utf8")) as unknown;
+        this.turns = Array.isArray(parsed)
+          ? (parsed as Turn[])
+          : (((parsed as { turns?: Turn[] }).turns ?? []) as Turn[]);
       } catch {
         this.turns = [];
       }
     }
+    // Rebuild conversation memory from persisted turns — a fresh Agent (cloud
+    // rebuilds one per chat) otherwise can't resolve "it"/"that" references.
+    this.history = this.turns.slice(-10).flatMap((t) => [
+      { role: "user", content: t.message },
+      { role: "assistant", content: t.reply },
+    ]);
   }
 
   private async saveTurns(): Promise<void> {

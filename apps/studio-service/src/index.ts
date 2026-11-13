@@ -1,12 +1,12 @@
-import { spawn, type ChildProcess } from "node:child_process";
-import { createRequire } from "node:module";
-import { createHmac, createHash, timingSafeEqual } from "node:crypto";
-import { createServer, request as httpRequest, type IncomingMessage, type ServerResponse } from "node:http";
-import { connect } from "node:net";
+import { type ChildProcess, spawn } from "node:child_process";
+import { createHash, createHmac, timingSafeEqual } from "node:crypto";
 import { createWriteStream, mkdirSync, readdirSync, rmSync, statSync } from "node:fs";
-import { dirname, join, relative } from "node:path";
-import { homedir } from "node:os";
 import { readFileSync } from "node:fs";
+import { type IncomingMessage, type ServerResponse, createServer, request as httpRequest } from "node:http";
+import { createRequire } from "node:module";
+import { connect } from "node:net";
+import { homedir } from "node:os";
+import { dirname, join, relative } from "node:path";
 import { Storage } from "@google-cloud/storage";
 
 /**
@@ -469,7 +469,10 @@ function handleGate(req: IncomingMessage, res: ServerResponse): TokenInfo | null
     if (info) {
       url.searchParams.delete("t");
       // session lives until the token's sessionExp hint (trial end) or 30d, whichever is sooner
-      const sessionExp = Math.min(info.sessionExp ?? Infinity, Date.now() + 30 * 24 * 60 * 60 * 1000);
+      const sessionExp = Math.min(
+        info.sessionExp ?? Number.POSITIVE_INFINITY,
+        Date.now() + 30 * 24 * 60 * 60 * 1000,
+      );
       const maxAge = Math.max(1, Math.floor((sessionExp - Date.now()) / 1000));
       const session = sign(info.email, sessionExp);
       res.writeHead(302, {
@@ -558,9 +561,7 @@ async function handleDesktopApi(
       .replace(/[/\\]+/g, "-")
       .slice(0, 140);
     const folderParam = url.searchParams.get("folder") || "raw footage";
-    const folder = (USER_FOLDERS as readonly string[]).includes(folderParam)
-      ? folderParam
-      : "raw footage";
+    const folder = (USER_FOLDERS as readonly string[]).includes(folderParam) ? folderParam : "raw footage";
     const rel = `${folder}/${name}`;
     const dest = join(inst.dir, rel);
     mkdirSync(dirname(dest), { recursive: true });
@@ -624,10 +625,7 @@ async function pullProject(prefix: string, dir: string): Promise<number> {
     const dest = join(dir, rel);
     mkdirSync(dirname(dest), { recursive: true });
     await new Promise<void>((res, rej) => {
-      f.createReadStream()
-        .pipe(createWriteStream(dest))
-        .on("finish", res)
-        .on("error", rej);
+      f.createReadStream().pipe(createWriteStream(dest)).on("finish", res).on("error", rej);
     });
     pulled++;
   }
@@ -645,9 +643,10 @@ style="width:1080px;height:1920px;background:#0a0a0f;display:flex;align-items:ce
 <div class="clip" data-start="0" data-duration="2.5"
 style="color:#f5f1e8;font:700 72px system-ui;text-align:center">New Donova project.<br>Upload footage in Assets.</div>
 </div></body></html>`,
-    "style.md": "# Style Bible\n\nDescribe your editing style here. The agent reads this before every edit.\n",
+    "style.md":
+      "# Style Bible\n\nDescribe your editing style here. The agent reads this before every edit.\n",
     "donova.json": '{\n  "version": 1\n}\n',
-    ".donova/turns.json": '{\n  "turns": []\n}\n',
+    ".donova/turns.json": "[]\n",
   };
   for (const [k, v] of Object.entries(seeds)) {
     await bucket.file(prefix + k).save(v);
@@ -896,9 +895,7 @@ async function main() {
         }
         // kick a cold boot before deciding how to respond
         if (!inst.booted && !inst.boot) {
-          void ensureInstance(inst).catch((err) =>
-            console.error(`[${inst.uid}] boot failed:`, err),
-          );
+          void ensureInstance(inst).catch((err) => console.error(`[${inst.uid}] boot failed:`, err));
         }
         if (inst.booted) {
           inst.lastTouched = Date.now();
@@ -954,7 +951,7 @@ async function main() {
       const up = connect({ host: "127.0.0.1", port: inst.port }, () => {
         up.write(`${req.method} ${req.url} HTTP/1.1\r\n`);
         for (const [k, v] of Object.entries(req.headers)) {
-          up.write(`${k}: ${Array.isArray(v) ? v.join(", ") : v ?? ""}\r\n`);
+          up.write(`${k}: ${Array.isArray(v) ? v.join(", ") : (v ?? "")}\r\n`);
         }
         up.write("\r\n");
         if (head?.length) up.write(head);
