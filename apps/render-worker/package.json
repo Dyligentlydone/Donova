@@ -13,8 +13,11 @@
   "dependencies": {
     "@donova/contract": "workspace:*",
     "@donova/engine": "workspace:*",
+    "@donova/media": "workspace:*",
     "@donova/producer": "workspace:*",
-    "@google-cloud/storage": "7.15.0"
+    "@donova/runtime": "workspace:*",
+    "@google-cloud/storage": "7.15.0",
+    "puppeteer-core": "^24.10.0"
   },
   "devDependencies": {
     "@types/node": "^22.15.0",

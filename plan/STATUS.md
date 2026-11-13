@@ -15,11 +15,27 @@ across rounds incl. cache reads. Prod is wired for DeepSeek:
 `DONOVA_LLM_API_KEY` when the secret exists. Chat caps: trial 25 lifetime,
 paid 300/mo + 4M tokens/mo, owners uncapped — counters on the GCS subscriber
 record, enforced in `/api/chat` (429 `{code:"CHAT_LIMIT"}`), `chatRemaining`
-returned per response. **Known gap surfaced:** in cloud the agent's `run` cmd
-only supports `check`/`render(Draft)`/`timeline` — transcribe/cuts/captions/
-scaffold/probe/snapshot/add still reply "not available in Donova Cloud yet",
-so core vibe-edit verbs need worker-side implementations before cloud chat is
-the full §0 loop.
+returned per response.
+
+## -9c. Cloud agent: full run-cmd via render-worker /run (2026-11-13)
+
+The "not available in Donova Cloud yet" gap is closed: `cloudRunCmd`
+(`apps/web/lib/agent.ts`) now routes `probe`, `transcribe`, `cuts`, `captions`,
+`scaffold`, `add`, `snapshot`, and `render` to a new `POST /run` on the render
+worker (`apps/render-worker/src/{run,server,storage}.ts`), which has ffmpeg +
+Chrome + all packages in-image. Flow: web reads the project from GCS, invokes
+`/run` via a Google-signed OIDC `Authorization` header (`lib/storage.ts
+triggerCloudRun`), worker pulls only the needed files, runs the verb against
+package-level functions (no CLI shell-out), pushes `filesWritten` back, web
+re-materializes them into the mirror + flushes agent `changed` files to GCS
+first (`runCmd` gained a `ctx.changed` param). `check`/`timeline` stay
+in-process on web; `render` enqueues a real Job. `captions` core moved to a
+pure `generateCaptionsHtml` in `@donova/media` (CLI is now a thin fs wrapper).
+Parakeet is prefetched in the worker Dockerfile. **Auth note:** `/run` uses
+the same OIDC-invoker model as `/render` — verify `--no-allow-unauthenticated`
+is set on `donova-render-worker` before launch (worker has no own auth layer).
+Worker route + end-to-end cloud chat path are untested in prod; unit-verified
+locally (captions core, builds, typecheck).
 
 ## -9. Real Studio as a Cloud Run service (apps/studio-service)
 

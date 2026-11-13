@@ -30,6 +30,11 @@ RUN corepack enable && corepack prepare pnpm@9.15.0 --activate \
   && pnpm install --frozen-lockfile=false \
   && pnpm build
 
+# Prefetch the Parakeet transcription model into the image (~670MB under
+# $HOME/.cache/donova) so the /run transcribe verb doesn't pay the download on
+# first call per cold instance. Best-effort: runtime still lazily downloads.
+RUN node packages/cli/bin/donova.mjs models install parakeet || echo "parakeet prefetch skipped"
+
 EXPOSE 8080
 
 # Starts HTTP server on $PORT by default, or runs batch job if --job passed

@@ -256,7 +256,7 @@ export class Agent {
   constructor(
     private root: string,
     private exec: {
-      runCmd: (cmd: string, args: Record<string, unknown>) => Promise<unknown>;
+      runCmd: (cmd: string, args: Record<string, unknown>, ctx?: { changed?: string[] }) => Promise<unknown>;
       mutateHtml: (mutations: Array<Record<string, unknown>>) => Promise<void>;
       readContext: () => Promise<AgentContext>;
     },
@@ -316,7 +316,9 @@ export class Agent {
       const before = await this.snapshot("index.html");
       const notes: string[] = [];
       try {
-        const res = await this.exec.runCmd(cmd, (call.input.args as Record<string, unknown>) ?? {});
+        const res = await this.exec.runCmd(cmd, (call.input.args as Record<string, unknown>) ?? {}, {
+          changed: changes.map((c) => c.file),
+        });
         notes.push(`(${cmd}: ${summarize(cmd, res)})`);
         // After installing a block, wire a reference clip into index.html so
         // the user sees it immediately instead of an invisible install.

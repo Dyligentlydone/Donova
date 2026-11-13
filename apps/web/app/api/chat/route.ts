@@ -12,15 +12,10 @@ export async function POST(req: Request) {
   }
   const allowance = await chatAllowance(auth.email);
   if (!allowance.allowed) {
-    return NextResponse.json(
-      { error: allowance.reason, code: "CHAT_LIMIT", remaining: 0 },
-      { status: 429 },
-    );
+    return NextResponse.json({ error: allowance.reason, code: "CHAT_LIMIT", remaining: 0 }, { status: 429 });
   }
   try {
-    const turn = await cloudAgent(userUid(auth.email), userPrefix(auth.email)).chat(
-      body.message.trim(),
-    );
+    const turn = await cloudAgent(userUid(auth.email), userPrefix(auth.email)).chat(body.message.trim());
     await recordChatUsage(auth.email, turn.usage ?? { inputTokens: 0, outputTokens: 0 });
     const remaining = allowance.remaining === -1 ? -1 : allowance.remaining - 1;
     return NextResponse.json({ ...turn, chatRemaining: remaining });

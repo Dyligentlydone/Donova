@@ -1,5 +1,6 @@
 import { createServer, type IncomingMessage, type ServerResponse } from "node:http";
 import { executeRenderJob, type RenderJobParams } from "./job.js";
+import { executeRun, type RunParams } from "./run.js";
 
 function json(res: ServerResponse, status: number, data: unknown) {
   const body = JSON.stringify(data);
@@ -33,14 +34,15 @@ export function startHttpServer(port = Number(process.env.PORT || 8080)) {
       });
     }
 
+    const authed = (() => {
+      if (!authKey) return true;
+      const header = req.headers.authorization ?? "";
+      const token = header.startsWith("Bearer ") ? header.slice(7) : "";
+      return token === authKey;
+    })();
+
     if (req.method === "POST" && url.pathname === "/render") {
-      if (authKey) {
-        const header = req.headers.authorization ?? "";
-        const token = header.startsWith("Bearer ") ? header.slice(7) : "";
-        if (token !== authKey) {
-          return json(res, 401, { error: "Unauthorized" });
-        }
-      }
+      if (!authed) return json(res, 401, { error: "Unauthorized" });
 
       let params: RenderJobParams;
       try {
@@ -65,6 +67,25 @@ export function startHttpServer(port = Number(process.env.PORT || 8080)) {
         console.error("Render job failed:", err);
         return json(res, 500, { ok: false, error: message });
       }
+    }
+
+    if (req.method === "POST" && url.pathname === "/run") {
+      if (!authed) return json(res, 401, { error: "Unauthorized" });
+
+      let params: RunParams;
+      try {
+        const raw = await readBody(req);
+        params = JSON.parse(raw);
+      } catch {
+        return json(res, 400, { error: "Invalid JSON body" });
+      }
+
+      if (!params.cmd || !params.projectPrefix) {
+        return json(res, 400, { error: "Missing cmd or projectPrefix" });
+      }
+
+      const result = await executeRun(params);
+      return json(res, result.ok ? 200 : 500, result);
     }
 
     return json(res, 404, { error: "Not found" });

@@ -75,3 +75,41 @@ export async function triggerCloudRender(params: CloudRenderParams): Promise<Clo
 
   return (await res.json()) as CloudRenderResponse;
 }
+
+export interface CloudRunCmdParams {
+  cmd: string;
+  args?: Record<string, unknown>;
+  projectPrefix: string;
+  bucket?: string;
+}
+
+export interface CloudRunCmdResponse {
+  ok: boolean;
+  cmd: string;
+  data?: unknown;
+  filesWritten?: string[];
+  error?: string;
+}
+
+/** The cloud agent's media verbs — POST /run on the render worker. */
+export async function triggerCloudRun(params: CloudRunCmdParams): Promise<CloudRunCmdResponse> {
+  const headers: Record<string, string> = { "Content-Type": "application/json" };
+  const idToken = await getCloudRunIdentityToken(WORKER_URL);
+  if (idToken) headers.Authorization = `Bearer ${idToken}`;
+
+  const res = await fetch(`${WORKER_URL}/run`, {
+    method: "POST",
+    headers,
+    body: JSON.stringify({
+      cmd: params.cmd,
+      args: params.args ?? {},
+      projectPrefix: params.projectPrefix,
+      bucket: params.bucket ?? DEFAULT_BUCKET,
+    }),
+  });
+  const body = (await res.json().catch(() => null)) as CloudRunCmdResponse | null;
+  if (!res.ok || !body) {
+    return { ok: false, cmd: params.cmd, error: body?.error ?? `Worker error (${res.status})` };
+  }
+  return body;
+}

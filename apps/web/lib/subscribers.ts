@@ -1,4 +1,4 @@
-import { createHmac, createHash, timingSafeEqual } from "node:crypto";
+import { createHash, createHmac, timingSafeEqual } from "node:crypto";
 import { Storage } from "@google-cloud/storage";
 import { STUDIO_URL } from "./studioUrl";
 
@@ -118,9 +118,7 @@ export async function recordChatUsage(
     rec.usage.tokensIn += usage.inputTokens;
     rec.usage.tokensOut += usage.outputTokens;
   }
-  await bucket
-    .file(subscriberKey(e))
-    .save(JSON.stringify(rec), { contentType: "application/json" });
+  await bucket.file(subscriberKey(e)).save(JSON.stringify(rec), { contentType: "application/json" });
 }
 
 export async function getSubscriber(email: string): Promise<SubscriberRecord | null> {
@@ -148,9 +146,7 @@ export async function recordTrial(email: string): Promise<{ rec: SubscriberRecor
     trialEndsAt: Date.now() + 7 * 24 * 60 * 60 * 1000,
     activatedAt: new Date().toISOString(),
   };
-  await bucket
-    .file(subscriberKey(e))
-    .save(JSON.stringify(rec), { contentType: "application/json" });
+  await bucket.file(subscriberKey(e)).save(JSON.stringify(rec), { contentType: "application/json" });
   return { rec, created: true };
 }
 
@@ -171,7 +167,9 @@ export function userPrefix(email: string | null | undefined): string {
   return `projects/${userUid(email)}/`;
 }
 
-export function subscriberState(rec: SubscriberRecord | null): "paid" | "trial-active" | "trial-ended" | "none" {
+export function subscriberState(
+  rec: SubscriberRecord | null,
+): "paid" | "trial-active" | "trial-ended" | "none" {
   if (!rec) return "none";
   if (rec.status === "active") return "paid";
   if (rec.status === "trial") {

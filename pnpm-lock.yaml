@@ -36,12 +36,21 @@ importers:
       '@donova/engine':
         specifier: workspace:*
         version: link:../../packages/engine
+      '@donova/media':
+        specifier: workspace:*
+        version: link:../../packages/media
       '@donova/producer':
         specifier: workspace:*
         version: link:../../packages/producer
+      '@donova/runtime':
+        specifier: workspace:*
+        version: link:../../packages/runtime
       '@google-cloud/storage':
         specifier: 7.15.0
         version: 7.15.0
+      puppeteer-core:
+        specifier: ^24.10.0
+        version: 24.43.1(bare-buffer@3.7.1)
     devDependencies:
       '@types/node':
         specifier: ^22.15.0

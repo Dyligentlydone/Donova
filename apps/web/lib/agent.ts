@@ -1,5 +1,5 @@
-import { readFile, writeFile } from "node:fs/promises";
-import { join } from "node:path";
+import { mkdir, readFile, writeFile } from "node:fs/promises";
+import { dirname, join } from "node:path";
 import { parseCompositionHtml } from "@donova/contract";
 import { lintHtml } from "@donova/lint";
 import { Agent, type Turn } from "@donova/studio-server/agent";
@@ -16,6 +16,7 @@ import {
   readProjectFile,
   writeProjectFile,
 } from "./project";
+import { triggerCloudRun } from "./storage";
 
 /**
  * Cloud adapter for the Studio agent — one Agent per user, scoped to their
@@ -78,8 +79,31 @@ export function cloudAgent(uid: string, prefix: string): CloudAgent {
     }
   }
 
+  /** Verbs executed on the render worker (it has ffmpeg + chrome + models). */
+  const WORKER_CMDS = new Set(["probe", "transcribe", "cuts", "captions", "scaffold", "add", "snapshot"]);
+  // Mirror only holds text files — worker outputs that aren't text never
+  // need materializing (the iframe/worker stream binaries from GCS directly).
+  const TEXT_EXT = /\.(html?|css|m?js|json|md|txt|svg|xml|ts|tsx|map)$/i;
+
+  /** Pull worker-written outputs into the local mirror (text only). */
+  async function pullWritten(rels: string[]): Promise<void> {
+    const root = localRoot(prefix);
+    for (const rel of rels) {
+      if (!TEXT_EXT.test(rel)) continue;
+      const content = await readProjectFile(prefix, rel);
+      if (content == null) continue;
+      const fp = join(root, rel);
+      await mkdir(dirname(fp), { recursive: true });
+      await writeFile(fp, content);
+    }
+  }
+
   /** Commands the agent can run server-side in the cloud container. */
-  async function cloudRunCmd(cmd: string, _args: Record<string, unknown>): Promise<unknown> {
+  async function cloudRunCmd(
+    cmd: string,
+    _args: Record<string, unknown>,
+    ctx?: { changed?: string[] },
+  ): Promise<unknown> {
     if (cmd === "check") {
       const html = (await readLocal("index.html")) ?? "";
       const { issues } = lintHtml(html, { path: "index.html", isRoot: true });
@@ -87,6 +111,14 @@ export function cloudAgent(uid: string, prefix: string): CloudAgent {
       const warnings = issues.filter((i) => i.severity === "warn");
       return { ok: errors.length === 0, errors, warnings };
     }
+    if (cmd === "timeline") {
+      const html = (await readLocal("index.html")) ?? "";
+      const { spec } = parseCompositionHtml(html, { path: "index.html", isRoot: true });
+      return { duration: spec.duration, clips: spec.clips.length };
+    }
+    // Worker-side verbs read GCS, not the mirror — flush this turn's local
+    // writes first or they operate on stale files (e.g. captions after edits).
+    if (ctx?.changed?.length) await syncUpFiles(ctx.changed);
     if (cmd === "render" || cmd === "renderDraft") {
       const job = await startRenderJob({
         quality: cmd === "renderDraft" ? "draft" : "standard",
@@ -102,14 +134,13 @@ export function cloudAgent(uid: string, prefix: string): CloudAgent {
       }
       throw new Error("cloud render timed out");
     }
-    if (cmd === "timeline") {
-      const html = (await readLocal("index.html")) ?? "";
-      const { spec } = parseCompositionHtml(html, { path: "index.html", isRoot: true });
-      return { duration: spec.duration, clips: spec.clips.length };
+    if (WORKER_CMDS.has(cmd)) {
+      const res = await triggerCloudRun({ cmd, args: _args, projectPrefix: prefix });
+      if (!res.ok) throw new Error(res.error ?? `${cmd} failed on worker`);
+      await pullWritten(res.filesWritten ?? []);
+      return res.data;
     }
-    // Media-processing commands (transcribe, cuts, captions, scaffold, probe,
-    // snapshot, add) need the CLI toolchain — run locally via `donova <cmd>`.
-    throw new Error(`${cmd} is not available in Donova Cloud yet — run it locally via \`donova ${cmd}\``);
+    throw new Error(`unknown command: ${cmd}`);
   }
 
   async function buildAgent(): Promise<Agent> {
@@ -125,8 +156,7 @@ export function cloudAgent(uid: string, prefix: string): CloudAgent {
         const indexHtml = (await readProjectFile(prefix, "index.html")) ?? "";
         let duration = 0;
         try {
-          duration = parseCompositionHtml(indexHtml, { path: "index.html", isRoot: true }).spec
-            .duration;
+          duration = parseCompositionHtml(indexHtml, { path: "index.html", isRoot: true }).spec.duration;
         } catch {
           /* leave 0 */
         }

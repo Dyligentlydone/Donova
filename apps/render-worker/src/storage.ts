@@ -48,6 +48,55 @@ async function downloadProjectPrefix(
   }
 }
 
+/**
+ * Download only the named project files (rel paths) under a prefix into
+ * destDir. Missing objects are skipped — callers check existsSync on inputs
+ * they require. Returns the rels actually pulled.
+ */
+export async function downloadProjectFiles(
+  storage: Storage,
+  bucket: string,
+  prefix: string,
+  rels: string[],
+  destDir: string,
+): Promise<string[]> {
+  const b = storage.bucket(bucket);
+  const pulled: string[] = [];
+  for (const rel of rels) {
+    if (!rel || rel.includes("..")) continue;
+    const f = b.file(prefix + rel);
+    const [exists] = await f.exists();
+    if (!exists) continue;
+    const dest = join(destDir, rel);
+    if (!resolve(dest).startsWith(resolve(destDir))) continue;
+    await mkdir(dirname(dest), { recursive: true });
+    await f.download({ destination: dest });
+    pulled.push(rel);
+  }
+  return pulled;
+}
+
+/** Upload local files (rel paths under srcDir) back into the project prefix. */
+export async function uploadProjectFiles(
+  storage: Storage,
+  bucket: string,
+  prefix: string,
+  srcDir: string,
+  rels: string[],
+): Promise<void> {
+  const b = storage.bucket(bucket);
+  for (const rel of rels) {
+    if (!rel || rel.includes("..")) continue;
+    const src = join(srcDir, rel);
+    if (!resolve(src).startsWith(resolve(srcDir))) continue;
+    await b.upload(src, { destination: prefix + rel });
+  }
+}
+
+export function gcs(): Storage {
+  return getStorage();
+}
+
 export async function downloadAndExtractBundle(opts: DownloadBundleOpts): Promise<string> {
   const destDir = resolve(opts.destDir);
   await mkdir(destDir, { recursive: true });
@@ -77,7 +126,6 @@ export async function downloadAndExtractBundle(opts: DownloadBundleOpts): Promis
       throw new Error("Empty response body when downloading bundle URL");
     }
     const writeStream = createWriteStream(tempArchive);
-    // @ts-expect-error ReadableStream vs NodeJS.ReadableStream
     await pipeline(resp.body, writeStream);
   } else {
     throw new Error("Must provide either bucket + bundleKey or bundleUrl");
