@@ -30,9 +30,10 @@ echo "Step 2/2: Deploying Cloud Run Service (${SERVICE_NAME})..."
 # max-instances=1: all edits land in ONE synced project tree — a second
 # instance would fork project state. min-instances=1 avoids the cold
 # materialize + preview boot per visit.
-# STUDIO_GATE_SECRET — shared HMAC secret with the web app (env, not committed)
+# STUDIO_GATE_SECRET comes from Google Secret Manager (studio-gate-secret) —
+# referenced by name so deploys can never drop it. Rotate with:
+#   printf '<new>' | gcloud secrets versions add studio-gate-secret --data-file=-
 ENV_VARS="DONOVA_BUCKET=${DONOVA_BUCKET:-donova-renders-${PROJECT_ID}},PROJECT_PREFIX=${PROJECT_PREFIX:-projects/default/}"
-[ -n "${STUDIO_GATE_SECRET:-}" ] && ENV_VARS="${ENV_VARS},STUDIO_GATE_SECRET=${STUDIO_GATE_SECRET}"
 
 gcloud run deploy "${SERVICE_NAME}" \
   --project="${PROJECT_ID}" \
@@ -45,6 +46,7 @@ gcloud run deploy "${SERVICE_NAME}" \
   --min-instances=1 \
   --max-instances=1 \
   --set-env-vars="${ENV_VARS}" \
+  --set-secrets="STUDIO_GATE_SECRET=studio-gate-secret:latest" \
   --allow-unauthenticated
 
 echo

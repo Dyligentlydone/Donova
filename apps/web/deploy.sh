@@ -26,14 +26,22 @@ gcloud builds submit \
   .
 
 echo "Step 2/2: Deploying Cloud Run Service (donova-web)..."
-# Secrets come from the environment (never committed):
-#   HELCIM_API_TOKEN    — Helcim API access token (billing)
-#   STUDIO_GATE_SECRET  — shared HMAC secret with the Studio service
-#   DONOVA_OWNER_EMAILS — optional comma-separated owner allowlist
+# Secrets live in Google Secret Manager — referenced by name so deploys can
+# never drop them and values never touch the shell env or git:
+#   studio-gate-secret  → STUDIO_GATE_SECRET (shared HMAC secret w/ Studio)
+#   helcim-api-token    → HELCIM_API_TOKEN (billing; referenced only if the
+#                         secret exists — create with:
+#                         printf '<token>' | gcloud secrets create helcim-api-token \
+#                           --replication-policy=automatic --data-file=-)
 ENV_VARS="DONOVA_BUCKET=donova-renders-donova-514500,DONOVA_WORKER_URL=https://donova-render-worker-2hsglzbnna-uc.a.run.app"
-[ -n "${HELCIM_API_TOKEN:-}" ] && ENV_VARS="${ENV_VARS},HELCIM_API_TOKEN=${HELCIM_API_TOKEN}"
-[ -n "${STUDIO_GATE_SECRET:-}" ] && ENV_VARS="${ENV_VARS},STUDIO_GATE_SECRET=${STUDIO_GATE_SECRET}"
 [ -n "${DONOVA_OWNER_EMAILS:-}" ] && ENV_VARS="${ENV_VARS},DONOVA_OWNER_EMAILS=${DONOVA_OWNER_EMAILS}"
+
+SECRETS="STUDIO_GATE_SECRET=studio-gate-secret:latest"
+if gcloud secrets describe helcim-api-token --project="${PROJECT_ID}" >/dev/null 2>&1; then
+  SECRETS="${SECRETS},HELCIM_API_TOKEN=helcim-api-token:latest"
+else
+  echo "  (helcim-api-token secret not found — billing checkout disabled)"
+fi
 
 gcloud run deploy donova-web \
   --project="${PROJECT_ID}" \
@@ -43,7 +51,8 @@ gcloud run deploy donova-web \
   --memory=2Gi \
   --timeout=300 \
   --allow-unauthenticated \
-  --set-env-vars="${ENV_VARS}"
+  --set-env-vars="${ENV_VARS}" \
+  --set-secrets="${SECRETS}"
 
 echo
 echo "✓ Done! Donova Web App is live on Google Cloud Run."
