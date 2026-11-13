@@ -2,6 +2,25 @@
 
 Last updated: 2026-11-13 (multi-user Studio isolation verified — see §-9). Update this file whenever you finish an MV task.
 
+## -9b. Cloud agent: provider-agnostic LLM + per-user chat caps (2026-11-13)
+
+The studio-server `Agent` tool loop now targets any Anthropic-Messages API:
+`DONOVA_LLM_BASE_URL`/`DONOVA_LLM_API_KEY`/`DONOVA_LLM_MODEL` (Anthropic envs
+accepted as fallback; no key → rules fallback unchanged). Thinking is sent as
+`{type:"disabled"}` (DeepSeek thinking burns output tokens and breaks
+`tool_choice`). Each `Turn` carries `usage{inputTokens,outputTokens}` summed
+across rounds incl. cache reads. Prod is wired for DeepSeek:
+`deploy.sh` sets `DONOVA_LLM_BASE_URL=https://api.deepseek.com/anthropic` +
+`DONOVA_LLM_MODEL=deepseek-flash` and mounts `deepseek-api-key` →
+`DONOVA_LLM_API_KEY` when the secret exists. Chat caps: trial 25 lifetime,
+paid 300/mo + 4M tokens/mo, owners uncapped — counters on the GCS subscriber
+record, enforced in `/api/chat` (429 `{code:"CHAT_LIMIT"}`), `chatRemaining`
+returned per response. **Known gap surfaced:** in cloud the agent's `run` cmd
+only supports `check`/`render(Draft)`/`timeline` — transcribe/cuts/captions/
+scaffold/probe/snapshot/add still reply "not available in Donova Cloud yet",
+so core vibe-edit verbs need worker-side implementations before cloud chat is
+the full §0 loop.
+
 ## -9. Real Studio as a Cloud Run service (apps/studio-service)
 
 The hosted Studio now runs the SAME code as local `donova studio`, **per user**: the

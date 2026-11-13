@@ -4,8 +4,9 @@ import { join } from "node:path";
 
 /**
  * Studio agent (17 §chat / MV6). One chat turn:
- *   user message → provider (Anthropic if ANTHROPIC_API_KEY, else rules
- *   fallback) → tool calls → executed server-side → turn recorded for undo.
+ *   user message → provider (any Anthropic-Messages API when a key is set
+ *   via DONOVA_LLM_API_KEY/ANTHROPIC_API_KEY, else rules fallback) → tool
+ *   calls → executed server-side → turn recorded for undo.
  *
  * Tools are the same verbs as the CLI: check, snapshot, captions, cuts,
  * scaffold, add, probe, timeline, renderDraft, writeFile, mutateHtml,
@@ -17,6 +18,10 @@ export interface TurnChange {
   before: string | null; // null = file didn't exist
   after: string | null;
 }
+export interface TurnUsage {
+  inputTokens: number; // includes cache reads/writes — the billing-relevant input total
+  outputTokens: number;
+}
 export interface Turn {
   id: string;
   at: string;
@@ -24,6 +29,7 @@ export interface Turn {
   reply: string;
   changes: TurnChange[];
   tools: string[];
+  usage?: TurnUsage;
 }
 
 export interface AgentTool {
@@ -99,24 +105,62 @@ type AnthropicContent = Array<{
   text?: string;
 }>;
 
-async function anthropicCall(ctx: AgentContext, messages: unknown[]): Promise<{ content: AnthropicContent }> {
-  const res = await fetch("https://api.anthropic.com/v1/messages", {
+interface LlmUsage {
+  input_tokens?: number;
+  output_tokens?: number;
+  cache_read_input_tokens?: number;
+  cache_creation_input_tokens?: number;
+}
+
+/**
+ * Any Anthropic-Messages-compatible provider: Anthropic itself, or DeepSeek's
+ * `/anthropic` shim (tools + tool_use/tool_result supported; thinking is
+ * disabled — it burns output tokens and weakens tool_choice in our loop).
+ * Env: DONOVA_LLM_* primary, ANTHROPIC_* accepted as fallback.
+ */
+function llmConfig(): { key: string; baseUrl: string; model: string } {
+  const baseUrl = (
+    process.env.DONOVA_LLM_BASE_URL ||
+    process.env.ANTHROPIC_BASE_URL ||
+    "https://api.anthropic.com/v1"
+  ).replace(/\/+$/, "");
+  return {
+    key: process.env.DONOVA_LLM_API_KEY || process.env.ANTHROPIC_API_KEY || "",
+    baseUrl,
+    model:
+      process.env.DONOVA_LLM_MODEL ||
+      process.env.DONOVA_MODEL ||
+      (baseUrl.includes("deepseek") ? "deepseek-flash" : "claude-haiku-5-5"),
+  };
+}
+
+export function llmConfigured(): boolean {
+  return llmConfig().key.length > 0;
+}
+
+async function llmCall(
+  ctx: AgentContext,
+  messages: unknown[],
+): Promise<{ content: AnthropicContent; usage?: LlmUsage }> {
+  const cfg = llmConfig();
+  const res = await fetch(`${cfg.baseUrl}/messages`, {
     method: "POST",
     headers: {
-      "x-api-key": process.env.ANTHROPIC_API_KEY ?? "",
+      "x-api-key": cfg.key,
       "anthropic-version": "2023-06-01",
       "content-type": "application/json",
     },
     body: JSON.stringify({
-      model: process.env.DONOVA_MODEL ?? "claude-sonnet-4-5",
+      model: cfg.model,
       max_tokens: 4096,
+      thinking: { type: "disabled" },
       system: systemPrompt(ctx),
       tools: TOOLS.map((t) => ({ name: t.name, description: t.description, input_schema: t.inputSchema })),
       messages,
     }),
   });
-  if (!res.ok) throw new Error(`anthropic ${res.status}: ${(await res.text()).slice(0, 300)}`);
-  return (await res.json()) as { content: AnthropicContent };
+  if (!res.ok) throw new Error(`llm ${res.status}: ${(await res.text()).slice(0, 300)}`);
+  return (await res.json()) as { content: AnthropicContent; usage?: LlmUsage };
 }
 
 /** Rules fallback — works offline, covers the common vibe-edit verbs. */
@@ -314,11 +358,19 @@ export class Agent {
       return note;
     };
 
-    if (process.env.ANTHROPIC_API_KEY) {
+    const usage: TurnUsage = { inputTokens: 0, outputTokens: 0 };
+    if (llmConfigured()) {
       // Real tool loop: model gets tool results back and can keep going.
       const messages: unknown[] = [...this.history, { role: "user", content: message }];
       for (let round = 0; round < 8; round++) {
-        const data = await anthropicCall(ctx, messages);
+        const data = await llmCall(ctx, messages);
+        if (data.usage) {
+          usage.inputTokens +=
+            (data.usage.input_tokens ?? 0) +
+            (data.usage.cache_read_input_tokens ?? 0) +
+            (data.usage.cache_creation_input_tokens ?? 0);
+          usage.outputTokens += data.usage.output_tokens ?? 0;
+        }
         const textParts: string[] = [];
         const toolUses: Array<{ id?: string; name?: string; input?: Record<string, unknown> }> = [];
         for (const c of data.content ?? []) {
@@ -347,6 +399,7 @@ export class Agent {
       reply: replies.join(" ") || "Done.",
       changes,
       tools: toolsUsed,
+      usage: usage.inputTokens + usage.outputTokens > 0 ? usage : undefined,
     };
     this.turns.push(turn);
     await this.saveTurns();

@@ -33,7 +33,9 @@ echo "Step 2/2: Deploying Cloud Run Service (donova-web)..."
 #                         secret exists — create with:
 #                         printf '<token>' | gcloud secrets create helcim-api-token \
 #                           --replication-policy=automatic --data-file=-)
-ENV_VARS="DONOVA_BUCKET=donova-renders-donova-514500,DONOVA_WORKER_URL=https://donova-render-worker-2hsglzbnna-uc.a.run.app"
+#   deepseek-api-key    → DONOVA_LLM_API_KEY (Studio chat agent; optional —
+#                         without it the agent runs the rules-only fallback)
+ENV_VARS="DONOVA_BUCKET=donova-renders-donova-514500,DONOVA_WORKER_URL=https://donova-render-worker-2hsglzbnna-uc.a.run.app,DONOVA_LLM_BASE_URL=https://api.deepseek.com/anthropic,DONOVA_LLM_MODEL=deepseek-flash"
 [ -n "${DONOVA_OWNER_EMAILS:-}" ] && ENV_VARS="${ENV_VARS},DONOVA_OWNER_EMAILS=${DONOVA_OWNER_EMAILS}"
 
 SECRETS="STUDIO_GATE_SECRET=studio-gate-secret:latest"
@@ -41,6 +43,11 @@ if gcloud secrets describe helcim-api-token --project="${PROJECT_ID}" >/dev/null
   SECRETS="${SECRETS},HELCIM_API_TOKEN=helcim-api-token:latest"
 else
   echo "  (helcim-api-token secret not found — billing checkout disabled)"
+fi
+if gcloud secrets describe deepseek-api-key --project="${PROJECT_ID}" >/dev/null 2>&1; then
+  SECRETS="${SECRETS},DONOVA_LLM_API_KEY=deepseek-api-key:latest"
+else
+  echo "  (deepseek-api-key secret not found — Studio agent runs rules-only fallback)"
 fi
 
 gcloud run deploy donova-web \
