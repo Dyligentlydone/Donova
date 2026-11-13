@@ -1,8 +1,8 @@
 import { execSync, spawn } from "node:child_process";
-import { appendFileSync, existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
+import { appendFileSync, existsSync, mkdirSync, readFileSync, unlinkSync, writeFileSync } from "node:fs";
 import { type IncomingMessage, type Server, type ServerResponse, createServer } from "node:http";
 import { get } from "node:http";
-import { homedir } from "node:os";
+import { homedir, tmpdir } from "node:os";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -482,7 +482,7 @@ function buildPrompt(projectDir: string, body: ChatBody): string {
       prompt += `\n\nThe user's style bible (style.md) — follow it for every visual/caption/sound choice, and preserve its content if you update it:\n\n${style}`;
     }
   } catch {}
-  prompt += `\n\nThe user just sent this request from the Studio dashboard:\n\n${body.message ?? ""}`;
+  prompt += `\n\nRules for this kind of edit: if the request references media that exists in the project but isn't in the composition yet, wire it in first (a timed element like <video src="..." data-start="0" data-duration="N"> — check the file's real duration with donova probe or ffprobe, don't guess). For anything that needs to see footage — locating a moment, tracking an object, reading on-screen text — use view_frame to sample the video rather than inventing timecodes or positions.\n\nThe user just sent this request from the Studio dashboard:\n\n${body.message ?? ""}`;
   if (body.annotation) {
     const safe = body.annotation.replace(/[^a-zA-Z0-9._/-]/g, "");
     const path = join(projectDir, safe);
@@ -590,6 +590,23 @@ const AGENT_TOOLS = [
       parameters: { type: "object", properties: { cmd: { type: "string" } }, required: ["cmd"] },
     },
   },
+  {
+    type: "function",
+    function: {
+      name: "view_frame",
+      description:
+        "See a frame of a video/image at a timecode — returns a visual description (objects, positions as 0-1 fractions, visible text/brand names, what's happening). Sample frames to locate a moment ('when he hands it over') instead of inventing timings.",
+      parameters: {
+        type: "object",
+        properties: {
+          path: { type: "string", description: "project-relative media path" },
+          time: { type: "number", description: "seconds into the media" },
+          note: { type: "string", description: "optional: what to look for" },
+        },
+        required: ["path", "time"],
+      },
+    },
+  },
 ];
 
 function safePath(projectDir: string, p: string): string | null {
@@ -640,7 +657,9 @@ function runTool(projectDir: string, name: string, args: Record<string, unknown>
         const launcher = new RegExp(
           `^(donova|npx donova|node ${bin.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")})\\s`,
         );
-        const okCmd = launcher.test(cmd) && /^[a-zA-Z0-9 ._\-/:+*?,=]+$/.test(cmd) && !cmd.includes("..");
+        // Quotes allowed for paths with spaces — $ ` & | ; < > ( ) stay
+        // banned, so quoting can't smuggle in substitution or chaining.
+        const okCmd = launcher.test(cmd) && /^[a-zA-Z0-9 ._\-/:+*?,="']+$/.test(cmd) && !cmd.includes("..");
         if (!okCmd) return "error: command not allowed in cloud mode";
         const env = { ...process.env };
         for (const k of Object.keys(env)) {
@@ -664,6 +683,70 @@ function runTool(projectDir: string, name: string, args: Record<string, unknown>
     return `error: unknown tool ${name}`;
   } catch (err) {
     return `error: ${String(err).slice(0, 2000)}`;
+  }
+}
+
+/**
+ * view_frame — extract one frame via ffmpeg and have a vision model describe
+ * it. The chat model (deepseek-flash) is text-only, so frames go to a cheap
+ * VLM and come back as words: objects, 0-1 frame positions, legible text,
+ * what's happening. This is how the agent locates "the moment he hands it
+ * over" instead of inventing a timecode.
+ */
+async function viewFrameTool(
+  projectDir: string,
+  spec: AgentSpec,
+  args: Record<string, unknown>,
+): Promise<string> {
+  const rel = String(args.path ?? "");
+  const t = Math.max(0, Number(args.time ?? 0) || 0);
+  const note = String(args.note ?? "").slice(0, 300);
+  const full = safePath(projectDir, rel);
+  if (!full || !existsSync(full)) return "error: no such file";
+  if (!MEDIA_EXT.test(rel)) return "error: not a media file";
+  const tmp = join(tmpdir(), `fc-frame-${Date.now()}-${Math.random().toString(36).slice(2, 7)}.jpg`);
+  try {
+    execSync(
+      `ffmpeg -hide_banner -loglevel error -y -ss ${t} -i ${JSON.stringify(full)} -frames:v 1 -vf "scale='min(768,iw)':-2" -q:v 4 ${JSON.stringify(tmp)}`,
+      { stdio: ["ignore", "ignore", "pipe"], timeout: 30_000 },
+    );
+    if (!existsSync(tmp)) return `error: no frame at t=${t} (past the end?)`;
+    const b64 = readFileSync(tmp).toString("base64");
+    const model = process.env.DONOVA_VISION_MODEL ?? "deepseek/deepseek-v4.1-flash-1017";
+    const headers: Record<string, string> = { "content-type": "application/json" };
+    if (spec.key) headers.authorization = `Bearer ${spec.key}`;
+    const r = await fetch(spec.url as string, {
+      method: "POST",
+      headers,
+      body: JSON.stringify({
+        model,
+        messages: [
+          {
+            role: "user",
+            content: [
+              {
+                type: "text",
+                text: `Describe this video frame precisely and compactly: people and what they're doing, objects (with position as 0-1 x/y fractions of the frame), and any legible text or brand names.${note ? ` The caller specifically wants: ${note}` : ""}`,
+              },
+              { type: "image_url", image_url: { url: `data:image/jpeg;base64,${b64}` } },
+            ],
+          },
+        ],
+      }),
+    });
+    const j = (await r.json()) as {
+      choices?: { message?: { content?: string } }[];
+      error?: { message?: string };
+    };
+    if (!r.ok) return `error: vision endpoint ${r.status}: ${j.error?.message ?? "failed"}`;
+    const text = j.choices?.[0]?.message?.content;
+    return text ? `frame@${t}s: ${text.slice(0, 2000)}` : "error: empty vision response";
+  } catch (err) {
+    return `error: ${String(err).slice(0, 300)}`;
+  } finally {
+    try {
+      unlinkSync(tmp);
+    } catch {}
   }
 }
 
@@ -798,9 +881,14 @@ async function runHttpJob(
         try {
           args = JSON.parse(call.function.arguments || "{}") as Record<string, unknown>;
         } catch {}
-        broadcast(`› ${call.function.name} ${String(args.path ?? args.cmd ?? "").slice(0, 80)}\n`);
+        broadcast(
+          `› ${call.function.name} ${String(args.path ?? args.cmd ?? "").slice(0, 80)}${call.function.name === "view_frame" ? `@${args.time ?? 0}s` : ""}\n`,
+        );
         tools.push(call.function.name);
-        const result = runTool(projectDir, call.function.name, args, ctx);
+        const result =
+          call.function.name === "view_frame"
+            ? await viewFrameTool(projectDir, spec, args)
+            : runTool(projectDir, call.function.name, args, ctx);
         messages.push({ role: "tool", tool_call_id: call.id, content: result });
       }
       continue;

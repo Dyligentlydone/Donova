@@ -48,6 +48,25 @@ style rules (1280×720/monospace/cyan/0.3s) applied, turns.json written.
 **Deploy:** `bash apps/studio-service/deploy.sh` (rebuilds CLI chunk in
 image — annotate hash changes with the sidecar code).
 
+Follow-up (same day): first real user chat exposed three gaps — fixed:
+- `run_command` charset rejected quoted paths (`probe "my clip.mp4"` →
+  "not allowed"); `"`/`'` now allowed (substitution chars stay banned).
+- Preview-process exit → pushes stopped AND next request re-pulled GCS
+  over local, clobbering un-pushed agent edits. pullProject now only runs
+  on first materialize (local tree is authoritative mid-session); pushes
+  run for any known tree.
+- Agent couldn't see footage → refused visual edits honestly. New
+  `view_frame` tool: ffmpeg extracts a frame (≤768px jpeg) → vision model
+  describes it (objects, 0-1 positions, legible text) → text back into the
+  tool loop. `DONOVA_VISION_MODEL` env; prod uses
+  `deepseek/deepseek-v4.1-flash-1017` (native image input, same OpenRouter
+  key, ~$0.038/M in — a frame scan of 30 samples ≈ $0.002).
+- chromium `--no-sandbox` added to check/snapshot launches on Linux so
+  `donova check` works in the root-user container.
+- buildPrompt now tells the agent to wire unreferenced media into the
+  comp (`<video data-start data-duration>`) and use view_frame rather
+  than inventing timecodes.
+
 ## -9e. Pre-launch audit: four agent blockers fixed (2026-11-13)
 
 Audit before trial launch found and fixed:

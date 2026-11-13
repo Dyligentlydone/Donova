@@ -38,7 +38,7 @@ ENV_VARS="DONOVA_BUCKET=${DONOVA_BUCKET:-donova-renders-${PROJECT_ID}},PROJECT_P
 # compatible tool loop against the user's tree). DONOVA_CLOUD=1 pins the
 # endpoint + disables setup/select/auto so nothing user-controlled can reach
 # a shell or a cross-user key store inside the shared container.
-ENV_VARS="${ENV_VARS},DONOVA_CLOUD=1,DONOVA_AGENT_URL=https://openrouter.ai/api/v1/chat/completions,DONOVA_AGENT_MODEL=deepseek/deepseek-v4.1-flash,DONOVA_AGENT_KEY_ENV=DONOVA_LLM_API_KEY"
+ENV_VARS="${ENV_VARS},DONOVA_CLOUD=1,DONOVA_AGENT_URL=https://openrouter.ai/api/v1/chat/completions,DONOVA_AGENT_MODEL=deepseek/deepseek-v4.1-flash,DONOVA_AGENT_KEY_ENV=DONOVA_LLM_API_KEY,DONOVA_VISION_MODEL=deepseek/deepseek-v4.1-flash-1017"
 [ -n "${DONOVA_OWNER_EMAILS:-}" ] && ENV_VARS="${ENV_VARS},DONOVA_OWNER_EMAILS=${DONOVA_OWNER_EMAILS}"
 
 SECRETS="STUDIO_GATE_SECRET=studio-gate-secret:latest"
