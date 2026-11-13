@@ -1,10 +1,14 @@
+import { authedEmail } from "@/lib/auth";
 import { projectFileMeta, projectFileStream, readProjectFile } from "@/lib/project";
+import { userPrefix } from "@/lib/subscribers";
 import { getGsapSource } from "@donova/runtime";
 
 /**
- * Serves the composition project from GCS — the Studio iframe loads
+ * Serves the caller's composition project from GCS — the Studio iframe loads
  * /project/index.html here. HTML gets the __fc runtime injected so the parent
  * can call renderSeek / read __playerReady. Media streams with Range support.
+ * Requires the signed account cookie; everything resolves inside the
+ * caller's own project prefix.
  */
 
 const MIME: Record<string, string> = {
@@ -48,10 +52,14 @@ export async function GET(req: Request, { params }: { params: Promise<{ path: st
     });
   }
 
+  const email = await authedEmail();
+  if (!email) return new Response("unauthorized", { status: 401 });
+  const prefix = userPrefix(email);
+
   const type = mime(rel);
 
   if (type.startsWith("text/html")) {
-    const html = await readProjectFile(rel);
+    const html = await readProjectFile(prefix, rel);
     if (html == null) return new Response("not found", { status: 404 });
     const tag = '<script src="/__fc-runtime.js"></script>';
     const out = html.includes("/__fc-runtime.js") ? html : html.replace(/<\/head>/i, `${tag}\n</head>`);
@@ -60,7 +68,7 @@ export async function GET(req: Request, { params }: { params: Promise<{ path: st
     });
   }
 
-  const meta = await projectFileMeta(rel);
+  const meta = await projectFileMeta(prefix, rel);
   if (!meta) return new Response("not found", { status: 404 });
 
   // Byte-range support so <video>/<audio> can seek in the preview iframe.
@@ -69,7 +77,7 @@ export async function GET(req: Request, { params }: { params: Promise<{ path: st
   if (m && (m[1] !== "" || m[2] !== "")) {
     const start = m[1] === "" ? Math.max(0, meta.size - Number(m[2])) : Number(m[1]);
     const end = m[2] === "" || m[1] === "" ? meta.size - 1 : Math.min(Number(m[2]), meta.size - 1);
-    const stream = projectFileStream(rel, start, end);
+    const stream = projectFileStream(prefix, rel, start, end);
     if (!stream) return new Response("forbidden", { status: 403 });
     return new Response(stream as unknown as ReadableStream, {
       status: 206,
@@ -83,7 +91,7 @@ export async function GET(req: Request, { params }: { params: Promise<{ path: st
     });
   }
 
-  const stream = projectFileStream(rel);
+  const stream = projectFileStream(prefix, rel);
   if (!stream) return new Response("forbidden", { status: 403 });
   return new Response(stream as unknown as ReadableStream, {
     headers: {

@@ -4,23 +4,26 @@ import { dirname, join, normalize, resolve, sep } from "node:path";
 import { Storage } from "@google-cloud/storage";
 
 /**
- * GCS-backed project store for hosted Studio. One shared project per service
- * (multi-user namespacing lands with auth). GCS is the source of truth; text
- * files are materialized to /tmp only for the Agent's fs-based turn engine.
+ * GCS-backed project store for hosted Studio. Every function is scoped to a
+ * caller's project prefix (`projects/<uid>/` — see lib/subscribers.userPrefix):
+ * no route may read or write outside the authenticated user's tree.
+ * GCS is the source of truth; text files materialize to a per-user /tmp
+ * mirror only for the Agent's fs-based turn engine.
  */
 
 const BUCKET = process.env.DONOVA_BUCKET || "donova-renders-donova-514500";
-const PREFIX = process.env.DONOVA_PROJECT_PREFIX || "projects/default/";
-const LOCAL_ROOT = join("/tmp", "donova-studio-project");
-
-export function localRoot(): string {
-  return LOCAL_ROOT;
-}
+const LOCAL_BASE = join("/tmp", "donova-web-users");
 
 let storage: Storage | null = null;
 function gcs(): Storage {
   if (!storage) storage = new Storage();
   return storage;
+}
+
+/** Per-user local mirror root — prefix comes from userUid (path-safe). */
+export function localRoot(prefix: string): string {
+  const uid = prefix.replace(/^projects\//, "").replace(/\/+$/, "").replace(/[^a-zA-Z0-9_-]/g, "");
+  return join(LOCAL_BASE, uid || "default");
 }
 
 function safeRel(p: string): string | null {
@@ -29,61 +32,68 @@ function safeRel(p: string): string | null {
   return rel;
 }
 
-export function projectKey(rel: string): string {
-  return `${PREFIX}${rel}`;
+export function projectKey(prefix: string, rel: string): string {
+  return `${prefix}${rel}`;
 }
 
-export async function readProjectFile(rel: string): Promise<string | null> {
+export async function readProjectFile(prefix: string, rel: string): Promise<string | null> {
   const r = safeRel(rel);
   if (!r) return null;
-  const f = gcs().bucket(BUCKET).file(projectKey(r));
+  const f = gcs().bucket(BUCKET).file(projectKey(prefix, r));
   const [exists] = await f.exists();
   if (!exists) return null;
   const [buf] = await f.download();
   return buf.toString("utf8");
 }
 
-export async function writeProjectFile(rel: string, content: string | Buffer): Promise<void> {
+export async function writeProjectFile(
+  prefix: string,
+  rel: string,
+  content: string | Buffer,
+): Promise<void> {
   const r = safeRel(rel);
   if (!r) throw new Error(`unsafe path: ${rel}`);
-  await gcs().bucket(BUCKET).file(projectKey(r)).save(content);
+  await gcs().bucket(BUCKET).file(projectKey(prefix, r)).save(content);
 }
 
-export async function deleteProjectFile(rel: string): Promise<void> {
+export async function deleteProjectFile(prefix: string, rel: string): Promise<void> {
   const r = safeRel(rel);
   if (!r) return;
-  await gcs().bucket(BUCKET).file(projectKey(r)).delete({ ignoreNotFound: true });
+  await gcs().bucket(BUCKET).file(projectKey(prefix, r)).delete({ ignoreNotFound: true });
 }
 
 /** All object paths under the project prefix, relative to the project root. */
-export async function listProjectFiles(): Promise<string[]> {
-  const [files] = await gcs().bucket(BUCKET).getFiles({ prefix: PREFIX });
+export async function listProjectFiles(prefix: string): Promise<string[]> {
+  const [files] = await gcs().bucket(BUCKET).getFiles({ prefix });
   return files
-    .map((f) => f.name.slice(PREFIX.length))
+    .map((f) => f.name.slice(prefix.length))
     .filter((n) => n.length > 0 && !n.endsWith("/"))
     .sort();
 }
 
-export async function projectFileExists(rel: string): Promise<boolean> {
+export async function projectFileExists(prefix: string, rel: string): Promise<boolean> {
   const r = safeRel(rel);
   if (!r) return false;
-  const [exists] = await gcs().bucket(BUCKET).file(projectKey(r)).exists();
+  const [exists] = await gcs().bucket(BUCKET).file(projectKey(prefix, r)).exists();
   return exists;
 }
 
-export function projectFileStream(rel: string, start?: number, end?: number) {
+export function projectFileStream(prefix: string, rel: string, start?: number, end?: number) {
   const r = safeRel(rel);
   if (!r) return null;
   return gcs()
     .bucket(BUCKET)
-    .file(projectKey(r))
+    .file(projectKey(prefix, r))
     .createReadStream(start != null || end != null ? { start, end } : undefined);
 }
 
-export async function projectFileMeta(rel: string): Promise<{ size: number; contentType?: string } | null> {
+export async function projectFileMeta(
+  prefix: string,
+  rel: string,
+): Promise<{ size: number; contentType?: string } | null> {
   const r = safeRel(rel);
   if (!r) return null;
-  const f = gcs().bucket(BUCKET).file(projectKey(r));
+  const f = gcs().bucket(BUCKET).file(projectKey(prefix, r));
   const [exists] = await f.exists();
   if (!exists) return null;
   const [meta] = await f.getMetadata();
@@ -99,8 +109,8 @@ export async function signedReadUrl(key: string, ttlMs = 15 * 60 * 1000): Promis
   return url;
 }
 
-export function gcsObjectUri(rel: string): string {
-  return `gs://${BUCKET}/${projectKey(rel)}`;
+export function gcsObjectUri(prefix: string, rel: string): string {
+  return `gs://${BUCKET}/${projectKey(prefix, rel)}`;
 }
 
 /* ------------------------- local materialization ------------------------- */
@@ -111,30 +121,31 @@ export function gcsObjectUri(rel: string): string {
 const TEXT_EXT = /\.(html?|css|m?js|json|md|txt|svg|xml|ts|tsx|map)$/i;
 const SKIP_DIRS = /^(media|uploads|node_modules)\//;
 
-function localPath(rel: string): string | null {
+function localPath(root: string, rel: string): string | null {
   const r = safeRel(rel);
   if (!r) return null;
-  const fp = resolve(join(LOCAL_ROOT, r));
-  return fp.startsWith(LOCAL_ROOT + sep) || fp === LOCAL_ROOT ? fp : null;
+  const fp = resolve(join(root, r));
+  return fp.startsWith(root + sep) || fp === root ? fp : null;
 }
 
-/** Download every text-like project file to the local mirror. */
-export async function materializeProject(): Promise<string> {
-  const files = await listProjectFiles();
+/** Download every text-like project file to the user's local mirror. */
+export async function materializeProject(prefix: string): Promise<string> {
+  const root = localRoot(prefix);
+  const files = await listProjectFiles(prefix);
   for (const rel of files) {
     if (SKIP_DIRS.test(rel) || !TEXT_EXT.test(rel)) continue;
-    const lp = localPath(rel);
+    const lp = localPath(root, rel);
     if (!lp) continue;
-    const content = await readProjectFile(rel);
+    const content = await readProjectFile(prefix, rel);
     if (content == null) continue;
     await mkdir(dirname(lp), { recursive: true });
     await writeFile(lp, content);
   }
-  return LOCAL_ROOT;
+  return root;
 }
 
-export function localStream(rel: string) {
-  const lp = localPath(rel);
+export function localStream(root: string, rel: string) {
+  const lp = localPath(root, rel);
   return lp ? createReadStream(lp) : null;
 }
 
@@ -186,9 +197,9 @@ const SEED_CONFIG = JSON.stringify(
 );
 
 /** Seed an empty project in GCS on first access. Idempotent. */
-export async function ensureProjectSeeded(): Promise<void> {
-  if (await projectFileExists("index.html")) return;
-  await writeProjectFile("index.html", SEED_INDEX);
-  await writeProjectFile("style.md", SEED_STYLE);
-  await writeProjectFile("donova.json", SEED_CONFIG);
+export async function ensureProjectSeeded(prefix: string): Promise<void> {
+  if (await projectFileExists(prefix, "index.html")) return;
+  await writeProjectFile(prefix, "index.html", SEED_INDEX);
+  await writeProjectFile(prefix, "style.md", SEED_STYLE);
+  await writeProjectFile(prefix, "donova.json", SEED_CONFIG);
 }

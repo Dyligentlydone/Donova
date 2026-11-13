@@ -66,3 +66,34 @@ export async function initializeHelcimCheckout(params: HelcimInitParams = {}): P
 
   return data;
 }
+
+/**
+ * Server-side proof a checkoutToken represents a real, successful payment —
+ * /api/billing/confirm must never grant access on the client's word alone.
+ * Returns false for unknown tokens, failed/voided payments, and any Helcim
+ * error (fail closed).
+ */
+export async function verifyHelcimCheckout(checkoutToken: string): Promise<boolean> {
+  let apiToken: string;
+  try {
+    apiToken = getHelcimToken();
+  } catch {
+    return false; // no API token configured → cannot verify → deny
+  }
+  try {
+    const res = await fetch(
+      `${HELCIM_API_URL}/helcim-pay/initialize/${encodeURIComponent(checkoutToken)}`,
+      { headers: { accept: "application/json", "api-token": apiToken } },
+    );
+    if (!res.ok) return false;
+    const data = (await res.json()) as {
+      status?: string;
+      amount?: number;
+      payment?: { status?: string };
+    };
+    const status = String(data.payment?.status ?? data.status ?? "").toLowerCase();
+    return ["approved", "captured", "success", "completed", "processed"].includes(status);
+  } catch {
+    return false;
+  }
+}

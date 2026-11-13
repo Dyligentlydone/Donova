@@ -27,6 +27,21 @@ userPrefix()` reading the `donova_email` cookie (set by /api/trial + billing/con
   (written by `/api/billing/confirm` on Helcim checkout; `DONOVA_OWNER_EMAILS`
   allowlist bypasses) then returns the signed Studio URL. Navbar + dashboard
   "Open Studio" buttons go through it — non-subscribers get the subscribe flow.
+- **Security lockdown (2026-11-13, verified live)**: every legacy `/api/*`
+  project route + `/project/*` now requires the signed `donova_account` cookie
+  (HMAC `base64url(email|exp).sig` — lib/auth.ts) AND an active subscriber
+  record, and all project ops resolve inside `userPrefix(email)`. The unsigned
+  `donova_email` cookie is display-only. `/api/billing/confirm` verifies the
+  checkoutToken against Helcim server-side (fails closed without
+  HELCIM_API_TOKEN). `/api/trial` is IP-rate-limited (5/day, GCS counter).
+  Uploads cap at 256MB (web) / 2GB (studio desktop). `public/studio` + the
+  `/studio` rewrite are gone. Admin endpoint takes `x-admin-key` header only
+  (timing-safe compare). Studio gate fails closed when the secret is missing.
+  `pushChanges` no longer drops >512MB files and skips overlapping runs.
+- **Secrets in Secret Manager**: `studio-gate-secret` (rotated 2026-11-13 —
+  v2; the old leaked value is dead everywhere), `helcim-api-token` (referenced
+  when it exists). Both deploy scripts use `--set-secrets`; rotate with
+  `gcloud secrets versions add` + `--update-secrets=name:version`.
 - Verified: anonymous → 401 gate page on every path incl. /api/*; master token →
   302 + session cookie → full SPA/API; fake email → 403 not-subscribed.
 - **Verified multi-user isolation (2026-11-13)**: trial user → fresh seeded

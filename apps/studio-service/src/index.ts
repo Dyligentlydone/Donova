@@ -85,7 +85,7 @@ interface TokenInfo {
 }
 
 function verify(token: string): TokenInfo | null {
-  if (!GATE_SECRET) return { email: "gate-disabled" };
+  if (!GATE_SECRET) return null; // fail closed — never silently open the gate
   const dot = token.lastIndexOf(".");
   if (dot <= 0) return null;
   const payload = token.slice(0, dot);
@@ -104,6 +104,7 @@ function verify(token: string): TokenInfo | null {
 }
 
 function cookieSession(req: IncomingMessage): TokenInfo | null {
+  if (!GATE_SECRET) return null;
   const header = req.headers.cookie || "";
   const match = header.match(new RegExp(`(?:^|;\\s*)${SESSION_COOKIE}=([^;\\s]+)`));
   return match ? verify(decodeURIComponent(match[1])) : null;
@@ -126,6 +127,7 @@ interface UserInstance {
   sidecar?: ChildProcess;
   booted: boolean;
   boot?: Promise<void>;
+  pushing?: boolean;
   lastTouched: number;
   lastPush: number;
 }
@@ -448,6 +450,12 @@ function handleGate(req: IncomingMessage, res: ServerResponse): TokenInfo | null
     res.end(JSON.stringify({ ok: true, instances: instances.size }));
     return null;
   }
+  if (!GATE_SECRET) {
+    // Fail closed: a missing secret must never expose every user's tree.
+    res.writeHead(500, { "content-type": "text/plain" });
+    res.end("gate misconfigured");
+    return null;
+  }
   const url = new URL(req.url || "/", "http://internal");
   const token = url.searchParams.get("t");
   if (token) {
@@ -477,6 +485,11 @@ function handleGate(req: IncomingMessage, res: ServerResponse): TokenInfo | null
   res.end(gatedPage());
   return null;
 }
+
+/** Per-upload ceiling — /tmp is RAM-backed and shared by every user's
+ * preview process, so one oversized file could OOM the whole container.
+ * 2GB covers multi-minute phone clips while leaving headroom. */
+const MAX_UPLOAD_BYTES = 2 * 1024 * 1024 * 1024;
 
 interface ProjectFile {
   key: string;
@@ -530,6 +543,13 @@ async function handleDesktopApi(
     return true;
   }
   if (url.pathname === "/api/desktop/upload" && req.method === "POST") {
+    const declared = Number(req.headers["content-length"] ?? 0);
+    if (declared > MAX_UPLOAD_BYTES) {
+      res.writeHead(413, { "content-type": "application/json" });
+      res.end(JSON.stringify({ ok: false, error: "file too large (2GB max)" }));
+      req.destroy();
+      return true;
+    }
     const name = (url.searchParams.get("name") || `clip-${Date.now()}.mp4`)
       .replace(/[/\\]+/g, "-")
       .slice(0, 140);
@@ -540,10 +560,28 @@ async function handleDesktopApi(
     const rel = `${folder}/${name}`;
     const dest = join(inst.dir, rel);
     mkdirSync(dirname(dest), { recursive: true });
-    await new Promise<void>((ok, fail) => {
-      const w = createWriteStream(dest);
-      req.pipe(w).on("finish", ok).on("error", fail);
-    });
+    let received = 0;
+    let tooBig = false;
+    try {
+      await new Promise<void>((ok, fail) => {
+        const w = createWriteStream(dest);
+        req.on("data", (chunk: Buffer) => {
+          received += chunk.length;
+          if (received > MAX_UPLOAD_BYTES && !tooBig) {
+            tooBig = true;
+            req.destroy();
+            w.destroy();
+            fail(new Error("file too large (2GB max)"));
+          }
+        });
+        req.pipe(w).on("finish", ok).on("error", fail);
+      });
+    } catch {
+      rmSync(dest, { force: true });
+      res.writeHead(413, { "content-type": "application/json" });
+      res.end(JSON.stringify({ ok: false, error: "file too large (2GB max)" }));
+      return true;
+    }
     try {
       await bucket.upload(dest, { destination: inst.prefix + rel });
     } catch (err) {
@@ -638,21 +676,27 @@ function walkFiles(dir: string, base = dir): string[] {
 }
 
 async function pushChanges(inst: UserInstance): Promise<number> {
-  const since = inst.lastPush;
-  inst.lastPush = Date.now();
-  let pushed = 0;
-  for (const abs of walkFiles(inst.dir)) {
-    const st = statSync(abs);
-    if (st.mtimeMs < since - 1500 || st.size > 512 * 1024 * 1024) continue;
-    const rel = relative(inst.dir, abs).split("\\").join("/");
-    try {
-      await bucket.upload(abs, { destination: inst.prefix + rel });
-      pushed++;
-    } catch (err) {
-      console.error(`[${inst.uid}] push failed: ${rel}`, err);
+  if (inst.pushing) return 0; // a big upload can outlive a sync tick — skip overlapping runs
+  inst.pushing = true;
+  try {
+    const since = inst.lastPush;
+    inst.lastPush = Date.now();
+    let pushed = 0;
+    for (const abs of walkFiles(inst.dir)) {
+      const st = statSync(abs);
+      if (st.mtimeMs < since - 1500) continue;
+      const rel = relative(inst.dir, abs).split("\\").join("/");
+      try {
+        await bucket.upload(abs, { destination: inst.prefix + rel });
+        pushed++;
+      } catch (err) {
+        console.error(`[${inst.uid}] push failed: ${rel}`, err);
+      }
     }
+    return pushed;
+  } finally {
+    inst.pushing = false;
   }
-  return pushed;
 }
 
 function waitForPort(port: number, timeoutMs = 90000): Promise<void> {
@@ -838,7 +882,14 @@ async function main() {
           res.end(warmingPage());
           return;
         }
-        void inst.boot!
+        if (!inst.boot) {
+          // Boot attempt already finished and cleared — retry next request
+          // rather than crashing on a stale promise.
+          res.writeHead(503, { "content-type": "text/plain" });
+          res.end("workspace failed to start — refresh to retry");
+          return;
+        }
+        void inst.boot
           .then(() => {
             inst.lastTouched = Date.now();
             proxyOnce(req, res, inst.port);

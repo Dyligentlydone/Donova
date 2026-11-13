@@ -1,13 +1,20 @@
+import { requireSubscriber } from "@/lib/auth";
 import { signedReadUrl } from "@/lib/project";
 import { triggerCloudRender } from "@/lib/storage";
+import { userPrefix } from "@/lib/subscribers";
 import { NextResponse } from "next/server";
 
 export async function POST(req: Request) {
+  const auth = await requireSubscriber();
+  if ("error" in auth) return auth.error;
+  const prefix = userPrefix(auth.email);
   try {
     const body = await req.json().catch(() => ({}));
-    const { bundleKey, bundleUrl, outputKey, composition, fps } = body;
+    const { bundleKey, bundleUrl, composition, fps } = body;
 
-    const targetOutput = outputKey || `renders/export_${Date.now()}.mp4`;
+    // Output always lands inside the caller's own tree — client-supplied
+    // outputKey is ignored so no one can write outside their prefix.
+    const targetOutput = `${prefix}renders/export_${Date.now()}.mp4`;
 
     const res = await triggerCloudRender({
       bundleKey: bundleKey || "test-bundles/basic.zip",

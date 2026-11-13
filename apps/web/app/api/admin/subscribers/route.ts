@@ -1,16 +1,19 @@
+import { timingSafeEqual } from "node:crypto";
 import { NextResponse } from "next/server";
 import { listSubscribers, subscriberState } from "../../../../lib/subscribers";
 
 /**
- * GET /api/admin/subscribers?key=<STUDIO_GATE_SECRET>
- * Owner-only list of every trial + subscriber record — for retargeting
- * emails. Not linked anywhere; treat the key like a password.
+ * GET /api/admin/subscribers — owner-only list of every trial + subscriber
+ * record, for retargeting emails. Requires `x-admin-key: <STUDIO_GATE_SECRET>`
+ * header — the key is never accepted in the URL because query strings land
+ * in request logs. Treat the key like a password.
  */
 export async function GET(req: Request) {
-  const url = new URL(req.url);
-  const key = url.searchParams.get("key") || req.headers.get("x-admin-key") || "";
+  const key = req.headers.get("x-admin-key") || "";
   const secret = process.env.STUDIO_GATE_SECRET || "";
-  if (!secret || key !== secret) {
+  const a = Buffer.from(key);
+  const b = Buffer.from(secret);
+  if (!secret || a.length !== b.length || !timingSafeEqual(a, b)) {
     return NextResponse.json({ ok: false, error: "unauthorized" }, { status: 401 });
   }
   const subs = await listSubscribers();

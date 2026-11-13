@@ -1,5 +1,7 @@
 import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
+import { ACCOUNT_COOKIE, signAccount } from "../../../lib/auth";
+import { rateLimitHit } from "../../../lib/ratelimit";
 import { recordTrial, subscriberState, studioLink } from "../../../lib/subscribers";
 
 /**
@@ -7,9 +9,17 @@ import { recordTrial, subscriberState, studioLink } from "../../../lib/subscribe
  * One trial per email: the trial clock starts on first claim and never
  * restarts. Paid subscribers and active trials get a fresh Studio link;
  * ended trials get a 403 so the page can show the subscribe CTA.
+ * Rate-limited per IP (GCS counter) to damp scripted trial farming.
  */
 export async function POST(req: Request) {
   try {
+    if (!(await rateLimitHit("trial", req, 5))) {
+      return NextResponse.json(
+        { ok: false, error: "too-many-trials-today" },
+        { status: 429 },
+      );
+    }
+
     const body = await req.json().catch(() => ({}));
     const email = typeof body.email === "string" ? body.email.trim().toLowerCase() : "";
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
@@ -24,6 +34,14 @@ export async function POST(req: Request) {
 
     const cookieStore = await cookies();
     cookieStore.set("donova_email", email, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "lax",
+      maxAge: 30 * 24 * 60 * 60,
+      path: "/",
+    });
+    // Signed account cookie — the value auth decisions are actually made on.
+    cookieStore.set(ACCOUNT_COOKIE, signAccount(email), {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
       sameSite: "lax",

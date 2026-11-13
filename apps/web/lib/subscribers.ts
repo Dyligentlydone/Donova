@@ -80,16 +80,20 @@ export async function recordTrial(email: string): Promise<{ rec: SubscriberRecor
 }
 
 /**
- * email → the user's GCS project prefix — the same scheme the Studio service
- * uses (owner + unauthed fall back to the shared default tree). Both sides
- * must stay in sync: uid = u-<sha256(email)[:12]>.
+ * email → the user's stable id — the same scheme the Studio service uses.
+ * Owner + unauthed map to the shared default tree. Both sides must stay in
+ * sync: uid = u-<sha256(email)[:12]>.
  */
-export function userPrefix(email: string | null | undefined): string {
+export function userUid(email: string | null | undefined): string {
   if (!email || !email.includes("@") || email === "owner@donova.local") {
-    return "projects/default/";
+    return "default";
   }
-  const uid = createHash("sha256").update(email.trim().toLowerCase()).digest("hex").slice(0, 12);
-  return `projects/u-${uid}/`;
+  return `u-${createHash("sha256").update(email.trim().toLowerCase()).digest("hex").slice(0, 12)}`;
+}
+
+/** email → the user's GCS project prefix (see userUid). */
+export function userPrefix(email: string | null | undefined): string {
+  return `projects/${userUid(email)}/`;
 }
 
 export function subscriberState(rec: SubscriberRecord | null): "paid" | "trial-active" | "trial-ended" | "none" {
@@ -151,9 +155,10 @@ export function verifyStudioToken(token: string): string | null {
   const a = Buffer.from(token.slice(dot + 1));
   const b = Buffer.from(expect);
   if (a.length !== b.length || !timingSafeEqual(a, b)) return null;
-  const raw = Buffer.from(payload, "base64url").toString();
-  const sep = raw.lastIndexOf("|");
-  if (sep <= 0) return null;
-  const email = raw.slice(0, sep);
-  return Number(raw.slice(sep + 1)) > Date.now() ? email : null;
+  const parts = Buffer.from(payload, "base64url").toString().split("|");
+  if (parts.length < 2) return null;
+  const email = parts[0];
+  const expiry = Number(parts[1]);
+  if (!email.includes("@") || !Number.isFinite(expiry) || expiry < Date.now()) return null;
+  return email;
 }

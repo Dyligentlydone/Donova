@@ -1,5 +1,7 @@
 import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
+import { ACCOUNT_COOKIE, signAccount } from "../../../../lib/auth";
+import { verifyHelcimCheckout } from "../../../../lib/helcim";
 
 export async function POST(req: Request) {
   try {
@@ -10,7 +12,17 @@ export async function POST(req: Request) {
       return NextResponse.json({ ok: false, error: "Missing checkoutToken" }, { status: 400 });
     }
 
-    console.log("Helcim subscription payment confirmed for token:", checkoutToken);
+    // Never grant access on the client's word: the checkout token must verify
+    // against Helcim server-side. Without an API token configured this fails
+    // closed — no subscriber record is written.
+    if (!(await verifyHelcimCheckout(String(checkoutToken)))) {
+      return NextResponse.json(
+        { ok: false, error: "payment-not-verified" },
+        { status: 402 },
+      );
+    }
+
+    console.log("Helcim subscription payment verified for token:", String(checkoutToken).slice(0, 12));
 
     // Server-side subscriber record — the Studio gate checks this, not the cookie.
     if (email && String(email).includes("@")) {
@@ -22,7 +34,6 @@ export async function POST(req: Request) {
       }
     }
 
-    // Set an active subscriber cookie (valid for 30 days)
     const cookieStore = await cookies();
     cookieStore.set("donova_subscriber", "active", {
       httpOnly: false,
@@ -32,9 +43,19 @@ export async function POST(req: Request) {
     });
 
     if (email) {
-      cookieStore.set("donova_email", String(email).trim(), {
+      const clean = String(email).trim();
+      // Display-only cookie (client-readable); the signed donova_account
+      // cookie below is the one auth decisions are made on.
+      cookieStore.set("donova_email", clean, {
         httpOnly: false,
         secure: process.env.NODE_ENV === "production",
+        maxAge: 30 * 24 * 60 * 60,
+        path: "/",
+      });
+      cookieStore.set(ACCOUNT_COOKIE, signAccount(clean), {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === "production",
+        sameSite: "lax",
         maxAge: 30 * 24 * 60 * 60,
         path: "/",
       });

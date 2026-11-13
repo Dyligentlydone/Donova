@@ -17,6 +17,8 @@ export interface Job {
   error?: string;
   outputKey?: string;
   progress?: [number, number];
+  /** Owning account email — checked before job status/URL is served. */
+  owner?: string;
 }
 
 const jobs = new Map<string, Job>();
@@ -33,11 +35,13 @@ export async function startRenderJob(opts: {
   quality?: "draft" | "standard" | "high";
   /** Per-user project prefix — defaults to the shared tree. */
   prefix?: string;
+  /** Owning account email for job visibility checks. */
+  owner?: string;
 }): Promise<Job> {
   const prefix = opts.prefix || PROJECT_PREFIX;
   const id = `job-${Date.now()}-${Math.floor(Math.random() * 1e6)}`;
   const outputKey = `${prefix}donova videos/${id}.mp4`;
-  const job: Job = { id, status: "queued", outputKey };
+  const job: Job = { id, status: "queued", outputKey, owner: opts.owner };
   jobs.set(id, job);
 
   void (async () => {
@@ -61,7 +65,9 @@ export async function startRenderJob(opts: {
       await gcs()
         .bucket(BUCKET)
         .file(`renders/jobs/${id}.json`)
-        .save(JSON.stringify({ status: job.status, outputKey, error: job.error }));
+        .save(
+          JSON.stringify({ status: job.status, outputKey, error: job.error, owner: job.owner }),
+        );
     } catch {
       /* non-fatal: in-memory status still available on this instance */
     }
@@ -84,12 +90,14 @@ export async function getJob(id: string): Promise<Job | null> {
     status: Job["status"];
     outputKey?: string;
     error?: string;
+    owner?: string;
   };
   return {
     id,
     status: rec.status,
     outputKey: rec.outputKey,
     error: rec.error,
+    owner: rec.owner,
     out: rec.outputKey ? await signedReadUrl(rec.outputKey, 60 * 60 * 1000) : undefined,
   };
 }
