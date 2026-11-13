@@ -9,13 +9,17 @@ The studio-server `Agent` tool loop now targets any Anthropic-Messages API:
 accepted as fallback; no key → rules fallback unchanged). Thinking is sent as
 `{type:"disabled"}` (DeepSeek thinking burns output tokens and breaks
 `tool_choice`). Each `Turn` carries `usage{inputTokens,outputTokens}` summed
-across rounds incl. cache reads. Prod is wired for DeepSeek:
-`deploy.sh` sets `DONOVA_LLM_BASE_URL=https://api.deepseek.com/anthropic` +
-`DONOVA_LLM_MODEL=deepseek-flash` and mounts `deepseek-api-key` →
-`DONOVA_LLM_API_KEY` when the secret exists. Chat caps: trial 25 lifetime,
-paid 300/mo + 4M tokens/mo, owners uncapped — counters on the GCS subscriber
-record, enforced in `/api/chat` (429 `{code:"CHAT_LIMIT"}`), `chatRemaining`
-returned per response.
+across rounds incl. cache reads. **Prod provider: OpenRouter** — its
+Anthropic-compatible `POST /api/v1/messages` is verified end-to-end
+(tool_use, `tool_choice:{type:tool}`, `thinking:{type:"disabled"}`,
+`deepseek/deepseek-v4.1-flash`; usage tokens come back in Anthropic shape).
+`deploy.sh` mounts `openrouter-api-key` → `DONOVA_LLM_API_KEY` and sets
+base+model envs; `deepseek-api-key` remains as the automatic fallback (direct
+`api.deepseek.com/anthropic`) — that key exists but its account had $0
+balance at last check. Chat caps: trial 25 lifetime, paid 300/mo + 4M
+tokens/mo, owners uncapped — counters on the GCS subscriber record, enforced
+in `/api/chat` (429 `{code:"CHAT_LIMIT"}`), `chatRemaining` returned per
+response.
 
 ## -9d. Billing: Helcim → Stripe (2026-11-13)
 

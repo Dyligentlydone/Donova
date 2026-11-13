@@ -79,3 +79,19 @@ plain env var (not secret). stripe@23.1.0 pinned (≥7-day rule).
 **Follow-ups:** customer-portal link for self-serve cancel; dunning email on
 invoice.payment_failed; webhook handler idempotency (events can redeliver —
 current writes are overwrite-idempotent, fine); Stripe tax config if needed.
+
+## 2026-11-13 — LLM provider switched: DeepSeek-direct → OpenRouter
+
+**Decision:** production agent calls now go through **OpenRouter**'s
+Anthropic-compatible endpoint (`https://openrouter.ai/api/v1` + `/messages`),
+model `deepseek/deepseek-v4.1-flash`. The direct DeepSeek key stays in Secret
+Manager as the automatic fallback (deploy.sh prefers `openrouter-api-key`,
+falls back to `deepseek-api-key` + deepseek envs).
+
+**Why:** owner supplied a funded OpenRouter key ($50 limit) after the direct
+DeepSeek account showed $0 balance; OpenRouter's Messages endpoint is
+protocol-identical (verified: tool_use blocks, forced tool_choice, thinking
+disabled, Anthropic usage shape), one env-var swap, US company, and one bill
+can cover any future model experiments (`deepseek/deepseek-v4.1-flash-1017`
+variant prices input at ~$0.038/M — 8x cheaper — worth benchmarking later).
+DeepSeek direct remains one redeploy away.

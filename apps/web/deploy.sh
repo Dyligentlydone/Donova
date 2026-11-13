@@ -31,11 +31,26 @@ echo "Step 2/2: Deploying Cloud Run Service (donova-web)..."
 #   studio-gate-secret     → STUDIO_GATE_SECRET (shared HMAC secret w/ Studio)
 #   stripe-secret-key      → STRIPE_SECRET_KEY (billing; live-mode key)
 #   stripe-webhook-secret  → STRIPE_WEBHOOK_SECRET (signs /api/billing/webhook)
-#   deepseek-api-key       → DONOVA_LLM_API_KEY (Studio chat agent; optional —
-#                            without it the agent runs the rules-only fallback)
+#   openrouter-api-key     → DONOVA_LLM_API_KEY (preferred provider: OpenRouter's
+#                            Anthropic-compatible /api/v1/messages — verified
+#                            tool_use + thinking:disabled + deepseek-v4.1-flash)
+#   deepseek-api-key       → DONOVA_LLM_API_KEY (fallback provider when no
+#                            openrouter secret; without either the agent runs
+#                            the rules-only fallback)
 # STRIPE_PRICE_ID identifies the recurring price (not a secret):
 #   price_1UbQBgL5oy3FSbVszyQ3tpD3 = Donova Creator $11.00/mo on prod_VcfWe1xAGRAQmm
-ENV_VARS="DONOVA_BUCKET=donova-renders-donova-514500,DONOVA_WORKER_URL=https://donova-render-worker-2hsglzbnna-uc.a.run.app,DONOVA_LLM_BASE_URL=https://api.deepseek.com/anthropic,DONOVA_LLM_MODEL=deepseek-flash,STRIPE_PRICE_ID=price_1UbQBgL5oy3FSbVszyQ3tpD3"
+LLM_ENV="DONOVA_LLM_BASE_URL=https://openrouter.ai/api/v1,DONOVA_LLM_MODEL=deepseek/deepseek-v4.1-flash"
+LLM_SECRET=""
+if gcloud secrets describe openrouter-api-key --project="${PROJECT_ID}" >/dev/null 2>&1; then
+  LLM_SECRET="DONOVA_LLM_API_KEY=openrouter-api-key:latest"
+elif gcloud secrets describe deepseek-api-key --project="${PROJECT_ID}" >/dev/null 2>&1; then
+  LLM_SECRET="DONOVA_LLM_API_KEY=deepseek-api-key:latest"
+  LLM_ENV="DONOVA_LLM_BASE_URL=https://api.deepseek.com/anthropic,DONOVA_LLM_MODEL=deepseek-flash"
+else
+  echo "  (no LLM key found — Studio agent runs rules-only fallback)"
+fi
+
+ENV_VARS="DONOVA_BUCKET=donova-renders-donova-514500,DONOVA_WORKER_URL=https://donova-render-worker-2hsglzbnna-uc.a.run.app,${LLM_ENV},STRIPE_PRICE_ID=price_1UbQBgL5oy3FSbVszyQ3tpD3"
 [ -n "${DONOVA_OWNER_EMAILS:-}" ] && ENV_VARS="${ENV_VARS},DONOVA_OWNER_EMAILS=${DONOVA_OWNER_EMAILS}"
 
 SECRETS="STUDIO_GATE_SECRET=studio-gate-secret:latest"
@@ -44,11 +59,7 @@ if gcloud secrets describe stripe-secret-key --project="${PROJECT_ID}" >/dev/nul
 else
   echo "  (stripe-secret-key secret not found — billing checkout disabled)"
 fi
-if gcloud secrets describe deepseek-api-key --project="${PROJECT_ID}" >/dev/null 2>&1; then
-  SECRETS="${SECRETS},DONOVA_LLM_API_KEY=deepseek-api-key:latest"
-else
-  echo "  (deepseek-api-key secret not found — Studio agent runs rules-only fallback)"
-fi
+[ -n "${LLM_SECRET}" ] && SECRETS="${SECRETS},${LLM_SECRET}"
 
 gcloud run deploy donova-web \
   --project="${PROJECT_ID}" \
