@@ -1,5 +1,4 @@
 import type { Metadata } from "next";
-import Script from "next/script";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -18,9 +17,6 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" className="dark">
-      <head>
-        <Script src="https://secure.helcim.app/helcim-pay/services/start.js" strategy="beforeInteractive" />
-      </head>
       <body className="bg-[#0a0a0a] text-white min-h-screen selection:bg-[#4a8fd8] selection:text-black antialiased">
         {children}
       </body>

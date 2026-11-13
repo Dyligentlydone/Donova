@@ -17,6 +17,25 @@ paid 300/mo + 4M tokens/mo, owners uncapped — counters on the GCS subscriber
 record, enforced in `/api/chat` (429 `{code:"CHAT_LIMIT"}`), `chatRemaining`
 returned per response.
 
+## -9d. Billing: Helcim → Stripe (2026-11-13)
+
+Billing now runs on Stripe (live mode). `HelcimModal`+`lib/helcim.ts`+
+`/api/billing/initialize` deleted; `CheckoutModal` POSTs `/api/billing/checkout`
+→ Stripe-hosted Checkout → success redirects to `GET /api/billing/confirm?
+session_id=…` which verifies the session server-side, records the subscriber,
+sets cookies, redirects to `/dashboard`. `POST /api/billing/webhook` is the
+durable lifecycle record: `checkout.session.completed` activates,
+`customer.subscription.{updated,deleted}` re-activates/deactivates
+(past_due keeps access), `invoice.payment_failed` logs. Subscriber record
+gained `provider/stripeCustomerId/stripeSubscriptionId/canceledAt`; activation
+merges over the existing record so usage counters survive re-subscribe.
+Stripe-side (live): product `prod_VcfWe1xAGRAQmm`, price
+`price_1UbQBgL5oy3FSbVszyQ3tpD3` ($11/mo), webhook `we_1UbQBoL5oy3FSbVsitHT9VyF`.
+Secrets `stripe-secret-key` + `stripe-webhook-secret` are in Secret Manager;
+deploy.sh mounts them + sets `STRIPE_PRICE_ID`. Live smoke-tested: real
+checkout session created/retrieved/expired via SDK 23.1.0. **Not yet deployed**
+— webhook + secrets are already live and waiting.
+
 ## -9c. Cloud agent: full run-cmd via render-worker /run (2026-11-13)
 
 The "not available in Donova Cloud yet" gap is closed: `cloudRunCmd`

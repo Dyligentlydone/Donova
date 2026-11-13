@@ -1,6 +1,6 @@
 "use client";
 
-import HelcimModal from "@/components/HelcimModal";
+import CheckoutModal from "@/components/CheckoutModal";
 import Navbar from "@/components/Navbar";
 import { ArrowRight, Check, Palette, ShieldCheck, Sparkles, Timer, Type, Zap } from "lucide-react";
 import Image from "next/image";
@@ -156,8 +156,7 @@ export default function Home() {
               <div>
                 <h4 className="font-bold text-white mb-1">Watch it happen</h4>
                 <p className="text-sm text-white/60">
-                  See every change live in your browser. Don&apos;t like something? Just say so — it
-                  adjusts.
+                  See every change live in your browser. Don&apos;t like something? Just say so — it adjusts.
                 </p>
               </div>
             </div>
@@ -251,8 +250,8 @@ export default function Home() {
         </div>
       </footer>
 
-      {/* ── HELCIM CHECKOUT MODAL ── */}
-      <HelcimModal isOpen={modalOpen} onClose={() => setModalOpen(false)} />
+      {/* ── STRIPE CHECKOUT MODAL ── */}
+      <CheckoutModal isOpen={modalOpen} onClose={() => setModalOpen(false)} />
     </div>
   );
 }

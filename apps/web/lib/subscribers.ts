@@ -5,7 +5,8 @@ import { STUDIO_URL } from "./studioUrl";
 /**
  * Subscriber records + Studio gate tokens.
  * Records live at subscribers/<sha256(email)>.json in the project bucket —
- * written by /api/billing/confirm after Helcim checkout completes.
+ * written by /api/billing/webhook + /api/billing/confirm after Stripe
+ * Checkout completes.
  * Studio gate tokens are HMAC-signed `base64url(email|expiryMs).hex` —
  * apps/studio-service verifies the same format with the shared secret.
  */
@@ -25,15 +26,42 @@ function subscriberKey(email: string): string {
   return `subscribers/${hash}.json`;
 }
 
-export async function recordSubscriber(email: string, checkoutToken?: string): Promise<void> {
-  await bucket.file(subscriberKey(email)).save(
+export async function recordSubscriber(
+  email: string,
+  checkoutRef?: string,
+  stripe?: { stripeCustomerId?: string; stripeSubscriptionId?: string },
+): Promise<void> {
+  const e = email.trim().toLowerCase();
+  const existing = await getSubscriber(e);
+  await bucket.file(subscriberKey(e)).save(
     JSON.stringify({
-      email: email.trim().toLowerCase(),
+      ...existing, // keep usage counters across webhook re-activations
+      email: e,
       status: "active",
       plan: "creator",
       price: "$11/mo",
-      checkoutToken: checkoutToken ?? null,
-      activatedAt: new Date().toISOString(),
+      provider: "stripe",
+      checkoutRef: checkoutRef ?? null,
+      stripeCustomerId: stripe?.stripeCustomerId ?? existing?.stripeCustomerId ?? null,
+      stripeSubscriptionId: stripe?.stripeSubscriptionId ?? existing?.stripeSubscriptionId ?? null,
+      canceledAt: null,
+      activatedAt: existing?.activatedAt ?? new Date().toISOString(),
+    }),
+    { contentType: "application/json" },
+  );
+}
+
+/** Stripe lifecycle: subscription canceled or terminally unpaid. */
+export async function deactivateSubscriber(email: string, reason: string): Promise<void> {
+  const e = email.trim().toLowerCase();
+  const existing = await getSubscriber(e);
+  if (!existing) return;
+  await bucket.file(subscriberKey(e)).save(
+    JSON.stringify({
+      ...existing,
+      status: "canceled",
+      cancelReason: reason,
+      canceledAt: new Date().toISOString(),
     }),
     { contentType: "application/json" },
   );
@@ -50,6 +78,12 @@ export interface SubscriberRecord {
   trialChats?: number;
   /** Paid-plan usage for `usageMonth` (YYYY-MM); resets when the month rolls. */
   usage?: { month: string; chats: number; tokensIn: number; tokensOut: number };
+  provider?: string;
+  checkoutRef?: string;
+  stripeCustomerId?: string;
+  stripeSubscriptionId?: string;
+  cancelReason?: string;
+  canceledAt?: string | null;
 }
 
 export const TRIAL_CHAT_LIMIT = 25;

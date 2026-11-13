@@ -49,3 +49,33 @@ Run invoker IAM; confirm `donova-render-worker` deploys with
 whole project mirror minus a skip list; per-file pulls can shrink worker cold
 time on big projects. (3) Parakeet prefetch happens at image-build; a missing
 `~/.cache/donova` model on first run would cold-start a verb ~20s.
+
+## 2026-11-13 — Payment processor: Stripe (replaces Helcim)
+
+**Decision:** Donova Cloud billing uses Stripe hosted Checkout + webhooks;
+Helcim is fully removed (modal, lib, initialize route, deploy secret refs).
+
+**Shape:** `POST /api/billing/checkout` creates a subscription Checkout
+Session for `STRIPE_PRICE_ID` (Donova Creator $11.00/mo) prefilled with the
+user email; success lands on `GET /api/billing/confirm?session_id=` which
+verifies with `sessions.retrieve` (never trusts client state), records the
+subscriber, sets account cookies, redirects to /dashboard. `POST
+/api/billing/webhook` is the authoritative lifecycle writer —
+`checkout.session.completed` activates; `customer.subscription.updated/deleted`
+maps active|trialing → activate, canceled|unpaid|incomplete_expired →
+deactivate; past_due deliberately keeps access during card retry; failed
+invoices only log for now (no dunning UX yet). Email rides in session +
+subscription metadata so webhooks resolve the account without a lookup.
+
+**Why the webhook is authoritative:** the confirm redirect is best-effort UX
+(users close tabs, GCS writes can fail); Stripe retries webhook delivery for
+~3 days, so the subscriber record converges to truth regardless.
+
+**Live resources:** account acct_1UbQ1EL5oy3FSbVs (US, charges+payouts on),
+price `price_1UbQBgL5oy3FSbVszyQ3tpD3`, webhook `we_1UbQBoL5oy3FSbVsitHT9VyF`
+→ `/api/billing/webhook`. Secrets in Secret Manager; `STRIPE_PRICE_ID` is a
+plain env var (not secret). stripe@23.1.0 pinned (≥7-day rule).
+
+**Follow-ups:** customer-portal link for self-serve cancel; dunning email on
+invoice.payment_failed; webhook handler idempotency (events can redeliver —
+current writes are overwrite-idempotent, fine); Stripe tax config if needed.
