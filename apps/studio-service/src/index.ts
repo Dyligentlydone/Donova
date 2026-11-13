@@ -128,6 +128,8 @@ interface UserInstance {
   booted: boolean;
   boot?: Promise<void>;
   pushing?: boolean;
+  /** Rel paths seen locally at materialize or pushed since — the delete baseline. */
+  knownPaths: Set<string>;
   lastTouched: number;
   lastPush: number;
 }
@@ -145,6 +147,7 @@ function instanceFor(email: string): UserInstance {
       dir: join(USER_ROOT, uid),
       port: nextPort++,
       booted: false,
+      knownPaths: new Set<string>(),
       lastTouched: Date.now(),
       lastPush: Date.now(),
     };
@@ -164,6 +167,7 @@ function ensureInstance(inst: UserInstance): Promise<void> {
     await seedIfEmpty(inst.prefix);
     await ensureUserFolders(inst.prefix, inst.dir);
     const pulled = await pullProject(inst.prefix, inst.dir);
+    inst.knownPaths = new Set(walkFiles(inst.dir).map((p) => relative(inst.dir, p).split("\\").join("/")));
     console.log(`[${inst.uid}] materialized ${pulled} files`);
     inst.proc = launchStudio(inst);
     inst.lastPush = Date.now();
@@ -681,11 +685,20 @@ async function pushChanges(inst: UserInstance): Promise<number> {
   try {
     const since = inst.lastPush;
     inst.lastPush = Date.now();
+    let files: string[];
+    try {
+      files = walkFiles(inst.dir);
+    } catch (err) {
+      console.error(`[${inst.uid}] walk failed — skipping push`, err);
+      return 0;
+    }
+    const current = new Set<string>();
     let pushed = 0;
-    for (const abs of walkFiles(inst.dir)) {
+    for (const abs of files) {
+      const rel = relative(inst.dir, abs).split("\\").join("/");
+      current.add(rel);
       const st = statSync(abs);
       if (st.mtimeMs < since - 1500) continue;
-      const rel = relative(inst.dir, abs).split("\\").join("/");
       try {
         await bucket.upload(abs, { destination: inst.prefix + rel });
         pushed++;
@@ -693,6 +706,23 @@ async function pushChanges(inst: UserInstance): Promise<number> {
         console.error(`[${inst.uid}] push failed: ${rel}`, err);
       }
     }
+    // Propagate deletes: paths known locally that are now gone get removed from
+    // GCS too, so they don't resurrect on the next materialization. Skipped
+    // entirely when the local tree is empty — a wiped /tmp must never nuke GCS.
+    if (current.size > 0) {
+      let deleted = 0;
+      for (const rel of inst.knownPaths) {
+        if (current.has(rel)) continue;
+        try {
+          await bucket.file(inst.prefix + rel).delete();
+          deleted++;
+        } catch (err) {
+          console.error(`[${inst.uid}] delete failed: ${rel}`, err);
+        }
+      }
+      if (deleted) console.log(`[${inst.uid}] propagated ${deleted} deletes`);
+    }
+    inst.knownPaths = current;
     return pushed;
   } finally {
     inst.pushing = false;

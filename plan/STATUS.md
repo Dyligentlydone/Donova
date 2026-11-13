@@ -44,6 +44,12 @@ userPrefix()` reading the `donova_email` cookie (set by /api/trial + billing/con
   `gcloud secrets versions add` + `--update-secrets=name:version`.
 - Verified: anonymous → 401 gate page on every path incl. /api/*; master token →
   302 + session cookie → full SPA/API; fake email → 403 not-subscribed.
+- **Delete propagation (2026-11-13)**: `pushChanges` now diffs `inst.knownPaths`
+  (seeded at materialize, updated each tick) against the live walk — paths gone
+  locally are deleted under the user's GCS prefix, so deletes survive eviction/
+  redeploy. Guard: deletes skip entirely when the local walk is empty, so a wiped
+  `/tmp` can never mass-delete GCS. Seed folders (`inspo`/`raw footage`/`donova
+  videos`) still re-`.keep` at boot by design; their *contents* stay deleted.
 - **Verified multi-user isolation (2026-11-13)**: trial user → fresh seeded
   `projects/u-*/` tree + own preview on own port; upload lands only in their
   prefix; owner's `projects/default/` list shows no cross-user files; both
@@ -67,8 +73,7 @@ userPrefix()` reading the `donova_email` cookie (set by /api/trial + billing/con
 - Verified live: SPA title "Donova Studio" (rebrand patcher ran), `/api/projects`,
   `/api/environment/ffmpeg` `{"ok":true}`, `/api/fonts`, SPA assets, SSE `/api/events`,
   and the 8s GCS write-back loop (verified locally; same code path in service).
-- Known limits: one shared project (`projects/default/`); deletes don't propagate to
-  GCS (only mtime-based pushes); /tmp is RAM so project media budget ≈ container mem;
+- Known limits: `/tmp` is RAM so project media budget ≈ container mem;
   SPA features that need HeyGen auth stay inert exactly like local.
 
 The §-8 routes/UI (`/studio` page + `/api/*` in apps/web) still exist and work as the
