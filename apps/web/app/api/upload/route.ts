@@ -1,5 +1,7 @@
 import { Storage } from "@google-cloud/storage";
+import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
+import { userPrefix } from "../../../lib/subscribers";
 
 const DEFAULT_BUCKET = process.env.DONOVA_BUCKET || "donova-renders-donova-514500";
 const storage = new Storage();
@@ -13,8 +15,10 @@ export async function POST(req: Request) {
       return NextResponse.json({ ok: false, error: "No file provided" }, { status: 400 });
     }
 
+    const email = (await cookies()).get("donova_email")?.value;
+    const prefix = userPrefix(email);
     const cleanName = file.name.replace(/[^a-zA-Z0-9._-]/g, "_");
-    const fileKey = `projects/default/raw footage/${Date.now()}_${cleanName}`;
+    const fileKey = `${prefix}raw footage/${Date.now()}_${cleanName}`;
     const bytes = Buffer.from(await file.arrayBuffer());
 
     const bucket = storage.bucket(DEFAULT_BUCKET);

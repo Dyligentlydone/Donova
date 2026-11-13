@@ -1,31 +1,64 @@
 import { spawn, type ChildProcess } from "node:child_process";
-import { createHmac, timingSafeEqual } from "node:crypto";
+import { createRequire } from "node:module";
+import { createHmac, createHash, timingSafeEqual } from "node:crypto";
 import { createServer, request as httpRequest, type IncomingMessage, type ServerResponse } from "node:http";
 import { connect } from "node:net";
-import { createWriteStream, mkdirSync, readdirSync, statSync } from "node:fs";
+import { createWriteStream, mkdirSync, readdirSync, rmSync, statSync } from "node:fs";
 import { dirname, join, relative } from "node:path";
+import { homedir } from "node:os";
+import { readFileSync } from "node:fs";
 import { Storage } from "@google-cloud/storage";
 
 /**
  * Donova Studio cloud service — runs the real rebranded Studio (the same
- * `donova studio` → `hyperframes preview` path used locally) against a project
- * tree synced with Google Cloud Storage.
+ * `donova studio` → `hyperframes preview` path used locally) against per-user
+ * project trees synced with Google Cloud Storage.
  *
- * Boot:  pull projects/<prefix>/ from GCS into /tmp/studio-project
- *        spawn `donova studio <dir> --port <internal> --no-open`
- *        proxy :PORT → 127.0.0.1:<internal>  (SPA + API + SSE + media)
- * Loop:  every SYNC_MS, upload files whose mtime changed back to GCS.
+ * Accounts: the session cookie carries the user's email → uid → one instance:
+ *   projects/<uid>/ in GCS  ⇄  /tmp/users/<uid>/  ⇄  `donova studio` on its own port
+ * Instances lazy-boot on first Studio request, sync every SYNC_MS, and are
+ * reaped after IDLE_MS (or LRU-evicted past MAX_INSTANCES).
  *
- * Deploy single-instance (max-instances=1) so all edits land in one tree.
+ * Deploy single-instance (max-instances=1) so the supervisor owns all trees.
  */
 
 const BUCKET_NAME = process.env.DONOVA_BUCKET || "donova-renders-donova-514500";
-const PROJECT_PREFIX = (process.env.PROJECT_PREFIX || "projects/default/").replace(/\/+$/, "") + "/";
-const PROJECT_DIR = process.env.PROJECT_DIR || "/tmp/studio-project";
-const INTERNAL_PORT = Number(process.env.STUDIO_INTERNAL_PORT) || 3001;
+const USER_ROOT = process.env.USER_ROOT || "/tmp/donova-users";
+const BASE_PORT = Number(process.env.STUDIO_INTERNAL_PORT) || 3100;
+const MAX_INSTANCES = Number(process.env.MAX_INSTANCES) || 8;
+const IDLE_MS = Number(process.env.IDLE_MS) || 20 * 60 * 1000;
 const PUBLIC_PORT = Number(process.env.PORT) || 8080;
 const SYNC_MS = Number(process.env.SYNC_MS) || 8000;
 const CLI_BIN = process.env.DONOVA_CLI || "/app/packages/cli/bin/donova.mjs";
+
+/** hyperframes CLI bin, resolved relative to the donova CLI's deps. */
+const HF_BIN = (() => {
+  try {
+    const req = createRequire(CLI_BIN);
+    const pkg = req.resolve("hyperframes/package.json");
+    return join(dirname(pkg), "bin", "hyperframes.mjs");
+  } catch {
+    return "hyperframes"; // PATH fallback
+  }
+})();
+console.log(`hyperframes bin: ${HF_BIN}`);
+
+let rebrandApplied = false;
+/** Patch the bundled studio SPA once (Donova branding) — same patch
+ * `donova studio` applies, imported from the CLI's built chunk. */
+async function applyRebrand(): Promise<void> {
+  if (rebrandApplied) return;
+  try {
+    const dist = join(dirname(CLI_BIN), "..", "dist");
+    const chunk = readdirSync(dist).find((f) => /^rebrand-.+\.js$/.test(f));
+    if (!chunk) return;
+    const mod = (await import(join(dist, chunk))) as { rebrandStudioUi?: () => boolean };
+    rebrandApplied = mod.rebrandStudioUi?.() ?? false;
+    if (rebrandApplied) console.log("studio bundle rebranded");
+  } catch (err) {
+    console.error("rebrand failed:", err);
+  }
+}
 const SKIP_PUSH = /(^|\/)(node_modules|\.git|dist)(\/|$)/;
 const GATE_SECRET = process.env.STUDIO_GATE_SECRET || "";
 const USER_FOLDERS = ["inspo", "raw footage", "donova videos"] as const;
@@ -74,6 +107,117 @@ function cookieSession(req: IncomingMessage): TokenInfo | null {
   const header = req.headers.cookie || "";
   const match = header.match(new RegExp(`(?:^|;\\s*)${SESSION_COOKIE}=([^;\\s]+)`));
   return match ? verify(decodeURIComponent(match[1])) : null;
+}
+
+/* ------------------------- per-user instances ---------------------------- */
+
+/** email → stable, path-safe user id. Owner + dev mode keep the legacy tree. */
+function uidFor(email: string): string {
+  if (email === "owner@donova.local" || email === "gate-disabled") return "default";
+  return `u-${createHash("sha256").update(email.trim().toLowerCase()).digest("hex").slice(0, 12)}`;
+}
+
+interface UserInstance {
+  uid: string;
+  prefix: string; // projects/<uid>/
+  dir: string; // /tmp/users/<uid>
+  port: number;
+  proc?: ChildProcess;
+  sidecar?: ChildProcess;
+  booted: boolean;
+  boot?: Promise<void>;
+  lastTouched: number;
+  lastPush: number;
+}
+
+const instances = new Map<string, UserInstance>();
+let nextPort = BASE_PORT;
+
+function instanceFor(email: string): UserInstance {
+  const uid = uidFor(email);
+  let inst = instances.get(uid);
+  if (!inst) {
+    inst = {
+      uid,
+      prefix: `projects/${uid}/`,
+      dir: join(USER_ROOT, uid),
+      port: nextPort++,
+      booted: false,
+      lastTouched: Date.now(),
+      lastPush: Date.now(),
+    };
+    instances.set(uid, inst);
+  }
+  inst.lastTouched = Date.now();
+  return inst;
+}
+
+/** Materialize (or seed) the user's tree and boot their preview server. */
+function ensureInstance(inst: UserInstance): Promise<void> {
+  if (inst.booted) return Promise.resolve();
+  if (inst.boot) return inst.boot;
+  inst.boot = (async () => {
+    await evictIfNeeded();
+    mkdirSync(inst.dir, { recursive: true });
+    await seedIfEmpty(inst.prefix);
+    await ensureUserFolders(inst.prefix, inst.dir);
+    const pulled = await pullProject(inst.prefix, inst.dir);
+    console.log(`[${inst.uid}] materialized ${pulled} files`);
+    inst.proc = launchStudio(inst);
+    inst.lastPush = Date.now();
+    await waitForPort(inst.port, 240000).catch((err) => {
+      dumpDaemonLog();
+      throw err;
+    });
+    inst.sidecar = launchAnnotate(inst);
+    inst.booted = true;
+    console.log(`[${inst.uid}] studio up on 127.0.0.1:${inst.port}`);
+  })().finally(() => {
+    inst.boot = undefined;
+  });
+  return inst.boot;
+}
+
+/** Graceful instance stop: final push, kill preview, drop the tree + port. */
+async function stopInstance(inst: UserInstance): Promise<void> {
+  inst.booted = false;
+  try {
+    await pushChanges(inst);
+  } catch (err) {
+    console.error(`[${inst.uid}] final push failed:`, err);
+  }
+  try {
+    inst.proc?.kill("SIGTERM");
+    inst.sidecar?.kill("SIGTERM");
+  } catch {
+    /* already dead */
+  }
+  try {
+    rmSync(inst.dir, { recursive: true, force: true });
+  } catch {
+    /* dir may not exist */
+  }
+  instances.delete(inst.uid);
+  console.log(`[${inst.uid}] instance stopped`);
+}
+
+async function evictIfNeeded(): Promise<void> {
+  const live = [...instances.values()].filter((i) => i.booted || i.boot);
+  if (live.length < MAX_INSTANCES) return;
+  live.sort((a, b) => a.lastTouched - b.lastTouched);
+  const victim = live.find((i) => i.uid !== "default") ?? live[0];
+  console.log(`evicting idle instance ${victim.uid} (cap ${MAX_INSTANCES})`);
+  await stopInstance(victim);
+}
+
+/** Reap instances idle longer than IDLE_MS. */
+function reapIdle(): void {
+  for (const inst of instances.values()) {
+    if ((inst.booted || inst.boot) && Date.now() - inst.lastTouched > IDLE_MS) {
+      console.log(`[${inst.uid}] idle ${Math.round((Date.now() - inst.lastTouched) / 60000)}m — reaping`);
+      void stopInstance(inst);
+    }
+  }
 }
 
 function gatedPage(): string {
@@ -153,7 +297,7 @@ document.addEventListener('click',function(e){
 </script><style>img[alt="donova"]{cursor:pointer}</style>
 `;
 
-function desktopPage(): string {
+function desktopPage(email: string): string {
   return `<!DOCTYPE html><html><head><meta charset="utf-8"><title>Donova — Your Workspace</title>
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <style>
@@ -202,7 +346,7 @@ function desktopPage(): string {
 </style></head><body><div class="wrap">
   <div class="top">
     <img src="${WEB_APP_URL}/donova-logo.png" alt="Donova">
-    <span class="hint">YOUR WORKSPACE</span>
+    <span class="hint">${email === "owner@donova.local" ? "YOUR WORKSPACE" : `YOUR WORKSPACE · ${email}`}</span>
   </div>
   <div class="hero">
     <div>
@@ -293,11 +437,16 @@ paint();
 </script></body></html>`;
 }
 
-function handleGate(req: IncomingMessage, res: ServerResponse): boolean {
+/**
+ * Returns the caller's identity when authenticated, or null after having
+ * fully handled the request (health check, token exchange redirect, or the
+ * 401 gate page).
+ */
+function handleGate(req: IncomingMessage, res: ServerResponse): TokenInfo | null {
   if (req.url === "/health") {
     res.writeHead(200, { "content-type": "application/json" });
-    res.end(JSON.stringify({ ok: true, project: PROJECT_PREFIX }));
-    return true;
+    res.end(JSON.stringify({ ok: true, instances: instances.size }));
+    return null;
   }
   const url = new URL(req.url || "/", "http://internal");
   const token = url.searchParams.get("t");
@@ -320,12 +469,13 @@ function handleGate(req: IncomingMessage, res: ServerResponse): boolean {
       res.writeHead(401, { "content-type": "text/html" });
       res.end(gatedPage());
     }
-    return true;
+    return null;
   }
-  if (cookieSession(req)) return false; // valid session → continue to routing
+  const session = cookieSession(req);
+  if (session) return session; // valid session → continue to routing
   res.writeHead(401, { "content-type": "text/html" });
   res.end(gatedPage());
-  return true;
+  return null;
 }
 
 interface ProjectFile {
@@ -336,11 +486,11 @@ interface ProjectFile {
   updated: string;
 }
 
-async function listProjectTree(): Promise<ProjectFile[]> {
-  const [files] = await bucket.getFiles({ prefix: PROJECT_PREFIX });
+async function listProjectTree(prefix: string): Promise<ProjectFile[]> {
+  const [files] = await bucket.getFiles({ prefix });
   return files
     .map((f) => {
-      const rel = f.name.slice(PROJECT_PREFIX.length);
+      const rel = f.name.slice(prefix.length);
       const folder = rel.includes("/") ? rel.slice(0, rel.indexOf("/")) : "";
       return {
         key: f.name,
@@ -360,10 +510,21 @@ async function listProjectTree(): Promise<ProjectFile[]> {
     .sort((a, b) => b.updated.localeCompare(a.updated));
 }
 
-async function handleDesktopApi(req: IncomingMessage, res: ServerResponse): Promise<boolean> {
+async function handleDesktopApi(
+  req: IncomingMessage,
+  res: ServerResponse,
+  inst: UserInstance,
+): Promise<boolean> {
   const url = new URL(req.url || "/", "http://internal");
   if (url.pathname === "/api/desktop/files" && req.method === "GET") {
-    const files = await listProjectTree();
+    let files = await listProjectTree(inst.prefix);
+    if (files.length === 0) {
+      // brand-new account — seed the project + folders at first desktop view,
+      // not just at first Studio boot
+      await seedIfEmpty(inst.prefix);
+      await ensureUserFolders(inst.prefix, inst.dir);
+      files = await listProjectTree(inst.prefix);
+    }
     res.writeHead(200, { "content-type": "application/json" });
     res.end(JSON.stringify({ files }));
     return true;
@@ -377,14 +538,14 @@ async function handleDesktopApi(req: IncomingMessage, res: ServerResponse): Prom
       ? folderParam
       : "raw footage";
     const rel = `${folder}/${name}`;
-    const dest = join(PROJECT_DIR, rel);
+    const dest = join(inst.dir, rel);
     mkdirSync(dirname(dest), { recursive: true });
     await new Promise<void>((ok, fail) => {
       const w = createWriteStream(dest);
       req.pipe(w).on("finish", ok).on("error", fail);
     });
     try {
-      await bucket.upload(dest, { destination: PROJECT_PREFIX + rel });
+      await bucket.upload(dest, { destination: inst.prefix + rel });
     } catch (err) {
       console.error("upload push failed:", err);
     }
@@ -398,7 +559,7 @@ async function handleDesktopApi(req: IncomingMessage, res: ServerResponse): Prom
       res.writeHead(400).end("bad rel");
       return true;
     }
-    const [signed] = await bucket.file(PROJECT_PREFIX + rel).getSignedUrl({
+    const [signed] = await bucket.file(inst.prefix + rel).getSignedUrl({
       action: "read",
       expires: Date.now() + 15 * 60 * 1000,
     });
@@ -412,13 +573,13 @@ async function handleDesktopApi(req: IncomingMessage, res: ServerResponse): Prom
 const storage = new Storage();
 const bucket = storage.bucket(BUCKET_NAME);
 
-async function pullProject(): Promise<number> {
-  const [files] = await bucket.getFiles({ prefix: PROJECT_PREFIX });
+async function pullProject(prefix: string, dir: string): Promise<number> {
+  const [files] = await bucket.getFiles({ prefix });
   let pulled = 0;
   for (const f of files) {
-    const rel = f.name.slice(PROJECT_PREFIX.length);
+    const rel = f.name.slice(prefix.length);
     if (!rel) continue;
-    const dest = join(PROJECT_DIR, rel);
+    const dest = join(dir, rel);
     mkdirSync(dirname(dest), { recursive: true });
     await new Promise<void>((res, rej) => {
       f.createReadStream()
@@ -431,8 +592,8 @@ async function pullProject(): Promise<number> {
   return pulled;
 }
 
-async function seedIfEmpty(): Promise<void> {
-  const [files] = await bucket.getFiles({ prefix: PROJECT_PREFIX, maxResults: 1 });
+async function seedIfEmpty(prefix: string): Promise<void> {
+  const [files] = await bucket.getFiles({ prefix, maxResults: 1 });
   if (files.length > 0) return;
   const seeds: Record<string, string> = {
     "index.html": `<!DOCTYPE html>
@@ -447,18 +608,17 @@ style="color:#f5f1e8;font:700 72px system-ui;text-align:center">New Donova proje
     ".donova/turns.json": '{\n  "turns": []\n}\n',
   };
   for (const [k, v] of Object.entries(seeds)) {
-    await bucket.file(PROJECT_PREFIX + k).save(v);
+    await bucket.file(prefix + k).save(v);
   }
 }
 
 /** Keep the local-machine folder names users already know from `donova init`:
  * inspo/ · raw footage/ · donova videos/ — as real dirs in /tmp and .keep
  * markers in GCS so the folders survive re-materialization. */
-async function ensureUserFolders(): Promise<void> {
+async function ensureUserFolders(prefix: string, dir: string): Promise<void> {
   for (const name of USER_FOLDERS) {
-    const local = join(PROJECT_DIR, name);
-    mkdirSync(local, { recursive: true });
-    const key = `${PROJECT_PREFIX}${name}/.keep`;
+    mkdirSync(join(dir, name), { recursive: true });
+    const key = `${prefix}${name}/.keep`;
     const [exists] = await bucket.file(key).exists();
     if (!exists) await bucket.file(key).save("donova user folder\n");
   }
@@ -477,20 +637,19 @@ function walkFiles(dir: string, base = dir): string[] {
   return out;
 }
 
-let lastPush = Date.now();
-async function pushChanges(): Promise<number> {
-  const since = lastPush;
-  lastPush = Date.now();
+async function pushChanges(inst: UserInstance): Promise<number> {
+  const since = inst.lastPush;
+  inst.lastPush = Date.now();
   let pushed = 0;
-  for (const abs of walkFiles(PROJECT_DIR)) {
+  for (const abs of walkFiles(inst.dir)) {
     const st = statSync(abs);
     if (st.mtimeMs < since - 1500 || st.size > 512 * 1024 * 1024) continue;
-    const rel = relative(PROJECT_DIR, abs).split("\\").join("/");
+    const rel = relative(inst.dir, abs).split("\\").join("/");
     try {
-      await bucket.upload(abs, { destination: PROJECT_PREFIX + rel });
+      await bucket.upload(abs, { destination: inst.prefix + rel });
       pushed++;
     } catch (err) {
-      console.error(`push failed: ${rel}`, err);
+      console.error(`[${inst.uid}] push failed: ${rel}`, err);
     }
   }
   return pushed;
@@ -514,10 +673,17 @@ function waitForPort(port: number, timeoutMs = 90000): Promise<void> {
   });
 }
 
-function launchStudio(): ChildProcess {
+/**
+ * Spawn the real Studio preview server directly — `hyperframes preview
+ * --foreground` binds the port in-process. We deliberately skip the
+ * `donova studio` wrapper: its `--background` path daemonizes and upstream
+ * readiness detection gives up after ~10s, which cold container boots
+ * exceed. Owning the process also makes idle reaping a clean SIGTERM.
+ */
+function launchStudio(inst: UserInstance): ChildProcess {
   const child = spawn(
     process.execPath,
-    [CLI_BIN, "studio", PROJECT_DIR, "--port", String(INTERNAL_PORT), "--no-open"],
+    [HF_BIN, "preview", inst.dir, "--port", String(inst.port), "--no-open", "--foreground"],
     {
       env: {
         ...process.env,
@@ -528,23 +694,67 @@ function launchStudio(): ChildProcess {
       stdio: ["ignore", "pipe", "pipe"],
     },
   );
-  child.stdout?.on("data", (d) => process.stdout.write(`[studio] ${d}`));
-  child.stderr?.on("data", (d) => process.stderr.write(`[studio] ${d}`));
+  child.stdout?.on("data", (d) => process.stdout.write(`[studio:${inst.uid}] ${d}`));
+  child.stderr?.on("data", (d) => process.stderr.write(`[studio:${inst.uid}] ${d}`));
+  child.on("error", (err) => {
+    console.error(`[studio:${inst.uid}] preview spawn failed:`, err.message);
+    if (inst.proc === child) inst.booted = false;
+  });
+  child.on("exit", (code, sig) => {
+    console.log(`[studio:${inst.uid}] preview exited code=${code} sig=${sig}`);
+    if (inst.proc === child) inst.booted = false;
+  });
   return child;
 }
 
-function proxyOnce(req: IncomingMessage, res: ServerResponse) {
+/** Frame-annotation sidecar (the same one `donova studio` spawns on
+ * studioPort+1000) — best-effort; Studio works without it. */
+function launchAnnotate(inst: UserInstance): ChildProcess | undefined {
+  try {
+    const dist = join(dirname(CLI_BIN), "..", "dist");
+    const chunk = readdirSync(dist).find((f) => /^annotate-.+\.js$/.test(f));
+    if (!chunk) return undefined;
+    return spawn(process.execPath, [join(dist, chunk), inst.dir, String(inst.port + 1000)], {
+      env: { ...process.env, DONOVA_BIN: CLI_BIN },
+      stdio: "ignore",
+    });
+  } catch {
+    return undefined;
+  }
+}
+
+/** The preview daemon logs to the hyperframes state dir, not the project
+ * tree — dump the newest log's tail so boot failures are diagnosable. */
+function dumpDaemonLog(): void {
+  try {
+    const dir = join(homedir(), ".local", "state", "hyperframes", "previews");
+    const logs = readdirSync(dir)
+      .filter((f) => f.endsWith(".log"))
+      .map((f) => ({ f, m: statSync(join(dir, f)).mtimeMs }))
+      .sort((a, b) => b.m - a.m);
+    if (!logs.length) {
+      console.error("no daemon logs found");
+      return;
+    }
+    const tail = readFileSync(join(dir, logs[0].f), "utf8").split("\n").slice(-25).join("\n");
+    console.error(`--- daemon log ${logs[0].f} ---\n${tail}\n--- end ---`);
+  } catch (err) {
+    console.error("daemon log dump failed:", err);
+  }
+}
+
+function proxyOnce(req: IncomingMessage, res: ServerResponse, port: number) {
   // Likely-HTML requests (no file extension) get buffered so the logo-home
   // snippet can be injected; strip accept-encoding so we inject plain text.
   const lastSeg = (req.url || "/").split("?")[0].split("/").pop() || "";
   const expectHtml = !lastSeg.includes(".");
-  const headers = { ...req.headers, host: `127.0.0.1:${INTERNAL_PORT}` };
+  const headers = { ...req.headers, host: `127.0.0.1:${port}` };
   if (expectHtml) delete headers["accept-encoding"];
 
   const upstream = httpRequest(
     {
       host: "127.0.0.1",
-      port: INTERNAL_PORT,
+      port,
       path: req.url,
       method: req.method,
       headers,
@@ -576,36 +786,67 @@ function proxyOnce(req: IncomingMessage, res: ServerResponse) {
   req.pipe(upstream);
 }
 
-async function main() {
-  mkdirSync(PROJECT_DIR, { recursive: true });
-  await seedIfEmpty();
-  await ensureUserFolders();
-  const pulled = await pullProject();
-  console.log(`project materialized: ${pulled} files from gs://${BUCKET_NAME}/${PROJECT_PREFIX}`);
-  lastPush = Date.now();
+/** Branded hold page while a user's preview server materializes + boots. */
+function warmingPage(): string {
+  return `<!DOCTYPE html><html><head><meta charset="utf-8"><title>Donova — warming up</title>
+<meta http-equiv="refresh" content="2.5"><meta name="viewport" content="width=device-width,initial-scale=1">
+<style>body{background:#0a0a0f;color:#f5f1e8;font:400 15px/1.65 system-ui,sans-serif;display:flex;
+align-items:center;justify-content:center;min-height:100vh;text-align:center}
+h1{color:#4a8fd8;font-size:22px;font-weight:800;margin-bottom:8px}p{color:rgba(245,241,232,.5);font-size:14px}</style>
+</head><body><div><h1>Setting up your workspace…</h1>
+<p>Pulling your files — this only happens the first time.</p></div></body></html>`;
+}
 
-  launchStudio();
-  await waitForPort(INTERNAL_PORT);
-  console.log(`studio up on 127.0.0.1:${INTERNAL_PORT} — proxying :${PUBLIC_PORT}`);
+async function main() {
+  mkdirSync(USER_ROOT, { recursive: true });
+  await applyRebrand();
 
   const server = createServer((req, res) => {
-    if (handleGate(req, res)) return;
+    const session = handleGate(req, res);
+    if (!session) return;
+    const inst = instanceFor(session.email);
     const url = new URL(req.url || "/", "http://internal");
-    // workspace desktop at the root for authed users; Studio lives at /studio
+    // workspace desktop at the root; the real Studio lives at /studio
     if (req.method === "GET" && url.pathname === "/") {
       res.writeHead(200, { "content-type": "text/html" });
-      res.end(desktopPage());
+      res.end(desktopPage(session.email));
       return;
     }
-    void handleDesktopApi(req, res)
+    void handleDesktopApi(req, res, inst)
       .then((handled) => {
         if (handled) return;
         if (url.pathname === "/studio" || url.pathname === "/studio/") {
-          req.url = "/";
+          req.url = "/" + url.search;
         } else if (url.pathname.startsWith("/studio/")) {
           req.url = url.pathname.slice("/studio".length) + url.search;
         }
-        proxyOnce(req, res);
+        // kick a cold boot before deciding how to respond
+        if (!inst.booted && !inst.boot) {
+          void ensureInstance(inst).catch((err) =>
+            console.error(`[${inst.uid}] boot failed:`, err),
+          );
+        }
+        if (inst.booted) {
+          inst.lastTouched = Date.now();
+          proxyOnce(req, res, inst.port);
+          return;
+        }
+        const lastSeg = url.pathname.split("/").pop() || "";
+        if (req.method === "GET" && !lastSeg.includes(".")) {
+          // HTML page requested mid-boot → hold page with auto-refresh
+          res.writeHead(200, { "content-type": "text/html" });
+          res.end(warmingPage());
+          return;
+        }
+        void inst.boot!
+          .then(() => {
+            inst.lastTouched = Date.now();
+            proxyOnce(req, res, inst.port);
+          })
+          .catch((err) => {
+            if (!res.headersSent) res.writeHead(503, { "content-type": "text/plain" });
+            res.end(`workspace failed to start: ${err instanceof Error ? err.message : err}`);
+          });
       })
       .catch((err) => {
         res.writeHead(500, { "content-type": "text/plain" });
@@ -613,35 +854,56 @@ async function main() {
       });
   });
   server.on("upgrade", (req, socket, head) => {
-    if (GATE_SECRET && !cookieSession(req)) {
+    const session = cookieSession(req);
+    if (GATE_SECRET && !session) {
       socket.destroy();
       return;
     }
-    const up = connect({ host: "127.0.0.1", port: INTERNAL_PORT }, () => {
-      up.write(`${req.method} ${req.url} HTTP/1.1\r\n`);
-      for (const [k, v] of Object.entries(req.headers)) {
-        up.write(`${k}: ${Array.isArray(v) ? v.join(", ") : v ?? ""}\r\n`);
+    if (!session) {
+      socket.destroy();
+      return;
+    }
+    const inst = instanceFor(session.email);
+    const pipe = () => {
+      if (!inst.booted) {
+        socket.destroy();
+        return;
       }
-      up.write("\r\n");
-      if (head?.length) up.write(head);
-      socket.pipe(up).pipe(socket);
-    });
-    up.on("error", () => socket.destroy());
+      inst.lastTouched = Date.now();
+      const up = connect({ host: "127.0.0.1", port: inst.port }, () => {
+        up.write(`${req.method} ${req.url} HTTP/1.1\r\n`);
+        for (const [k, v] of Object.entries(req.headers)) {
+          up.write(`${k}: ${Array.isArray(v) ? v.join(", ") : v ?? ""}\r\n`);
+        }
+        up.write("\r\n");
+        if (head?.length) up.write(head);
+        socket.pipe(up).pipe(socket);
+      });
+      up.on("error", () => socket.destroy());
+    };
+    if (inst.booted) pipe();
+    else if (inst.boot) void inst.boot.then(pipe).catch(() => socket.destroy());
+    else socket.destroy();
   });
   server.listen(PUBLIC_PORT, "0.0.0.0", () => {
-    console.log(`donova-studio-service listening on :${PUBLIC_PORT}`);
+    console.log(`donova-studio-service listening on :${PUBLIC_PORT} (multi-user, root=${USER_ROOT})`);
   });
 
   setInterval(() => {
-    pushChanges().then((n) => {
-      if (n > 0) console.log(`synced ${n} changed file(s) → GCS`);
-    });
+    for (const inst of instances.values()) {
+      if (!inst.booted) continue;
+      pushChanges(inst).then((n) => {
+        if (n > 0) console.log(`[${inst.uid}] synced ${n} changed file(s) → GCS`);
+      });
+    }
   }, SYNC_MS).unref();
 
+  setInterval(reapIdle, 60 * 1000).unref();
+
   const shutdown = async () => {
-    console.log("shutdown: final push to GCS");
+    console.log("shutdown: final push to GCS for all instances");
     try {
-      await pushChanges();
+      await Promise.all([...instances.values()].map((i) => pushChanges(i)));
     } finally {
       process.exit(0);
     }

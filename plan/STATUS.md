@@ -1,18 +1,24 @@
 # STATUS — what exists today (read before building)
 
-Last updated: 2026-11-12 (real Studio service on Cloud Run — see §-9). Update this file whenever you finish an MV task.
+Last updated: 2026-11-13 (multi-user Studio isolation verified — see §-9). Update this file whenever you finish an MV task.
 
 ## -9. Real Studio as a Cloud Run service (apps/studio-service)
 
-The hosted Studio now runs the SAME code as local `donova studio`: a supervisor
-(`apps/studio-service/src/index.ts`) materializes `projects/default/` from GCS into
-`/tmp/studio-project`, launches `donova studio <dir> --port 3001 --no-open` (which
-rebrands + boots upstream `hyperframes preview`), proxies `0.0.0.0:$PORT →
-127.0.0.1:3001` (HTTP + WS upgrade), and every 8s uploads changed files back to GCS.
+The hosted Studio now runs the SAME code as local `donova studio`, **per user**: the
+supervisor (`apps/studio-service/src/index.ts`) derives `uid = u-<sha256(email)[:12]>`
+from the session cookie, materializes `projects/<uid>/` from GCS into
+`/tmp/donova-users/<uid>` (owner → legacy `projects/default/`), spawns
+`hyperframes preview <dir> --port <3100+n>` directly in the foreground (no upstream
+daemon — its 10s readiness window was too short for Cloud Run), and runs a per-user
+sync loop pushing changed files back to the user's own GCS prefix. `GET /studio`
+returns a "warming up" page while a user's instance cold-boots (~60-90s first time).
+Web-side upload/render routes scope to the same prefix via `lib/subscribers.ts
+userPrefix()` reading the `donova_email` cookie (set by /api/trial + billing/confirm).
 
 - Service `donova-studio`, image `donova-images/studio-service`, CPU 4 / 8Gi /
-  timeout 3600 / **max-instances=1** (a second instance would fork project state) /
-  min-instances=1 (avoids ~15s cold boot).
+  timeout 3600 / **max-instances=1** / min-instances=1. Per-user instances are
+  evicted when idle >20min or >8 concurrent users (LRU; eviction pushes to GCS
+  first and wipes the /tmp root).
 - `--allow-unauthenticated` at the infra level, but the service enforces an HMAC
   session gate itself: `?t=<token>` (web-issued, 5min TTL) or `__donova_session`
   cookie (30d); everything else → 401 gate page. `STUDIO_GATE_SECRET` env on both
@@ -23,6 +29,10 @@ rebrands + boots upstream `hyperframes preview`), proxies `0.0.0.0:$PORT →
   "Open Studio" buttons go through it — non-subscribers get the subscribe flow.
 - Verified: anonymous → 401 gate page on every path incl. /api/*; master token →
   302 + session cookie → full SPA/API; fake email → 403 not-subscribed.
+- **Verified multi-user isolation (2026-11-13)**: trial user → fresh seeded
+  `projects/u-*/` tree + own preview on own port; upload lands only in their
+  prefix; owner's `projects/default/` list shows no cross-user files; both
+  users' studios run side-by-side on one container.
 - **Workspace desktop**: authed `GET /` serves a folder-home screen (inspo ·
   raw footage · donova videos cards, live file lists, upload dropzone →
   `POST /api/desktop/upload`, signed-download links → `/api/desktop/download`).

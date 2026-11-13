@@ -31,9 +31,12 @@ export async function startRenderJob(opts: {
   composition?: string;
   fps?: number;
   quality?: "draft" | "standard" | "high";
+  /** Per-user project prefix — defaults to the shared tree. */
+  prefix?: string;
 }): Promise<Job> {
+  const prefix = opts.prefix || PROJECT_PREFIX;
   const id = `job-${Date.now()}-${Math.floor(Math.random() * 1e6)}`;
-  const outputKey = `projects/default/donova videos/${id}.mp4`;
+  const outputKey = `${prefix}donova videos/${id}.mp4`;
   const job: Job = { id, status: "queued", outputKey };
   jobs.set(id, job);
 
@@ -41,7 +44,7 @@ export async function startRenderJob(opts: {
     job.status = "rendering";
     try {
       const res = await triggerCloudRender({
-        projectPrefix: PROJECT_PREFIX,
+        projectPrefix: prefix,
         outputKey,
         composition: opts.composition || "index.html",
         fps: opts.fps,

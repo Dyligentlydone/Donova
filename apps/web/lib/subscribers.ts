@@ -79,6 +79,19 @@ export async function recordTrial(email: string): Promise<{ rec: SubscriberRecor
   return { rec, created: true };
 }
 
+/**
+ * email → the user's GCS project prefix — the same scheme the Studio service
+ * uses (owner + unauthed fall back to the shared default tree). Both sides
+ * must stay in sync: uid = u-<sha256(email)[:12]>.
+ */
+export function userPrefix(email: string | null | undefined): string {
+  if (!email || !email.includes("@") || email === "owner@donova.local") {
+    return "projects/default/";
+  }
+  const uid = createHash("sha256").update(email.trim().toLowerCase()).digest("hex").slice(0, 12);
+  return `projects/u-${uid}/`;
+}
+
 export function subscriberState(rec: SubscriberRecord | null): "paid" | "trial-active" | "trial-ended" | "none" {
   if (!rec) return "none";
   if (rec.status === "active") return "paid";
