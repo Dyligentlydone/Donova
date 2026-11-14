@@ -110,6 +110,26 @@ first CLI contract) — `run_command` used to report that as "Command
 failed" and swallow the report. `execToolCmd` now returns captured
 stdout+stderr on non-zero exit so the agent sees the actual check output.
 
+### Export save-as (2026-11-14, rev `donova-studio-00026-cnk`)
+
+Exporting dumped renders into `~/Downloads` under a `u-<uid>_<ts>` job-id
+name with no user choice. Fixed on both download surfaces:
+
+- **Studio render queue** (`donova-rebrand-export-v1` in rebrand.ts):
+  capture-phase click interceptor on `button[aria-label^="Download "]`
+  and any `a[download]` → `showSaveFilePicker` (native Save-As: user picks
+  the folder AND the name) → fetch the `/api/projects/<pid>/renders/file/`
+  URL → `resp.body.pipeTo(writable)`, aborts the partial write on failure,
+  falls back to a normal download where the API is missing (Firefox,
+  Safari) or the save fails. Suggested name strips the uid prefix →
+  `donova-<YYYY-MM-DD>_<HHMMSS>.<ext>`.
+- **Desktop files page** (`/api/desktop/download`): was a 302 to a bare
+  GCS signed URL — no CORS (so no fetch→picker), no friendly filename,
+  and `.dl` links played the video in-tab rather than saving. Now proxies
+  bytes through the service with `Content-Disposition: attachment`, and
+  the page's SAVE VIDEO links run the same picker flow.
+
+
 ## -9e. Pre-launch audit: four agent blockers fixed (2026-11-13)
 
 Audit before trial launch found and fixed:
