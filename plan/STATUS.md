@@ -186,6 +186,28 @@ container) — nothing logged, and the page's `fetch().then()` ignored
   propagation is unaffected — GCS-only objects were never local so the
   reap loop can't touch them.
 
+### "New edit" — archive, don't destroy (2026-11-14, rev `donova-studio-00030-kmn`)
+
+There was no project model beyond "one index.html" — starting over meant
+asking the agent to rewrite it and losing the old composition. Now a
+deterministic archive flow (option 1 + button, per user pick):
+
+- `POST /api/desktop/new-edit` copies the current composition to
+  `edits/edit-<utc-ts>.html` (deduped), preferring the local instance
+  copy when present so un-pushed edits survive; then writes
+  `BLANK_COMPOSITION` to index.html on both sides.
+- Sidecar `POST /new-edit` does the same on the local tree for
+  `donova studio`; refused in cloud mode (sync tick would race it).
+- Buttons: injected `fc-newedit-pill` in the Studio header (left of the
+  auto pill / Export; confirm → POST → `location.reload()`), and
+  "+ New edit" on the workspace hero (archives then opens Studio).
+- Untouched: footage folders, `renders/`, `style.md`, `.donova/turns.json`
+  (the agent still remembers the previous edit's conversation).
+- Verified live: 401 unauth, pill marker + endpoint in served bundle,
+  workspace button rendered. Endpoint not invoked live — it would
+  archive the user's real composition; the flow is non-destructive by
+  construction and the user's first click is the proof.
+
 
 ## -9e. Pre-launch audit: four agent blockers fixed (2026-11-13)
 
