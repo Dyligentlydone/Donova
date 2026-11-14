@@ -352,6 +352,21 @@ function desktopPage(email: string): string {
   .files a.dl:hover{color:#6aa7f0}
   .empty{padding:20px 12px;color:rgba(245,241,232,.32);font-size:12.5px;text-align:center}
   .folder input{display:none}
+  .how{margin-top:34px;border:1px solid rgba(255,255,255,.09);border-radius:18px;
+    padding:26px 30px 22px;background:rgba(255,255,255,.02)}
+  .how h2{font-size:14px;font-weight:800;letter-spacing:.14em;text-transform:uppercase;
+    color:#4a8fd8;margin-bottom:18px}
+  .how ol{list-style:none;counter-reset:step;display:grid;gap:14px;padding:0}
+  .how li{counter-increment:step;display:flex;gap:16px;align-items:flex-start}
+  .how li::before{content:counter(step);flex:0 0 26px;height:26px;border-radius:8px;
+    background:rgba(74,143,216,.14);border:1px solid rgba(74,143,216,.35);
+    color:#6aa7f0;font:800 12px/24px ui-monospace,monospace;text-align:center}
+  .how li .lead{color:#fff;font-weight:700;font-size:14px}
+  .how li .sub{color:rgba(245,241,232,.55);font-size:13px;margin-top:2px}
+  .how li .sub b{color:rgba(245,241,232,.85)}
+  .how .note{margin-top:18px;padding-top:14px;border-top:1px solid rgba(255,255,255,.07);
+    color:rgba(245,241,232,.45);font-size:12.5px}
+  .how .note b{color:rgba(245,241,232,.75)}
   .other{margin-top:26px}
   .other summary{cursor:pointer;color:rgba(245,241,232,.5);font-size:13px;margin-bottom:8px}
   .foot{margin-top:40px;color:rgba(245,241,232,.3);font-size:12px;text-align:center}
@@ -390,6 +405,22 @@ function desktopPage(email: string): string {
       <ul class="files"></ul>
     </div>
   </template>
+  <div class="how">
+    <h2>How it works</h2>
+    <ol>
+      <li><div><div class="lead">Drop your clips</div>
+        <div class="sub">Drag footage onto <b>Raw Footage</b> — or click any folder to browse your computer. Everything here is your private workspace.</div></div></li>
+      <li><div><div class="lead">Open Studio</div>
+        <div class="sub">Hit <b>Open Studio</b> — the footage you dropped is already inside, ready to edit.</div></div></li>
+      <li><div><div class="lead">Describe the edit in plain words</div>
+        <div class="sub">Use the chat pill in the bottom-right of Studio: "trim the pauses", "zoom in on the handoff", "add captions". The agent watches your real footage and edits the project for you.</div></div></li>
+      <li><div><div class="lead">Watch it, then tweak</div>
+        <div class="sub">Preview the result and keep talking — "slower", "bigger captions" — until it's right. It remembers the conversation.</div></div></li>
+      <li><div><div class="lead">Export &amp; save anywhere</div>
+        <div class="sub">Finished videos land in <b>Donova Videos</b>. <b>SAVE VIDEO</b> opens a real save dialog — you pick the folder and filename.</div></div></li>
+    </ol>
+    <p class="note">Tip: drop videos whose style you love into <b>Inspo</b> — the agent studies them and remembers your preferences in <b>style.md</b>, so edits get more "you" over time.</p>
+  </div>
   <details class="other"><summary>Project files</summary><ul class="files" id="f-other"></ul></details>
   <p class="foot">Files sync automatically while Studio is open.</p>
 </div>
