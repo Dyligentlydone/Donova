@@ -161,6 +161,31 @@ folders and Project files: drop clips → open Studio → describe the edit
 in the chat pill → preview + tweak → export lands in Donova Videos with
 a real save dialog; closing note points Inspo/style.md at style memory.
 
+### Workspace uploads bypass the 32MiB edge limit (2026-11-14, rev `donova-studio-00029-dvd`)
+
+**Bug:** any clip >32MiB failed to upload silently. Cloud Run rejects
+inbound request bodies >32MiB at the Google Frontend (before the
+container) — nothing logged, and the page's `fetch().then()` ignored
+`r.ok` so the failure was invisible. Verified: 40MB PUT → 413 at the LB.
+
+**Fix:** direct-to-GCS resumable uploads.
+
+- `POST /api/desktop/upload-url` → `file.createResumableUpload()` returns
+  a session URI (no signing/IAM needed); the browser PUTs the file
+  straight to `storage.googleapis.com` — same 40MB file now lands in ~4s.
+- `POST /api/desktop/finalize` pulls the object into `inst.dir` when the
+  instance is booted so a running Studio sees it; best-effort (GCS is
+  the source of truth — the file list is already correct).
+- Bucket CORS on `donova-renders-donova-514500`: PUT/GET/HEAD/OPTIONS
+  allowed from both studio origins.
+- Client: XHR drives the PUT with a real progress %, error paths surface
+  actual messages in the folder label (`r.ok` now checked everywhere),
+  and a drop carrying no files (link/app item) explains itself instead
+  of no-oping.
+- Old `/api/desktop/upload` POST kept for compat; `knownPaths` delete
+  propagation is unaffected — GCS-only objects were never local so the
+  reap loop can't touch them.
+
 
 ## -9e. Pre-launch audit: four agent blockers fixed (2026-11-13)
 
