@@ -595,15 +595,20 @@ const AGENT_TOOLS = [
     function: {
       name: "view_frame",
       description:
-        "See a frame of a video/image at a timecode — returns a visual description (objects, positions as 0-1 fractions, visible text/brand names, what's happening). Sample frames to locate a moment ('when he hands it over') instead of inventing timings.",
+        "See frame(s) of a video/image — returns visual descriptions (objects, positions as 0-1 fractions, visible text/brand names, what's happening). To locate a moment, pass times as an ARRAY to sweep in one call (e.g. times:[1,3,5,7] then refine with a tighter sweep — 8-16 samples is usually plenty; don't sample one frame at a time).",
       parameters: {
         type: "object",
         properties: {
           path: { type: "string", description: "project-relative media path" },
-          time: { type: "number", description: "seconds into the media" },
+          time: { type: "number", description: "seconds into the media (single frame)" },
+          times: {
+            type: "array",
+            items: { type: "number" },
+            description: "batch: up to 8 timecodes in one call",
+          },
           note: { type: "string", description: "optional: what to look for" },
         },
-        required: ["path", "time"],
+        required: ["path"],
       },
     },
   },
@@ -699,55 +704,65 @@ async function viewFrameTool(
   args: Record<string, unknown>,
 ): Promise<string> {
   const rel = String(args.path ?? "");
-  const t = Math.max(0, Number(args.time ?? 0) || 0);
   const note = String(args.note ?? "").slice(0, 300);
   const full = safePath(projectDir, rel);
   if (!full || !existsSync(full)) return "error: no such file";
   if (!MEDIA_EXT.test(rel)) return "error: not a media file";
-  const tmp = join(tmpdir(), `fc-frame-${Date.now()}-${Math.random().toString(36).slice(2, 7)}.jpg`);
-  try {
-    execSync(
-      `ffmpeg -hide_banner -loglevel error -y -ss ${t} -i ${JSON.stringify(full)} -frames:v 1 -vf "scale='min(768,iw)':-2" -q:v 4 ${JSON.stringify(tmp)}`,
-      { stdio: ["ignore", "ignore", "pipe"], timeout: 30_000 },
-    );
-    if (!existsSync(tmp)) return `error: no frame at t=${t} (past the end?)`;
-    const b64 = readFileSync(tmp).toString("base64");
-    const model = process.env.DONOVA_VISION_MODEL ?? "deepseek/deepseek-v4.1-flash-1017";
-    const headers: Record<string, string> = { "content-type": "application/json" };
-    if (spec.key) headers.authorization = `Bearer ${spec.key}`;
-    const r = await fetch(spec.url as string, {
-      method: "POST",
-      headers,
-      body: JSON.stringify({
-        model,
-        messages: [
-          {
-            role: "user",
-            content: [
-              {
-                type: "text",
-                text: `Describe this video frame precisely and compactly: people and what they're doing, objects (with position as 0-1 x/y fractions of the frame), and any legible text or brand names.${note ? ` The caller specifically wants: ${note}` : ""}`,
-              },
-              { type: "image_url", image_url: { url: `data:image/jpeg;base64,${b64}` } },
-            ],
-          },
-        ],
-      }),
-    });
-    const j = (await r.json()) as {
-      choices?: { message?: { content?: string } }[];
-      error?: { message?: string };
-    };
-    if (!r.ok) return `error: vision endpoint ${r.status}: ${j.error?.message ?? "failed"}`;
-    const text = j.choices?.[0]?.message?.content;
-    return text ? `frame@${t}s: ${text.slice(0, 2000)}` : "error: empty vision response";
-  } catch (err) {
-    return `error: ${String(err).slice(0, 300)}`;
-  } finally {
+  // Batched timecodes (max 8) or a single `time` — one tool round covers a
+  // whole sweep so the model doesn't burn a round per frame.
+  const timesRaw = Array.isArray(args.times) ? args.times : [args.time ?? 0];
+  const times = timesRaw.map((v) => Math.max(0, Number(v) || 0)).slice(0, 8);
+  const describeOne = async (t: number): Promise<string> => {
+    const tmp = join(tmpdir(), `fc-frame-${Date.now()}-${Math.random().toString(36).slice(2, 7)}.jpg`);
     try {
-      unlinkSync(tmp);
-    } catch {}
-  }
+      execSync(
+        `ffmpeg -hide_banner -loglevel error -y -ss ${t} -i ${JSON.stringify(full)} -frames:v 1 -vf "scale='min(768,iw)':-2" -q:v 4 ${JSON.stringify(tmp)}`,
+        { stdio: ["ignore", "ignore", "pipe"], timeout: 30_000 },
+      );
+      if (!existsSync(tmp)) return `frame@${t}s: error — no frame (past the end?)`;
+      const b64 = readFileSync(tmp).toString("base64");
+      const model = process.env.DONOVA_VISION_MODEL ?? "deepseek/deepseek-v4.1-flash-1017";
+      const headers: Record<string, string> = { "content-type": "application/json" };
+      if (spec.key) headers.authorization = `Bearer ${spec.key}`;
+      const r = await fetch(spec.url as string, {
+        method: "POST",
+        headers,
+        signal: AbortSignal.timeout(60_000), // a hung VLM call must not wedge the job
+        body: JSON.stringify({
+          model,
+          messages: [
+            {
+              role: "user",
+              content: [
+                {
+                  type: "text",
+                  text: `Describe this video frame precisely and compactly: people and what they're doing, objects (with position as 0-1 x/y fractions of the frame), and any legible text or brand names.${note ? ` The caller specifically wants: ${note}` : ""}`,
+                },
+                { type: "image_url", image_url: { url: `data:image/jpeg;base64,${b64}` } },
+              ],
+            },
+          ],
+        }),
+      });
+      const j = (await r.json()) as {
+        choices?: { message?: { content?: string } }[];
+        error?: { message?: string };
+      };
+      if (!r.ok) return `frame@${t}s: error — vision endpoint ${r.status}: ${j.error?.message ?? "failed"}`;
+      const text = j.choices?.[0]?.message?.content;
+      return text ? `frame@${t}s: ${text.slice(0, 1200)}` : `frame@${t}s: error — empty vision response`;
+    } catch (err) {
+      return `frame@${t}s: error — ${String(err).slice(0, 200)}`;
+    } finally {
+      try {
+        unlinkSync(tmp);
+      } catch {}
+    }
+  };
+  // Parallel — 8 sequential VLM calls made a sweep take minutes; concurrent
+  // keeps it ~30s. Promise.all preserves order. Tmp names are unique.
+  const out = await Promise.all(times.map(describeOne));
+  return out.join("\n");
 }
 
 interface ChatMessage {
@@ -832,7 +847,10 @@ async function runHttpJob(
           : undefined,
     });
   };
-  for (let round = 0; round < 15; round++) {
+  // 24 rounds: vision tasks legitimately need ~4 read rounds + ~6 batched
+  // frame sweeps + write + verify. Still bounded so a stuck loop can't
+  // run the meter up — each round is one provider call.
+  for (let round = 0; round < 24; round++) {
     let msg: ChatMessage | undefined;
     try {
       const r = await fetch(spec.url as string, {
@@ -882,7 +900,7 @@ async function runHttpJob(
           args = JSON.parse(call.function.arguments || "{}") as Record<string, unknown>;
         } catch {}
         broadcast(
-          `› ${call.function.name} ${String(args.path ?? args.cmd ?? "").slice(0, 80)}${call.function.name === "view_frame" ? `@${args.time ?? 0}s` : ""}\n`,
+          `› ${call.function.name} ${String(args.path ?? args.cmd ?? "").slice(0, 80)}${call.function.name === "view_frame" ? `@${Array.isArray(args.times) ? `${args.times.length} frames` : `${args.time ?? 0}s`}` : ""}\n`,
         );
         tools.push(call.function.name);
         const result =
