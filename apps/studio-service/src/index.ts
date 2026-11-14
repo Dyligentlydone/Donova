@@ -1,7 +1,7 @@
 import { type ChildProcess, spawn } from "node:child_process";
 import { createHash, createHmac, timingSafeEqual } from "node:crypto";
 import { createWriteStream, mkdirSync, readdirSync, rmSync, statSync } from "node:fs";
-import { readFileSync } from "node:fs";
+import { copyFileSync, existsSync, readFileSync, writeFileSync } from "node:fs";
 import { type IncomingMessage, type ServerResponse, createServer, request as httpRequest } from "node:http";
 import { createRequire } from "node:module";
 import { connect } from "node:net";
@@ -328,6 +328,11 @@ function desktopPage(email: string): string {
     text-transform:uppercase;text-decoration:none;padding:16px 30px;border-radius:12px;white-space:nowrap;
     box-shadow:0 0 30px rgba(74,143,216,.3)}
   .open:hover{background:#6aa7f0}
+  .actions{display:flex;flex-direction:column;gap:10px;align-items:stretch}
+  .newedit{background:transparent;color:#6aa7f0;border:1px solid rgba(74,143,216,.4);
+    font-weight:700;font-size:12px;letter-spacing:.1em;text-transform:uppercase;
+    padding:12px 20px;border-radius:12px;cursor:pointer;text-align:center}
+  .newedit:hover{background:rgba(74,143,216,.1)}
   .folders{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:22px}
   .folder{display:flex;flex-direction:column;align-items:center;gap:4px;user-select:none}
   .folder .ico{width:128px;height:auto;cursor:pointer;transition:transform .12s,filter .12s;
@@ -381,7 +386,10 @@ function desktopPage(email: string): string {
       <p>Drop raw clips on <b>Raw Footage</b>, style references on <b>Inspo</b> —
       finished videos land in <b>Donova Videos</b>. Click any folder to browse your computer.</p>
     </div>
-    <a class="open" href="/studio">Open Studio →</a>
+    <div class="actions">
+      <a class="open" href="/studio">Open Studio →</a>
+      <button class="newedit" id="newedit">+ New edit</button>
+    </div>
   </div>
   <svg width="0" height="0" style="position:absolute"><defs>
     <linearGradient id="gBack" x1="0" y1="0" x2="0" y2="1">
@@ -426,6 +434,16 @@ function desktopPage(email: string): string {
 </div>
 <script>
 if(location.hash&&location.hash.indexOf('#project')===0){location.replace('/studio'+location.hash);}
+var ne=document.getElementById('newedit');
+if(ne)ne.addEventListener('click',function(){
+  if(!confirm('Start a new edit?\\n\\nYour current composition is saved to edits/ — nothing is lost. Footage and renders stay put.'))return;
+  ne.disabled=true;ne.textContent='archiving…';
+  fetch('/api/desktop/new-edit',{method:'POST'}).then(function(r){return r.json()}).then(function(j){
+    if(!j.ok){ne.disabled=false;ne.textContent='+ New edit';alert(j.error||'new edit failed');return;}
+    ne.textContent='opening fresh edit…';
+    location.href='/studio';
+  }).catch(function(){ne.disabled=false;ne.textContent='+ New edit';alert('new edit failed — try again');});
+});
 var esc=function(s){var d=document.createElement('div');d.textContent=s;return d.innerHTML;};
 var fmt=function(n){return n>1e9?(n/1e9).toFixed(1)+' GB':n>1e6?(n/1e6).toFixed(1)+' MB':n>1e3?(n/1e3).toFixed(0)+' KB':n+' B';};
 function item(f,dl){
@@ -698,6 +716,37 @@ async function handleDesktopApi(
     res.end(JSON.stringify({ ok: true, rel }));
     return true;
   }
+  // "New edit" — archive the current composition into edits/ and start a
+  // blank one. The local copy wins when present (un-pushed edits); GCS is
+  // the fallback. Destructive-looking but nothing is deleted.
+  if (url.pathname === "/api/desktop/new-edit" && req.method === "POST") {
+    const localIndex = join(inst.dir, "index.html");
+    const hasLocal = existsSync(localIndex);
+    const [hasRemote] = await bucket.file(`${inst.prefix}index.html`).exists();
+    let archived: string | null = null;
+    if (hasLocal || hasRemote) {
+      const stamp = new Date().toISOString().replace(/[T:]/g, "-").slice(0, 19);
+      let editRel = `edits/edit-${stamp}.html`;
+      for (let n = 1; (await bucket.file(inst.prefix + editRel).exists())[0]; n++) {
+        editRel = `edits/edit-${stamp}-${n}.html`;
+      }
+      if (hasLocal) {
+        const localEdit = join(inst.dir, editRel);
+        mkdirSync(dirname(localEdit), { recursive: true });
+        copyFileSync(localIndex, localEdit);
+        await bucket.upload(localIndex, { destination: inst.prefix + editRel });
+      } else {
+        await bucket.file(`${inst.prefix}index.html`).copy(bucket.file(`${inst.prefix}${editRel}`));
+      }
+      archived = editRel;
+    }
+    mkdirSync(inst.dir, { recursive: true });
+    writeFileSync(localIndex, BLANK_COMPOSITION);
+    await bucket.file(`${inst.prefix}index.html`).save(BLANK_COMPOSITION);
+    res.writeHead(200, { "content-type": "application/json" });
+    res.end(JSON.stringify({ ok: true, archived }));
+    return true;
+  }
   if (url.pathname === "/api/desktop/upload" && req.method === "POST") {
     const declared = Number(req.headers["content-length"] ?? 0);
     if (declared > MAX_UPLOAD_BYTES) {
@@ -797,17 +846,19 @@ async function pullProject(prefix: string, dir: string): Promise<number> {
   return pulled;
 }
 
-async function seedIfEmpty(prefix: string): Promise<void> {
-  const [files] = await bucket.getFiles({ prefix, maxResults: 1 });
-  if (files.length > 0) return;
-  const seeds: Record<string, string> = {
-    "index.html": `<!DOCTYPE html>
+const BLANK_COMPOSITION = `<!DOCTYPE html>
 <html><head><meta charset="utf-8"><title>Donova Studio Project</title></head>
 <body><div id="root" data-composition-id="root" data-width="1080" data-height="1920"
 style="width:1080px;height:1920px;background:#0a0a0f;display:flex;align-items:center;justify-content:center">
 <div class="clip" data-start="0" data-duration="2.5"
 style="color:#f5f1e8;font:700 72px system-ui;text-align:center">New Donova project.<br>Upload footage in Assets.</div>
-</div></body></html>`,
+</div></body></html>`;
+
+async function seedIfEmpty(prefix: string): Promise<void> {
+  const [files] = await bucket.getFiles({ prefix, maxResults: 1 });
+  if (files.length > 0) return;
+  const seeds: Record<string, string> = {
+    "index.html": BLANK_COMPOSITION,
     "style.md":
       "# Style Bible\n\nDescribe your editing style here. The agent reads this before every edit.\n",
     "donova.json": '{\n  "version": 1\n}\n',

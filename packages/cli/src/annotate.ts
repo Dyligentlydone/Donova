@@ -1,5 +1,13 @@
 import { execSync, spawn } from "node:child_process";
-import { appendFileSync, existsSync, mkdirSync, readFileSync, unlinkSync, writeFileSync } from "node:fs";
+import {
+  appendFileSync,
+  copyFileSync,
+  existsSync,
+  mkdirSync,
+  readFileSync,
+  unlinkSync,
+  writeFileSync,
+} from "node:fs";
 import { type IncomingMessage, type Server, type ServerResponse, createServer } from "node:http";
 import { get } from "node:http";
 import { homedir, tmpdir } from "node:os";
@@ -934,6 +942,17 @@ async function runHttpJob(
 
 // --- request handling -------------------------------------------------------
 
+// Same blank composition the cloud service seeds — kept in sync by hand
+// (the two run in separate processes; there's no shared module between
+// the sidecar and studio-service).
+const NEW_EDIT_COMPOSITION = `<!DOCTYPE html>
+<html><head><meta charset="utf-8"><title>Donova Studio Project</title></head>
+<body><div id="root" data-composition-id="root" data-width="1080" data-height="1920"
+style="width:1080px;height:1920px;background:#0a0a0f;display:flex;align-items:center;justify-content:center">
+<div class="clip" data-start="0" data-duration="2.5"
+style="color:#f5f1e8;font:700 72px system-ui;text-align:center">New Donova project.<br>Upload footage in Assets.</div>
+</div></body></html>`;
+
 function handle(projectDir: string, req: IncomingMessage, res: ServerResponse): void {
   res.setHeader("access-control-allow-origin", "*");
   res.setHeader("access-control-allow-methods", "POST, GET, OPTIONS");
@@ -1138,6 +1157,35 @@ function handle(projectDir: string, req: IncomingMessage, res: ServerResponse): 
         res.end(JSON.stringify({ ok: false, error: String(e) }));
       });
     });
+    return;
+  }
+  // "New edit" — archive index.html into edits/ and write a blank
+  // composition. Cloud mode defers to the service's /api/desktop/new-edit
+  // (GCS is the durable copy there; the sync tick would race this write).
+  if (req.method === "POST" && req.url === "/new-edit") {
+    if (CLOUD) {
+      res.writeHead(200, { "content-type": "application/json" });
+      res.end(JSON.stringify({ ok: false, error: "use the workspace button in cloud mode" }));
+      return;
+    }
+    try {
+      const indexPath = join(projectDir, "index.html");
+      let archived: string | null = null;
+      if (existsSync(indexPath)) {
+        const stamp = new Date().toISOString().replace(/[T:]/g, "-").slice(0, 19);
+        let rel = `edits/edit-${stamp}.html`;
+        for (let n = 1; existsSync(join(projectDir, rel)); n++) rel = `edits/edit-${stamp}-${n}.html`;
+        mkdirSync(join(projectDir, "edits"), { recursive: true });
+        copyFileSync(indexPath, join(projectDir, rel));
+        archived = rel;
+      }
+      writeFileSync(indexPath, NEW_EDIT_COMPOSITION);
+      res.writeHead(200, { "content-type": "application/json" });
+      res.end(JSON.stringify({ ok: true, archived }));
+    } catch (e) {
+      res.writeHead(500, { "content-type": "application/json" });
+      res.end(JSON.stringify({ ok: false, error: String(e) }));
+    }
     return;
   }
   if (req.method === "POST" && req.url === "/agent/chat") {

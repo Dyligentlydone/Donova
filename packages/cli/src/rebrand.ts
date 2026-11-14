@@ -649,6 +649,59 @@ const EXPORT_AS = `<script>
 })();
 </script>`;
 
+// "New edit" pill — pinned left of the auto pill / Export in the header.
+// Archives index.html into edits/ then writes a blank composition: cloud
+// hits /api/desktop/new-edit (GCS + live instance), local donova studio
+// hits the sidecar's /new-edit (the local tree is the truth). Reloads so
+// Studio re-reads the fresh composition.
+const NEW_EDIT = `<script>
+// donova-rebrand-newedit-v1
+(function(){
+  var ID='fc-newedit-pill',local=/^(localhost|127\\.0\\.0\\.1|\\[::1\\])$/.test(location.hostname);
+  var url=local?('http://127.0.0.1:'+((+location.port||80)+1000)+'/new-edit'):'/api/desktop/new-edit';
+  function exportBtn(){
+    var bs=document.querySelectorAll('button');
+    for(var i=0;i<bs.length;i++){
+      var t=(bs[i].textContent||'').trim();
+      if(t==='Export'||t==='Rendering…'||t==='Rendering...')return bs[i];
+    }
+    return null;
+  }
+  function place(){
+    var p=document.getElementById(ID);if(!p)return;
+    var anchor=document.getElementById('fc-auto-pill')||exportBtn();
+    if(anchor){
+      var r=anchor.getBoundingClientRect();
+      p.style.top=(r.top+(r.height-p.offsetHeight)/2)+'px';
+      p.style.right=(innerWidth-r.left+8)+'px';
+      p.style.bottom='auto';
+    }else{
+      p.style.top='10px';p.style.right='20px';p.style.bottom='auto';
+    }
+  }
+  function paint(p,label){p.disabled=false;p.textContent=label||'New edit';}
+  function mount(){
+    if(!document.body||document.getElementById(ID))return;
+    var p=document.createElement('button');p.id=ID;
+    p.setAttribute('style','position:fixed;top:10px;right:20px;z-index:2147483000;padding:6px 12px;border-radius:8px;border:1px solid #ffffff22;background:#0b0e14e6;color:#e8ecf1;font:600 12px system-ui,sans-serif;cursor:pointer');
+    p.textContent='New edit';
+    p.title='start a fresh composition — the current one is saved into edits/';
+    p.onclick=function(){
+      if(!confirm('Start a new edit?\\n\\nThe current composition is saved into edits/ — nothing is lost. Footage and renders stay put.'))return;
+      p.disabled=true;p.textContent='archiving…';
+      fetch(url,{method:'POST'}).then(function(r){return r.json()}).then(function(j){
+        if(!j.ok){paint(p);alert(j.error||'new edit failed');return;}
+        location.reload();
+      }).catch(function(){paint(p);alert('new edit failed — try again');});
+    };
+    document.body.appendChild(p);place();
+  }
+  new MutationObserver(function(){mount();place();}).observe(document.documentElement,{childList:true,subtree:true});
+  addEventListener('resize',place);
+  mount();setInterval(place,1200);
+})();
+</script>`;
+
 // Default-layout shaping: Compositions closed so the left column leads with
 // Assets (creators live in footage, not sub-comps), and an "Annotate"
 // checkbox row inside every panels menu (the "…" strip menu + Window menu —
@@ -792,7 +845,7 @@ export function rebrandStudioUi(): boolean {
   const markUri = readAsset("donova-d.png");
   const patcher = PATCHER.replaceAll("__DONOVA_LOGO__", logoUri ? `data:image/png;base64,${logoUri}` : "");
   const chat = CHAT.replaceAll("__DONOVA_LOGO__", logoUri ? `data:image/png;base64,${logoUri}` : "");
-  const payloads = `${patcher}${ANNOTATE}${chat}${AUTO}${EXPORT_AS}${LAYOUT}`;
+  const payloads = `${patcher}${ANNOTATE}${chat}${AUTO}${EXPORT_AS}${NEW_EDIT}${LAYOUT}`;
   const marker = markerFor(payloads);
 
   const indexPath = join(dir, "index.html");
@@ -805,7 +858,7 @@ export function rebrandStudioUi(): boolean {
         .replace(/<title>[^<]*<\/title>/, "<title>Donova Studio</title>")
         .replace(
           "</body>",
-          `${patcher}\n${ANNOTATE}\n${chat}\n${AUTO}\n${EXPORT_AS}\n${LAYOUT}\n<!-- ${marker} -->\n</body>`,
+          `${patcher}\n${ANNOTATE}\n${chat}\n${AUTO}\n${EXPORT_AS}\n${NEW_EDIT}\n${LAYOUT}\n<!-- ${marker} -->\n</body>`,
         );
       writeFileSync(indexPath, branded);
     }
