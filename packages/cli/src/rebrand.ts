@@ -570,6 +570,82 @@ const AUTO = `<script>
 })();
 </script>`;
 
+// Export save-as: the render queue's stock download is a programmatic
+// a[download] click — browser decides the folder, filename is the job id.
+// This swaps it for showSaveFilePicker so the user picks the folder and
+// name. Capture phase beats React's handler; non-Chromium browsers keep
+// the default flow untouched.
+const EXPORT_AS = `<script>
+// donova-rebrand-export-v1
+(function(){
+  var PICKER=typeof window.showSaveFilePicker==='function';
+  function extOf(n){var m=/\\.(mp4|webm|mov|gif|png|jpg|jpeg|webp|mp3|wav)$/i.exec(n||'');return m?m[0].toLowerCase():'.mp4';}
+  function niceName(jobFile){
+    var ext=extOf(jobFile);
+    var base=String(jobFile||'').replace(/^.*\\//,'').replace(/\\.[^.]+$/,'');
+    base=base.replace(/^u-[0-9a-f]{6,16}_?/i,'');           // strip uid prefix
+    base=base.replace(/^(\\d{4}-\\d{2}-\\d{2})_(\\d{2})-(\\d{2})-(\\d{2})$/,'$1_$2$3$4');
+    base=base.replace(/[^a-z0-9._-]+/gi,'-').replace(/^-+|-+$/g,'')||'export';
+    return 'donova-'+base+ext;
+  }
+  function projectId(){
+    var m=/^#project\\/([^?#/]+)/.exec(location.hash||'');
+    return m?decodeURIComponent(m[1]):'';
+  }
+  function toast(m,ok){
+    var t=document.createElement('div');t.textContent=m;
+    t.setAttribute('style','position:fixed;bottom:24px;left:50%;transform:translateX(-50%);z-index:2147483004;background:#0b0e14f2;color:'+(ok===false?'#f0a0a0':'#e8ecf1')+';border:1px solid '+(ok===false?'#f0a0a055':'#5df0a055')+';border-radius:8px;padding:9px 16px;font:12px system-ui;box-shadow:0 8px 30px #000a');
+    document.body.appendChild(t);setTimeout(function(){t.remove()},4200);
+  }
+  function fallbackDownload(url,name){
+    var a=document.createElement('a');a.href=url;a.download=name;
+    document.body.appendChild(a);a.click();a.remove();
+  }
+  async function saveAs(url,jobFile){
+    var suggested=niceName(jobFile),ext=extOf(jobFile);
+    try{
+      var handle=await window.showSaveFilePicker({
+        suggestedName:suggested,
+        types:[{description:'Video',accept:{'video/*':[ext]}}]
+      });
+    }catch(e){return;} // user dismissed the picker — no-op, not an error
+    toast('saving '+suggested+'…');
+    var w;
+    try{
+      var resp=await fetch(url);
+      if(!resp.ok)throw new Error('http '+resp.status);
+      w=await handle.createWritable();
+      if(resp.body&&resp.body.pipeTo){await resp.body.pipeTo(w);}else{await w.write(await resp.blob());await w.close();}
+      toast('saved — check the folder you picked');
+    }catch(e){
+      try{if(w&&w.abort)await w.abort();}catch(_){}
+      toast('save failed — using normal download',false);
+      fallbackDownload(url,suggested);
+    }
+  }
+  document.addEventListener('click',function(ev){
+    if(!PICKER)return;
+    var el=ev.target;
+    // upstream render-queue download icon button
+    var btn=el&&el.closest?el.closest('button[aria-label^="Download "]'):null;
+    if(btn){
+      var fname=(btn.getAttribute('aria-label')||'').replace(/^Download\\s+/,'').trim();
+      var pid=projectId();
+      if(!fname||!pid)return;
+      ev.preventDefault();ev.stopImmediatePropagation();
+      saveAs('/api/projects/'+encodeURIComponent(pid)+'/renders/file/'+fname.split('/').map(encodeURIComponent).join('/'),fname);
+      return;
+    }
+    // generic a[download] (desktop page links carry href+download)
+    var a=el&&el.closest?el.closest('a[download]'):null;
+    if(a&&a.href&&/^\\//.test(new URL(a.href,location.href).pathname)){
+      ev.preventDefault();
+      saveAs(a.href,a.getAttribute('download')||a.href.split('/').pop());
+    }
+  },true);
+})();
+</script>`;
+
 // Strips previously injected payloads regardless of which branding era wrote
 // them (donova/editnce/framecraft all use the "<word>-rebrand" marker).
 const OLD_SCRIPT_RE = /<script>\s*\/\/ \w+-rebrand[^\n]*[\s\S]*?<\/script>/g;
@@ -608,7 +684,7 @@ export function rebrandStudioUi(): boolean {
   const markUri = readAsset("donova-d.png");
   const patcher = PATCHER.replaceAll("__DONOVA_LOGO__", logoUri ? `data:image/png;base64,${logoUri}` : "");
   const chat = CHAT.replaceAll("__DONOVA_LOGO__", logoUri ? `data:image/png;base64,${logoUri}` : "");
-  const payloads = `${patcher}${ANNOTATE}${chat}${AUTO}`;
+  const payloads = `${patcher}${ANNOTATE}${chat}${AUTO}${EXPORT_AS}`;
   const marker = markerFor(payloads);
 
   const indexPath = join(dir, "index.html");
@@ -619,7 +695,10 @@ export function rebrandStudioUi(): boolean {
         .replace(OLD_SCRIPT_RE, "")
         .replace(/<!--\s*\w+-rebrand-[0-9a-f]+\s*-->/g, "")
         .replace(/<title>[^<]*<\/title>/, "<title>Donova Studio</title>")
-        .replace("</body>", `${patcher}\n${ANNOTATE}\n${chat}\n${AUTO}\n<!-- ${marker} -->\n</body>`);
+        .replace(
+          "</body>",
+          `${patcher}\n${ANNOTATE}\n${chat}\n${AUTO}\n${EXPORT_AS}\n<!-- ${marker} -->\n</body>`,
+        );
       writeFileSync(indexPath, branded);
     }
   }

@@ -398,9 +398,10 @@ if(location.hash&&location.hash.indexOf('#project')===0){location.replace('/stud
 var esc=function(s){var d=document.createElement('div');d.textContent=s;return d.innerHTML;};
 var fmt=function(n){return n>1e9?(n/1e9).toFixed(1)+' GB':n>1e6?(n/1e6).toFixed(1)+' MB':n>1e3?(n/1e3).toFixed(0)+' KB':n+' B';};
 function item(f,dl){
+  var base=(f.rel.split('/').pop()||'file').replace(/["\\']/g,'');
   return '<li><span class="name">'+esc(f.rel.slice(f.rel.indexOf('/')+1))+'</span>'+
     '<span class="sz">'+fmt(f.size)+'</span>'+
-    (dl?'<a class="dl" href="/api/desktop/download?rel='+encodeURIComponent(f.rel)+'">DOWNLOAD</a>':'')+'</li>';
+    (dl?'<a class="dl" download="'+esc(base)+'" data-rel="'+esc(f.rel)+'" href="/api/desktop/download?rel='+encodeURIComponent(f.rel)+'">SAVE VIDEO</a>':'')+'</li>';
 }
 var FOLDERS=[
   {key:'raw footage',label:'Raw Footage',hint:'Drop clips here or click to browse — everything you film lives in this folder.'},
@@ -445,6 +446,36 @@ function paint(){
     document.getElementById('f-other').innerHTML=other.map(function(f){return item(f,false);}).join('')||'<li class="empty">Nothing yet.</li>';
   });
 }
+// Save links route through the OS save dialog when the browser supports it,
+// so the user picks the folder and filename instead of losing the render to
+// ~/Downloads. Plain download attribute covers browsers without the API.
+document.addEventListener('click',function(ev){
+  var a=ev.target&&ev.target.closest?ev.target.closest('a.dl'):null;
+  if(!a||typeof window.showSaveFilePicker!=='function')return;
+  ev.preventDefault();
+  var base=(a.getAttribute('download')||'video.mp4');
+  var ext=(/\.[a-z0-9]+$/i.exec(base)||['.mp4'])[0];
+  var stem=base.replace(/\.[^.]+$/,'').replace(/^u-[0-9a-f]{6,16}_?/i,'');
+  stem=stem.replace(/^(\d{4}-\d{2}-\d{2})_(\d{2})-(\d{2})-(\d{2})$/,'$1_$2$3$4');
+  var suggested='donova-'+stem+ext;
+  var li=a.parentNode, ul=li&&li.parentNode, folder=ul&&ul.parentNode;
+  var cnt=folder?folder.querySelector('.cnt'):null;
+  window.showSaveFilePicker({suggestedName:suggested,types:[{description:'Video',accept:{'video/*':[ext]}}]})
+    .then(function(h){
+      return fetch(a.href).then(function(r){
+        if(!r.ok)throw new Error('http '+r.status);
+        return h.createWritable().then(function(w){
+          if(r.body&&r.body.pipeTo)return r.body.pipeTo(w);
+          return r.blob().then(function(b){return w.write(b);}).then(function(){return w.close();});
+        });
+      });
+    })
+    .then(function(){if(cnt)cnt.textContent='saved '+suggested;})
+    .catch(function(e){
+      if(e&&(e.name==='AbortError'||e.code===20))return; // dismissed picker
+      var d=document.createElement('a');d.href=a.href;d.download=base;document.body.appendChild(d);d.click();d.remove();
+    });
+},false);
 paint();
 </script></body></html>`;
 }
@@ -604,16 +635,32 @@ async function handleDesktopApi(
   }
   if (url.pathname === "/api/desktop/download" && req.method === "GET") {
     const rel = url.searchParams.get("rel") || "";
-    if (!rel || rel.includes("..")) {
+    if (!rel || rel.includes("..") || rel.startsWith("/")) {
       res.writeHead(400).end("bad rel");
       return true;
     }
-    const [signed] = await bucket.file(inst.prefix + rel).getSignedUrl({
-      action: "read",
-      expires: Date.now() + 15 * 60 * 1000,
-    });
-    res.writeHead(302, { location: signed });
-    res.end();
+    // Proxy through the service rather than 302→signed GCS URL: the signed
+    // URL has no CORS headers so the save-as picker can't fetch() it, and it
+    // carries no friendly filename. Same-origin + attachment covers both.
+    const name = (rel.split("/").pop() || "download").replace(/["\\]/g, "");
+    const file = bucket.file(inst.prefix + rel);
+    try {
+      const [meta] = await file.getMetadata();
+      res.writeHead(200, {
+        "content-type": meta.contentType || "application/octet-stream",
+        ...(meta.size ? { "content-length": String(meta.size) } : {}),
+        "content-disposition": `attachment; filename="${name}"; filename*=UTF-8''${encodeURIComponent(name)}`,
+      });
+      file
+        .createReadStream()
+        .on("error", (err) => {
+          console.error("download stream failed:", err);
+          res.destroy();
+        })
+        .pipe(res);
+    } catch {
+      if (!res.headersSent) res.writeHead(404).end("not found");
+    }
     return true;
   }
   return false;
