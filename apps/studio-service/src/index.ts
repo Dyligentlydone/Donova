@@ -60,7 +60,7 @@ async function applyRebrand(): Promise<void> {
     console.error("rebrand failed:", err);
   }
 }
-const SKIP_PUSH = /(^|\/)(node_modules|\.git|dist)(\/|$)/;
+const SKIP_PUSH = /(^|\/)(node_modules|\.git|dist)(\/|$)|(^|\/)\.hyperframes\/preview(\/|$)/;
 const GATE_SECRET = process.env.STUDIO_GATE_SECRET || "";
 const USER_FOLDERS = ["inspo", "raw footage", "donova videos"] as const;
 const SESSION_COOKIE = "__donova_session";
@@ -702,7 +702,12 @@ async function pushChanges(inst: UserInstance): Promise<number> {
     for (const abs of files) {
       const rel = relative(inst.dir, abs).split("\\").join("/");
       current.add(rel);
-      const st = statSync(abs);
+      let st: ReturnType<typeof statSync>;
+      try {
+        st = statSync(abs);
+      } catch {
+        continue; // vanished between walk and stat — nothing to upload
+      }
       if (st.mtimeMs < since - 1500) continue;
       try {
         await bucket.upload(abs, { destination: inst.prefix + rel });
@@ -828,7 +833,7 @@ function proxyOnce(req: IncomingMessage, res: ServerResponse, port: number) {
   const lastSeg = (req.url || "/").split("?")[0].split("/").pop() || "";
   const expectHtml = !lastSeg.includes(".");
   const headers = { ...req.headers, host: `127.0.0.1:${port}` };
-  if (expectHtml) delete headers["accept-encoding"];
+  if (expectHtml) headers["accept-encoding"] = undefined;
 
   const upstream = httpRequest(
     {
@@ -850,9 +855,7 @@ function proxyOnce(req: IncomingMessage, res: ServerResponse, port: number) {
       up.on("end", () => {
         let html = Buffer.concat(chunks).toString("utf8");
         html = html.replace("</body>", `${LOGO_HOME_SNIPPET}</body>`);
-        const h = { ...up.headers };
-        delete h["content-length"];
-        delete h["content-encoding"];
+        const h = { ...up.headers, "content-length": undefined, "content-encoding": undefined };
         res.writeHead(up.statusCode ?? 502, h);
         res.end(html);
       });
@@ -937,7 +940,7 @@ async function main() {
           return;
         }
         if (url.pathname === "/studio" || url.pathname === "/studio/") {
-          req.url = "/" + url.search;
+          req.url = `/${url.search}`;
         } else if (url.pathname.startsWith("/studio/")) {
           req.url = url.pathname.slice("/studio".length) + url.search;
         }
@@ -1021,9 +1024,11 @@ async function main() {
       // process can die mid-session while the sidecar (agent edits) lives
       // on, and un-pushed edits must still reach GCS.
       if (inst.knownPaths.size === 0) continue;
-      pushChanges(inst).then((n) => {
-        if (n > 0) console.log(`[${inst.uid}] synced ${n} changed file(s) → GCS`);
-      });
+      pushChanges(inst)
+        .then((n) => {
+          if (n > 0) console.log(`[${inst.uid}] synced ${n} changed file(s) → GCS`);
+        })
+        .catch((err) => console.error(`[${inst.uid}] push tick failed`, err));
     }
   }, SYNC_MS).unref();
 
