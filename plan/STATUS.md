@@ -129,6 +129,30 @@ name with no user choice. Fixed on both download surfaces:
   bytes through the service with `Content-Disposition: attachment`, and
   the page's SAVE VIDEO links run the same picker flow.
 
+### Studio layout: Assets-first + Annotate menu toggle (2026-11-14, rev `donova-studio-00027-2bf`)
+
+Left column led with Compositions (upstream default) and the annotate
+overlay had no on/off entry in the panels menu. `donova-rebrand-layout-v2`
+in rebrand.ts (injected into the studio bundle):
+
+- Clicks the Compositions tab's own close control **once** — dockview
+  removes the panel properly so state, persisted layout and the menu
+  checkbox all stay in sync. A manual re-enable via the menu is detected
+  on next load and never overridden again (`fc-comp-off`/`fc-comp-respect`
+  localStorage flags).
+- Clones a real `menuitemcheckbox` row into any panels menu containing
+  "Reset layout" (both the left-strip "…" menu and the header Window
+  menu), labels it "Annotate", and wires it to the annotate overlay via
+  new exposed hooks `window.__fcAnnotateToggle` / `__fcAnnotateIsOpen`.
+  Check state mirrors the overlay on each open.
+
+Net default left strip: **Assets** (first, active), Code, Catalog,
+Annotate clone-tab. Compositions re-openable from the same menu.
+
+**Note on saved layouts:** the dockview layout itself persists in
+`hf-studio-ui-preferences`; our close-once approach handles that — it
+edits the live dock instead of fighting the serializer.
+
 
 ## -9e. Pre-launch audit: four agent blockers fixed (2026-11-13)
 
