@@ -34,6 +34,14 @@ RUN corepack enable && corepack prepare pnpm@9.15.0 --activate \
   && pnpm install --frozen-lockfile=false \
   && pnpm build
 
+# Pre-bake the parakeet ASR model (~670MB int8) into the cache dir
+# ensureParakeetModel() scans — same failure class as chrome above: the
+# runtime download would happen inside the agent's run_command window and
+# die, leaving `donova transcribe`/`captions` permanently broken in cloud.
+# whisper.cpp is intentionally absent — auto engine resolves to parakeet.
+# Also proves sherpa-onnx-node loads on this platform at build time.
+RUN node packages/cli/bin/donova.mjs models install parakeet
+
 EXPOSE 8080
 
 CMD ["node", "apps/studio-service/dist/index.js"]

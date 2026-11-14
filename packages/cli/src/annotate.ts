@@ -490,7 +490,11 @@ function buildPrompt(projectDir: string, body: ChatBody): string {
       prompt += `\n\nThe user's style bible (style.md) — follow it for every visual/caption/sound choice, and preserve its content if you update it:\n\n${style}`;
     }
   } catch {}
-  prompt += `\n\nRules for this kind of edit: if the request references media that exists in the project but isn't in the composition yet, wire it in first (a timed element like <video src="..." data-start="0" data-duration="N"> — check the file's real duration with donova probe or ffprobe, don't guess). For anything that needs to see footage — locating a moment, tracking an object, reading on-screen text — use view_frame to sample the video rather than inventing timecodes or positions.\n\nThe user just sent this request from the Studio dashboard:\n\n${body.message ?? ""}`;
+  prompt += `\n\nRules for this kind of edit: if the request references media that exists in the project but isn't in the composition yet, wire it in first (a timed element like <video src="..." data-start="0" data-duration="N"> — check the file's real duration with donova probe or ffprobe, don't guess). For anything that needs to see footage — locating a moment, tracking an object, reading on-screen text — use view_frame to sample the video rather than inventing timecodes or positions.
+
+Captions/subtitles recipe (the parakeet ASR model is preinstalled; whisper and 'models install' are NOT available in this environment — don't attempt them): donova transcribe <media> --out transcript.json, then donova captions . --transcript transcript.json.
+
+Tool discipline: you have a bounded number of tool calls — spend them on the edit. If a command fails the same way twice, stop permuting flags; the error text is the answer, so work around it or report the blocker in your reply. Missing binaries/models can't be fixed by flags.\n\nThe user just sent this request from the Studio dashboard:\n\n${body.message ?? ""}`;
   if (body.annotation) {
     const safe = body.annotation.replace(/[^a-zA-Z0-9._/-]/g, "");
     const path = join(projectDir, safe);
@@ -691,12 +695,15 @@ function runTool(projectDir: string, name: string, args: Record<string, unknown>
 /** run_command's executor. donova subcommands exit non-zero when they *find*
  * issues (check, lint, gate) — that output IS the answer, so return captured
  * stdout+stderr instead of execSync's bare "Command failed" string. */
+const HEAVY_CMD = /\b(transcribe|captions|measure|probe|render|audio|cuts)\b/;
 function execToolCmd(cmd: string, cwd: string, env?: NodeJS.ProcessEnv): string {
   try {
     return execSync(cmd, {
       cwd,
       encoding: "utf8",
-      timeout: 60_000,
+      // ASR/media analysis on real clips legitimately needs minutes; reads
+      // and lints stay on the short leash.
+      timeout: HEAVY_CMD.test(cmd) ? 240_000 : 60_000,
       stdio: ["ignore", "pipe", "pipe"],
       env,
     }).slice(0, 8000);
