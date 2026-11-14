@@ -492,7 +492,7 @@ function buildPrompt(projectDir: string, body: ChatBody): string {
   } catch {}
   prompt += `\n\nRules for this kind of edit: if the request references media that exists in the project but isn't in the composition yet, wire it in first (a timed element like <video src="..." data-start="0" data-duration="N"> — check the file's real duration with donova probe or ffprobe, don't guess). For anything that needs to see footage — locating a moment, tracking an object, reading on-screen text — use view_frame to sample the video rather than inventing timecodes or positions.
 
-Captions/subtitles recipe (the parakeet ASR model is preinstalled; whisper and 'models install' are NOT available in this environment — don't attempt them): donova transcribe <media> --out transcript.json, then donova captions . --transcript transcript.json.
+Captions/subtitles recipe (the parakeet ASR model is preinstalled; whisper and 'models install' are NOT available in this environment — don't attempt them): donova transcribe <media> --out transcript.json, then donova captions transcript.json --dir .
 
 Tool discipline: you have a bounded number of tool calls — spend them on the edit. If a command fails the same way twice, stop permuting flags; the error text is the answer, so work around it or report the blocker in your reply. Missing binaries/models can't be fixed by flags.\n\nThe user just sent this request from the Studio dashboard:\n\n${body.message ?? ""}`;
   if (body.annotation) {
