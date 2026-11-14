@@ -153,6 +153,14 @@ Annotate clone-tab. Compositions re-openable from the same menu.
 `hf-studio-ui-preferences`; our close-once approach handles that — it
 edits the live dock instead of fighting the serializer.
 
+### Workspace "how it works" card (2026-11-14, rev `donova-studio-00028-jmk`)
+
+The desktop workspace went hero → folders with no explanation of the
+edit loop. `desktopPage` now renders a numbered walkthrough between the
+folders and Project files: drop clips → open Studio → describe the edit
+in the chat pill → preview + tweak → export lands in Donova Videos with
+a real save dialog; closing note points Inspo/style.md at style memory.
+
 
 ## -9e. Pre-launch audit: four agent blockers fixed (2026-11-13)
 
