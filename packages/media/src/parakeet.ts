@@ -239,9 +239,13 @@ function failureReason(
     .split("\n")
     .map((line) => line.trim())
     .filter(Boolean);
-  const why = lines.find((line) => line.startsWith(ERROR_PREFIX))?.slice(ERROR_PREFIX.length) ?? lines.at(-1);
-  if (!why) return how;
-  return `${how}: ${bounded(why)}`;
+  const ours = lines.find((line) => line.startsWith(ERROR_PREFIX))?.slice(ERROR_PREFIX.length);
+  if (ours) return `${how}: ${bounded(ours)}`;
+  // Crash outside the worker's catch (missing file, OOM, native abort): the
+  // real error sits above the "Node.js vX" banner tail — return the whole
+  // tail block, not just the version line.
+  if (!lines.length) return how;
+  return `${how}: ${bounded(lines.slice(-8).join(" | "))}`;
 }
 
 /** Decodes in a child process: onnxruntime aborts the whole process on some inputs, uncatchably. */
