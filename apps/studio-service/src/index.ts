@@ -448,16 +448,48 @@ FOLDERS.forEach(function(fd){
   list.innerHTML='<li class="empty">'+fd.hint+'</li>';
   function send(file){
     node.classList.add('busy');cnt.textContent='uploading '+file.name+'…';
-    fetch('/api/desktop/upload?name='+encodeURIComponent(file.name)+'&folder='+encodeURIComponent(fd.key),{method:'POST',body:file})
+    // Cloud Run rejects request bodies over 32MiB at the edge — real clips
+    // go straight to GCS through a resumable session, then finalize pulls
+    // the object into the live Studio instance.
+    var q='name='+encodeURIComponent(file.name)+'&folder='+encodeURIComponent(fd.key)+'&size='+file.size+'&type='+encodeURIComponent(file.type||'application/octet-stream');
+    fetch('/api/desktop/upload-url?'+q,{method:'POST'})
+      .then(function(r){return r.json().then(function(d){
+        if(!r.ok||!d.ok)throw new Error((d&&d.error)||('http '+r.status));
+        return d;
+      });})
+      .then(function(d){
+        return new Promise(function(res,rej){
+          var x=new XMLHttpRequest();
+          x.open('PUT',d.uri);
+          x.setRequestHeader('Content-Type',file.type||'application/octet-stream');
+          x.upload.onprogress=function(e){
+            if(e.lengthComputable&&e.total)cnt.textContent='uploading '+file.name+' — '+Math.round(e.loaded/e.total*100)+'%';
+          };
+          x.onload=function(){if(x.status>=200&&x.status<300)res(d);else rej(new Error('storage rejected the upload ('+x.status+')'));};
+          x.onerror=function(){rej(new Error('network error — check your connection'));};
+          x.send(file);
+        });
+      })
+      .then(function(d){
+        cnt.textContent='finishing '+file.name+'…';
+        return fetch('/api/desktop/finalize?rel='+encodeURIComponent(d.rel),{method:'POST'})
+          .then(function(r){if(!r.ok)throw new Error('finalize failed ('+r.status+')');});
+      })
       .then(function(){node.classList.remove('busy');paint();})
-      .catch(function(){node.classList.remove('busy');cnt.textContent='upload failed — try again';});
+      .catch(function(err){
+        node.classList.remove('busy');
+        cnt.textContent='upload failed — '+(err&&err.message?err.message:'try again');
+      });
   }
   node.querySelector('.ico').addEventListener('click',function(){pick.click();});
   node.querySelector('.lbl').addEventListener('click',function(){pick.click();});
   pick.addEventListener('change',function(){Array.from(pick.files).forEach(send);pick.value='';});
   ['dragover','dragenter'].forEach(function(ev){node.addEventListener(ev,function(e){e.preventDefault();node.classList.add('over');});});
   ['dragleave','drop'].forEach(function(ev){node.addEventListener(ev,function(e){e.preventDefault();node.classList.remove('over');
-    if(ev==='drop'&&e.dataTransfer&&e.dataTransfer.files)Array.from(e.dataTransfer.files).forEach(send);});});
+    if(ev==='drop'&&e.dataTransfer){
+      if(e.dataTransfer.files&&e.dataTransfer.files.length)Array.from(e.dataTransfer.files).forEach(send);
+      else cnt.textContent='drag the video file itself — links and app items can\u2019t upload';
+    }});});
   mount.appendChild(node);nodes[fd.key]={cnt:cnt,list:list,dl:!!fd.downloads};
 });
 function paint(){
@@ -615,6 +647,55 @@ async function handleDesktopApi(
     }
     res.writeHead(200, { "content-type": "application/json" });
     res.end(JSON.stringify({ files }));
+    return true;
+  }
+  // Direct-to-GCS upload: Cloud Run rejects request bodies >32MiB at the
+  // load balancer (real clips never reach this service), so the browser
+  // asks for a resumable session URI and PUTs the file straight to GCS.
+  // finalize then pulls the object into the live instance dir so a running
+  // Studio sees it immediately (cold instances pick it up on materialize).
+  if (url.pathname === "/api/desktop/upload-url" && req.method === "POST") {
+    const declared = Number(url.searchParams.get("size") ?? 0);
+    if (declared > MAX_UPLOAD_BYTES) {
+      res.writeHead(413, { "content-type": "application/json" });
+      res.end(JSON.stringify({ ok: false, error: "file too large (2GB max)" }));
+      return true;
+    }
+    const name = (url.searchParams.get("name") || `clip-${Date.now()}.mp4`)
+      .replace(/[/\\]+/g, "-")
+      .slice(0, 140);
+    const folderParam = url.searchParams.get("folder") || "raw footage";
+    const folder = (USER_FOLDERS as readonly string[]).includes(folderParam) ? folderParam : "raw footage";
+    const rel = `${folder}/${name}`;
+    const contentType = url.searchParams.get("type") || "application/octet-stream";
+    const [uri] = await bucket.file(inst.prefix + rel).createResumableUpload({
+      metadata: { contentType },
+      origin: `https://${req.headers.host ?? ""}`,
+    });
+    res.writeHead(200, { "content-type": "application/json" });
+    res.end(JSON.stringify({ ok: true, uri, rel }));
+    return true;
+  }
+  if (url.pathname === "/api/desktop/finalize" && req.method === "POST") {
+    const rel = url.searchParams.get("rel") || "";
+    const inFolder = USER_FOLDERS.some((f) => rel.startsWith(`${f}/`));
+    if (!rel || rel.includes("..") || rel.startsWith("/") || !inFolder) {
+      res.writeHead(400).end("bad rel");
+      return true;
+    }
+    // Local copy is best-effort — GCS is the source of truth and the file
+    // list already shows it; a failed pull only delays Studio's view.
+    if (inst.booted) {
+      try {
+        const dest = join(inst.dir, rel);
+        mkdirSync(dirname(dest), { recursive: true });
+        await bucket.file(inst.prefix + rel).download({ destination: dest });
+      } catch (err) {
+        console.error(`[${inst.uid}] finalize pull failed: ${rel}`, err);
+      }
+    }
+    res.writeHead(200, { "content-type": "application/json" });
+    res.end(JSON.stringify({ ok: true, rel }));
     return true;
   }
   if (url.pathname === "/api/desktop/upload" && req.method === "POST") {
