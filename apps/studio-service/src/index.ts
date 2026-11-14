@@ -832,8 +832,8 @@ function proxyOnce(req: IncomingMessage, res: ServerResponse, port: number) {
   // snippet can be injected; strip accept-encoding so we inject plain text.
   const lastSeg = (req.url || "/").split("?")[0].split("/").pop() || "";
   const expectHtml = !lastSeg.includes(".");
-  const headers = { ...req.headers, host: `127.0.0.1:${port}` };
-  if (expectHtml) headers["accept-encoding"] = undefined;
+  const { "accept-encoding": _dropAE, ...plainReqHeaders } = req.headers;
+  const headers = { ...(expectHtml ? plainReqHeaders : req.headers), host: `127.0.0.1:${port}` };
 
   const upstream = httpRequest(
     {
@@ -855,7 +855,7 @@ function proxyOnce(req: IncomingMessage, res: ServerResponse, port: number) {
       up.on("end", () => {
         let html = Buffer.concat(chunks).toString("utf8");
         html = html.replace("</body>", `${LOGO_HOME_SNIPPET}</body>`);
-        const h = { ...up.headers, "content-length": undefined, "content-encoding": undefined };
+        const { "content-length": _cl, "content-encoding": _ce, ...h } = up.headers;
         res.writeHead(up.statusCode ?? 502, h);
         res.end(html);
       });
