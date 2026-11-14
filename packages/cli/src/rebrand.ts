@@ -161,6 +161,9 @@ const ANNOTATE = `<script>
     return f;
   }
   function toggle(){document.getElementById(OV_ID)?closeAll():open();}
+  // exposed for the layout script's menu row — same toggle the tab fires
+  window.__fcAnnotateToggle=toggle;
+  window.__fcAnnotateIsOpen=function(){return !!document.getElementById(OV_ID);};
   function closeAll(){var o=document.getElementById(OV_ID);if(o)o.__close&&o.__close();}
   // upgrade the fallback pill to a real tab once the Catalog tab strip mounts
   function mount(){
@@ -646,6 +649,111 @@ const EXPORT_AS = `<script>
 })();
 </script>`;
 
+// Default-layout shaping: Compositions closed so the left column leads with
+// Assets (creators live in footage, not sub-comps), and an "Annotate"
+// checkbox row inside every panels menu (the "…" strip menu + Window menu —
+// both end with "Reset layout") toggling the annotate overlay. Compositions
+// can be re-opened from the same menu; a manual re-enable is detected and
+// never overridden again.
+const LAYOUT = `<script>
+// donova-rebrand-layout-v2
+(function(){
+  var FLAG='fc-comp-off',RESPECT='fc-comp-respect',ROW='fc-annot-row';
+  function tabNamed(t){
+    var ts=document.querySelectorAll('.dv-tabs-container .dv-tab');
+    for(var i=0;i<ts.length;i++){if((ts[i].textContent||'').trim()===t)return ts[i];}
+    return null;
+  }
+  function handleCompositions(){
+    if(localStorage.getItem(RESPECT))return;
+    var c=tabNamed('Compositions');
+    if(!c)return;
+    if(localStorage.getItem(FLAG)){
+      // we auto-closed it once and it's back — the user re-enabled it on
+      // purpose via the menu; never touch it again.
+      localStorage.setItem(RESPECT,'1');return;
+    }
+    var x=c.querySelector('[aria-label="Close Compositions"]')||c.querySelector('.hf-dock-tab-close');
+    if(!x)return;
+    localStorage.setItem(FLAG,'1');
+    x.click();
+  }
+  function annotateOpen(){return window.__fcAnnotateIsOpen?!!window.__fcAnnotateIsOpen():false;}
+  function annotateToggle(){if(window.__fcAnnotateToggle)window.__fcAnnotateToggle();}
+  // Clone a real checkbox row so the injected item inherits the exact menu
+  // styling. Label = the longest text node (wins over the ✓ glyph in both
+  // menu variants); indicator = the span that holds the tick.
+  function decorate(menu){
+    if(menu.querySelector('.'+ROW))return;
+    var kids=menu.querySelectorAll('[role="menuitemcheckbox"],[role="menuitem"]');
+    var probe=null,reset=null;
+    for(var i=0;i<kids.length;i++){
+      var t=(kids[i].textContent||'').trim();
+      if(t==='Reset layout'){reset=kids[i];break;}
+      if(!probe&&kids[i].getAttribute('role')==='menuitemcheckbox')probe=kids[i];
+    }
+    if(!probe||!reset)return;
+    var row=probe.cloneNode(true);
+    row.classList.add(ROW);
+    var walker=document.createTreeWalker(row,NodeFilter.SHOW_TEXT);
+    var n,label=null;
+    while((n=walker.nextNode())){if(n.nodeValue.trim().length>(label?label.nodeValue.trim().length:0))label=n;}
+    if(label)label.nodeValue='Annotate';
+    // tick host: a span already holding ✓, else the label's sibling span
+    // inside the row, else the row's first span (Window-menu layout).
+    var indic=null;
+    walker=document.createTreeWalker(row,NodeFilter.SHOW_TEXT);
+    while((n=walker.nextNode())){if(n.nodeValue.indexOf('\\u2713')>=0){indic=n.parentElement;break;}}
+    if(!indic&&label){
+      var host=label.parentElement;
+      var sib=host&&host!==row?host.nextElementSibling:null;
+      if(sib&&sib.tagName==='SPAN'&&row.contains(sib))indic=sib;
+      else{
+        sib=host&&host!==row?host.previousElementSibling:null;
+        if(sib&&sib.tagName==='SPAN'&&row.contains(sib))indic=sib;
+      }
+    }
+    if(!indic)indic=row.querySelector('span');
+    function paint(){var on=annotateOpen();row.setAttribute('aria-checked',on?'true':'false');if(indic)indic.textContent=on?'\\u2713':'';}
+    paint();
+    var eat=function(e){e.stopImmediatePropagation();e.preventDefault();};
+    row.addEventListener('pointerdown',eat,true);
+    row.addEventListener('mousedown',eat,true);
+    row.addEventListener('click',function(e){eat(e);annotateToggle();setTimeout(paint,30);},true);
+    // before the separator when there is one, else just before "Reset layout"
+    var prev=reset.previousElementSibling;
+    if(prev&&prev.getAttribute('role')!=='menuitemcheckbox'&&prev.getAttribute('role')!=='menuitem'){
+      reset.parentElement.insertBefore(row,prev);
+    }else{
+      reset.parentElement.insertBefore(row,reset);
+    }
+  }
+  function scanMenus(node){
+    var menus=[];
+    if(node&&node.nodeType===1){
+      if(node.getAttribute&&node.getAttribute('role')==='menu')menus.push(node);
+      if(node.querySelectorAll)node.querySelectorAll('[role="menu"]').forEach(function(m){menus.push(m);});
+    }
+    menus.forEach(decorate);
+  }
+  var compDone=!!localStorage.getItem(RESPECT);
+  new MutationObserver(function(muts){
+    for(var i=0;i<muts.length;i++){
+      for(var j=0;j<muts[i].addedNodes.length;j++)scanMenus(muts[i].addedNodes[j]);
+    }
+    if(!compDone&&!localStorage.getItem(RESPECT)&&tabNamed('Compositions')){
+      handleCompositions();compDone=true;
+    }
+  }).observe(document.documentElement,{childList:true,subtree:true});
+  handleCompositions();
+  // fallback poll: tabs can mount while the observer's batch is mid-flight
+  var tries=0,t=setInterval(function(){
+    if(compDone||localStorage.getItem(RESPECT)||tries++>40){clearInterval(t);return;}
+    if(tabNamed('Compositions')){handleCompositions();compDone=true;clearInterval(t);}
+  },500);
+})();
+</script>`;
+
 // Strips previously injected payloads regardless of which branding era wrote
 // them (donova/editnce/framecraft all use the "<word>-rebrand" marker).
 const OLD_SCRIPT_RE = /<script>\s*\/\/ \w+-rebrand[^\n]*[\s\S]*?<\/script>/g;
@@ -684,7 +792,7 @@ export function rebrandStudioUi(): boolean {
   const markUri = readAsset("donova-d.png");
   const patcher = PATCHER.replaceAll("__DONOVA_LOGO__", logoUri ? `data:image/png;base64,${logoUri}` : "");
   const chat = CHAT.replaceAll("__DONOVA_LOGO__", logoUri ? `data:image/png;base64,${logoUri}` : "");
-  const payloads = `${patcher}${ANNOTATE}${chat}${AUTO}${EXPORT_AS}`;
+  const payloads = `${patcher}${ANNOTATE}${chat}${AUTO}${EXPORT_AS}${LAYOUT}`;
   const marker = markerFor(payloads);
 
   const indexPath = join(dir, "index.html");
@@ -697,7 +805,7 @@ export function rebrandStudioUi(): boolean {
         .replace(/<title>[^<]*<\/title>/, "<title>Donova Studio</title>")
         .replace(
           "</body>",
-          `${patcher}\n${ANNOTATE}\n${chat}\n${AUTO}\n${EXPORT_AS}\n<!-- ${marker} -->\n</body>`,
+          `${patcher}\n${ANNOTATE}\n${chat}\n${AUTO}\n${EXPORT_AS}\n${LAYOUT}\n<!-- ${marker} -->\n</body>`,
         );
       writeFileSync(indexPath, branded);
     }
