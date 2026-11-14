@@ -11,7 +11,9 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 
 # Pinned chrome-headless-shell for HeadlessExperimental.beginFrame
 ARG CHROME_BUILD=141.0.7390.54
-RUN npx -y @puppeteer/browsers install chrome-headless-shell@${CHROME_BUILD} --path /opt/donova/chrome
+# Install into the cache dir ensureChrome() scans: homedir()/.donova/chrome
+# (HOME=/opt/donova). Any other path forces a ~100MB runtime download.
+RUN npx -y @puppeteer/browsers install chrome-headless-shell@${CHROME_BUILD} --path /opt/donova/.donova/chrome
 
 ENV DONOVA_CHROME_BUILD=${CHROME_BUILD} \
     DONOVA_HOME=/opt/donova \
