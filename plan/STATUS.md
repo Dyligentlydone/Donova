@@ -67,6 +67,49 @@ Follow-up (same day): first real user chat exposed three gaps — fixed:
   comp (`<video data-start data-duration>`) and use view_frame rather
   than inventing timecodes.
 
+### Second production pass (2026-11-14) — real-footage request, verified
+
+The user's real ask ("zoom in and follow the pomade jar at the handoff so
+the brand name shows, then back to regular framing") ran the full loop in
+prod. It exposed and fixed three more things:
+
+- **Frame-scan economics.** First run issued 34 sequential `view_frame`
+  calls and died at the 15-round cap with nothing written. `view_frame`
+  now accepts `times[]` (≤8/batch, frames fetched+described in parallel,
+  each labeled with its real timestamp); the vision fetch has an abort
+  timeout; the tool-loop cap is 24 rounds. The successful run: 28 samples
+  in 4 batched calls → `write_file` → `timeline` verify → `done`.
+- **Push-loop crash (the big one).** `pushChanges` statSync'd files a beat
+  after walking them; `.hyperframes/preview/<hash>.html` churns constantly,
+  so ENOENT → unhandled rejection → **the whole multi-user service
+  exited mid-chat** (sidecars are child processes — every live session
+  died with it). Fixes: statSync guarded, `.hyperframes/preview/` excluded
+  from pushes (regenerable artifacts), and the sync tick `.catch()`es —
+  housekeeping must never take down the service.
+- **Chrome was never in the path.** Both Dockerfiles installed
+  chrome-headless-shell to `/opt/donova/chrome` but `ensureChrome()` scans
+  `homedir()/.donova/chrome` → every check/render fell through to a ~100MB
+  runtime download inside the agent's 60s `run_command` window →
+  "Command failed". Install path fixed in both images; `donova doctor`
+  now reports `✓ chrome-headless-shell@linux-141.0.7390.54` and `gate`'s
+  runtime stage launches a real browser.
+
+**Verified production result** (revision `donova-studio-00024-l2w`, trial
+account `u-7cb3f88b84d3`, 10s 1080×1920 barbershop clip): the agent
+probed, sampled 28 frames in 4 batches, measured jar positions per beat,
+rewrote the GSAP camera track on `#cam` — push-in to 2.4× at 5.05s
+(label only legible ~5.15–5.55s, *before* the handoff — it made that
+judgment call itself and explained the deviation), held on the label,
+followed the jar through the handover in 5 measured steps, pulled back to
+full frame by 6.85s ahead of the ~6.95s cut. Every keyframe bounds-checked
+against `cx,cy ∈ [0.5/s, 1−0.5/s]`. `donova timeline` + `gate` pass;
+`index.html` + `.donova/turns.json` (5 turns) synced to GCS.
+
+**Residual note:** `donova check` exits 1 when it *finds issues* (agent-
+first CLI contract) — `run_command` used to report that as "Command
+failed" and swallow the report. `execToolCmd` now returns captured
+stdout+stderr on non-zero exit so the agent sees the actual check output.
+
 ## -9e. Pre-launch audit: four agent blockers fixed (2026-11-13)
 
 Audit before trial launch found and fixed:

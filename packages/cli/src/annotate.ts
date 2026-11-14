@@ -670,23 +670,32 @@ function runTool(projectDir: string, name: string, args: Record<string, unknown>
         for (const k of Object.keys(env)) {
           if (/key|secret|token|password/i.test(k)) delete env[k];
         }
-        return execSync(cmd, {
-          cwd: projectDir,
-          encoding: "utf8",
-          timeout: 60_000,
-          stdio: ["ignore", "pipe", "pipe"],
-          env,
-        }).slice(0, 8000);
+        return execToolCmd(cmd, projectDir, env);
       }
-      return execSync(cmd, {
-        cwd: projectDir,
-        encoding: "utf8",
-        timeout: 60_000,
-        stdio: ["ignore", "pipe", "pipe"],
-      }).slice(0, 8000);
+      return execToolCmd(cmd, projectDir);
     }
     return `error: unknown tool ${name}`;
   } catch (err) {
+    return `error: ${String(err).slice(0, 2000)}`;
+  }
+}
+
+/** run_command's executor. donova subcommands exit non-zero when they *find*
+ * issues (check, lint, gate) — that output IS the answer, so return captured
+ * stdout+stderr instead of execSync's bare "Command failed" string. */
+function execToolCmd(cmd: string, cwd: string, env?: NodeJS.ProcessEnv): string {
+  try {
+    return execSync(cmd, {
+      cwd,
+      encoding: "utf8",
+      timeout: 60_000,
+      stdio: ["ignore", "pipe", "pipe"],
+      env,
+    }).slice(0, 8000);
+  } catch (err) {
+    const e = err as { stdout?: string | Buffer; stderr?: string | Buffer };
+    const out = `${e.stdout ?? ""}${e.stderr ?? ""}`.trim();
+    if (out) return `(exit non-zero)\n${out.slice(0, 8000)}`;
     return `error: ${String(err).slice(0, 2000)}`;
   }
 }
