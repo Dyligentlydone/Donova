@@ -208,6 +208,36 @@ deterministic archive flow (option 1 + button, per user pick):
   archive the user's real composition; the flow is non-destructive by
   construction and the user's first click is the proof.
 
+### Captions/transcribe made real in cloud (2026-11-14, rev `donova-studio-00033-t8n`)
+
+A caption request stalled the agent twice, for two separate reasons:
+
+1. **No ASR engine in the container** — whisper.cpp absent; parakeet
+   model downloads ~670MB on first use inside the 60s exec window (could
+   never finish). Agent burned ~15 rounds permuting flags. Fix:
+   `donova models install parakeet` in the Dockerfile (also proves the
+   sherpa native binding loads at build time); heavy commands
+   (transcribe/captions/measure/probe/render/audio/cuts) get 240s.
+2. **Bundled-out worker file** — tsup inlines `@donova/media` into
+   cli/dist, so `join(dirname(import.meta.url),"sherpaWorker.js")`
+   resolved inside cli/dist where no such file existed → `node <missing>`
+   → exit 1 + bare banner; `failureReason`'s last-line fallback hid the
+   real "Cannot find module". Fix: emit `sherpaWorker` as a second tsup
+   entry (separate pass: no dts for the cross-package entry, no clean);
+   `failureReason` now returns the stderr tail block when there's no
+   ERR: line so future crashes surface the real error.
+
+Also fixed the prompt: caption recipe teaches `donova transcribe <media>
+--out transcript.json` → `donova captions transcript.json --dir .`
+(transcript is the positional — the agent caught my wrong order live),
+whisper/models-install marked unavailable, and the tool-discipline rule
+(same error twice → stop permuting flags).
+
+**Verified end-to-end:** local `transcribe` runs the full pipeline
+(model → wav prep → worker → decode → transcript.json); production chat
+transcribed `raw footage/post 1.mp4` (80 words in ~7s) and wired 80
+word-level caption clips — `check` clean, `timeline` 81 clips.
+
 
 ## -9e. Pre-launch audit: four agent blockers fixed (2026-11-13)
 
